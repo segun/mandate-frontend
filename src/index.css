@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+    --color-primary: #1e3a8a;
+    --color-secondary: #0d9488;
+    --color-accent: #fbbf24;
+    --color-background: #f9fafb;
+    --color-surface: #ffffff;
+    --color-success: #16a34a;
+    --color-warning: #d97706;
+    --color-danger: #dc2626;
+    --color-info: #2563eb;
+
+    --font-sans: "DM Sans", "Inter", system-ui, sans-serif;
+
+    --shadow-card: 0 18px 55px -32px rgba(15, 23, 42, 0.45);
+}
+
+@layer base {
+    :root {
+        color: #0f172a;
+    }
+
+    body {
+        @apply bg-background text-slate-900 font-sans antialiased text-[14px] sm:text-[15px] md:text-[16px] lg:text-[16px] xl:text-[17px];
+        background-image:
+            radial-gradient(circle at 20% 20%, rgba(30, 58, 138, 0.08) 0, transparent 35%),
+            radial-gradient(circle at 80% 0%, rgba(13, 148, 136, 0.07) 0, transparent 32%),
+            linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.8) 0%,
+                rgba(249, 250, 251, 0.9) 60%,
+                #f9fafb 100%
+            );
+        min-height: 100vh;
+    }
+
+    #root {
+        min-height: 100vh;
+    }
+
+    a {
+        @apply text-primary transition-colors;
+    }
+
+    a:hover {
+        @apply text-secondary;
+    }
+
+    ::selection {
+        background: rgba(13, 148, 136, 0.2);
+        color: #0f172a;
+    }
+}
