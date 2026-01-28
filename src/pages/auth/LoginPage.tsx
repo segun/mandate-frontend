@@ -29,19 +29,8 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/90 via-primary/80 to-secondary/80 px-4">
-      <div
-        className="absolute inset-0"
-        aria-hidden
-        style={{
-          backgroundImage: 'radial-gradient(#e2e8f0 1px, transparent 1px)',
-          backgroundSize: '36px 36px',
-          maskImage: 'radial-gradient(circle at center, white, transparent)',
-          WebkitMaskImage: 'radial-gradient(circle at center, white, transparent)',
-          opacity: 0.28,
-        }}
-      />
-      <div className="relative w-full max-w-md bg-surface/95 backdrop-blur px-6 sm:px-8 py-8 rounded-2xl shadow-card border border-slate-100/80">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+      <div className="relative w-full max-w-md bg-slate-100/95 px-6 sm:px-8 py-8 rounded-2xl shadow-card border border-slate-200">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-blue-800 text-white flex items-center justify-center shadow-sm">
             <span className="text-lg font-semibold">M</span>
