@@ -1,62 +1,45 @@
-import { useEffect, useState, useCallback } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Voter, PaginatedResponse } from '../../services/voters.service';
-import { votersService } from '../../services/voters.service';
+import type { State, PaginatedResponse } from '../../services/states.service';
+import { statesService } from '../../services/states.service';
 
-export function VotersPage() {
-  const [voters, setVoters] = useState<Voter[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState('');
+export function StatesPage() {
+  const [states, setStates] = useState<State[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [search, setSearch] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
-  const fetchVoters = useCallback(async () => {
+  const fetchStates = async () => {
     setLoading(true);
     try {
-      let response: PaginatedResponse<Voter>;
+      let response: PaginatedResponse<State>;
       if (search) {
-        response = await votersService.search(search, page);
+        response = await (statesService.search ? statesService.search(search, page) : statesService.getAll(page));
       } else {
-        response = await votersService.getAll(page);
+        response = await statesService.getAll(page);
       }
-      setVoters(response.data);
+      setStates(response.data);
       setTotalPages(response.meta.totalPages);
-    } catch (error) {
-      console.error('Failed to fetch voters:', error);
+      setError('');
+    } catch {
+      setError('Failed to fetch states');
     } finally {
       setLoading(false);
     }
-  }, [search, page]);
+  };
 
   useEffect(() => {
-    fetchVoters();
-  }, [fetchVoters]);
+    fetchStates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    fetchVoters();
-  };
-
-  const getSupportLevelBadge = (level: string) => {
-    const styles: Record<string, string> = {
-      'STRONG_SUPPORTER': 'bg-secondary text-white',
-      'LEAN_SUPPORTER': 'bg-emerald-100 text-emerald-700',
-      'UNDECIDED': 'bg-slate-100 text-slate-600',
-      'LEAN_OPPOSITION': 'bg-amber-100 text-amber-700',
-      'STRONG_OPPOSITION': 'bg-red-100 text-red-700',
-    };
-    return styles[level] || 'bg-slate-100 text-slate-600';
-  };
-
-  const getPvcBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      'YES': 'bg-secondary text-white',
-      'NO': 'bg-slate-100 text-slate-600',
-      'PROCESSING': 'bg-accent text-white',
-      'LOST': 'bg-red-100 text-red-700',
-    };
-    return styles[status] || 'bg-slate-100 text-slate-600';
+    fetchStates();
   };
 
   return (
@@ -64,18 +47,21 @@ export function VotersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Voters</h1>
-          <p className="text-sm text-slate-600">Search and manage registrations</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary">States</h1>
+          <p className="text-sm text-slate-600">Search and manage states</p>
         </div>
         <Link
-          to="/voters/new"
+          to="/states/new"
           className="mt-4 sm:mt-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-800 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 transition-colors"
         >
-          + Add Voter
+          + Add State
         </Link>
       </div>
 
-      {/* Content */}
+      {!loading && error && states.length === 0 && (
+        <div className="mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg p-4">{error}</div>
+      )}
+
       <div className="bg-surface rounded-2xl shadow-card border border-slate-100 overflow-hidden">
         <form onSubmit={handleSearch} className="border-b border-slate-100 bg-slate-50/60 px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -83,7 +69,7 @@ export function VotersPage() {
               <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">🔍</div>
               <input
                 type="text"
-                placeholder="Search by name, phone, or PVC number..."
+                placeholder="Search by name or code..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
@@ -108,8 +94,8 @@ export function VotersPage() {
         </form>
         {loading ? (
           <div className="p-10 text-center text-slate-500">Loading...</div>
-        ) : voters.length === 0 ? (
-          <div className="p-10 text-center text-slate-500">No voters found</div>
+        ) : states.length === 0 ? (
+          <div className="p-10 text-center text-slate-500">No states found</div>
         ) : (
           <>
             {/* Desktop Table */}
@@ -118,29 +104,19 @@ export function VotersPage() {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Phone</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">PVC Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Support Level</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Code</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Description</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {voters.map((voter) => (
-                    <tr key={voter.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-primary">{voter.fullName}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{voter.phone}</td>
+                  {states.map((state: State) => (
+                    <tr key={state.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{state.name}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{state.code}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{state.description}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getPvcBadge(voter.pvcStatus)}`}>
-                          {voter.pvcStatus}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getSupportLevelBadge(voter.supportLevel)}`}>
-                          {voter.supportLevel.replace(/_/g, ' ')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Link to={`/voters/${voter.id}`} className="text-secondary hover:underline text-sm font-semibold">
+                        <Link to={`/states/${state.id}`} className="text-secondary hover:underline text-sm font-semibold">
                           View
                         </Link>
                       </td>
@@ -152,21 +128,18 @@ export function VotersPage() {
 
             {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-slate-100">
-              {voters.map((voter) => (
-                <div key={voter.id} className="p-4">
+              {states.map((state: State) => (
+                <div key={state.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-primary">{voter.fullName}</h3>
-                    <Link to={`/voters/${voter.id}`} className="text-secondary text-sm font-semibold">
+                    <h3 className="font-medium text-primary">{state.name}</h3>
+                    <Link to={`/states/${state.id}`} className="text-secondary text-sm font-semibold">
                       View →
                     </Link>
                   </div>
-                  <p className="text-sm text-slate-500 mb-2">{voter.phone}</p>
+                  <p className="text-sm text-slate-500 mb-2">{state.code}</p>
                   <div className="flex gap-2">
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getPvcBadge(voter.pvcStatus)}`}>
-                      PVC: {voter.pvcStatus}
-                    </span>
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getSupportLevelBadge(voter.supportLevel)}`}>
-                      {voter.supportLevel.replace(/_/g, ' ')}
+                    <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
+                      {state.description}
                     </span>
                   </div>
                 </div>
@@ -176,10 +149,10 @@ export function VotersPage() {
         )}
 
         {/* Pagination */}
-        {!loading && voters.length > 0 && (
+        {!loading && states.length > 0 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((p: number) => Math.max(1, p - 1))}
               disabled={page === 1}
               className="px-3 py-1.5 text-sm border border-slate-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
             >
@@ -189,7 +162,7 @@ export function VotersPage() {
               Page {page} of {totalPages}
             </span>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p: number) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className="px-3 py-1.5 text-sm border border-slate-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
             >

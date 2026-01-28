@@ -20,6 +20,7 @@ export function LoginPage() {
       const response = await authService.login({ email, password });
       login(response.data.user, response.data.accessToken);
       navigate('/dashboard');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {

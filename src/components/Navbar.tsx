@@ -11,6 +11,8 @@ export function Navbar() {
   const navLinks = useMemo(
     () => [
       { label: 'Dashboard', to: '/dashboard' },
+      { label: 'States', to: '/states' },
+      { label: 'LGAs', to: '/lgas/1' }, // Placeholder, should be dynamic
       { label: 'Wards', to: '/wards' },
       { label: 'Polling Units', to: '/polling-units' },
       { label: 'Voters', to: '/voters' },

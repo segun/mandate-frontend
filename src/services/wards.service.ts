@@ -6,6 +6,7 @@ export interface Ward {
   code: string;
   description?: string;
   coordinatorId?: string;
+  tenantId?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -24,6 +25,11 @@ export interface PaginatedResponse<T> {
 export const wardsService = {
   async getAll(page = 1, limit = 20): Promise<PaginatedResponse<Ward>> {
     const response = await api.get('/wards', { params: { page, limit } });
+    return response.data;
+  },
+
+  async search(query: string, page = 1, limit = 20): Promise<PaginatedResponse<Ward>> {
+    const response = await api.get('/wards/search', { params: { q: query, page, limit } });
     return response.data;
   },
 
