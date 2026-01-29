@@ -8,6 +8,8 @@ import { VotersPage } from './pages/voters/VotersPage';
 import { WardsPage } from './pages/wards/WardsPage';
 import { CreateWardPage } from './pages/wards/CreateWardPage';
 import { StatesPage } from './pages/states/StatesPage';
+import { CreateStatePage } from './pages/states/CreateStatePage';
+import { StateDetailPage } from './pages/states/StateDetailPage';
 import { LGAsPage } from './pages/lgas/LGAsPage';
 import { PollingUnitsPage } from './pages/polling-units/PollingUnitsPage';
 import { UsersPage } from './pages/users/UsersPage';
@@ -30,6 +32,8 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/states" element={<StatesPage />} />
+                <Route path="/states/new" element={<CreateStatePage />} />
+                <Route path="/states/:id" element={<StateDetailPage />} />
                 <Route path="/lgas" element={<LGAsPage />} />
                 <Route path="/wards" element={<WardsPage />} />
                 <Route path="/wards/new" element={<CreateWardPage />} />

@@ -61,11 +61,13 @@ export const statesService = {
   },
   async getById(id: string): Promise<State> {
     const response = await api.get(`/states/${id}`);
-    return response.data.data;
+    // API returns data directly or wrapped in { data: ... }
+    return response.data.data || response.data;
   },
   async addStates(geoStateIds: string[]): Promise<{ added: State[]; skipped: string[] }> {
     const response = await api.post('/states', { geoStateIds });
-    return response.data.data;
+    // API returns data directly or wrapped in { data: ... }
+    return response.data.data || response.data;
   },
   async update(id: string, data: { isActive?: boolean }): Promise<State> {
     const response = await api.patch(`/states/${id}`, data);
