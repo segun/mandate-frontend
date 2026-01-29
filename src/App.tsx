@@ -21,7 +21,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen bg-background text-slate-900">
+        <div className="min-h-screen bg-[#0d0d0f] text-[#f2f2f2]">
           <Navbar />
           <main className="main-content px-4 sm:px-6 lg:px-8 pb-12 pt-6">
             <Routes>

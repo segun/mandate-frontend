@@ -12,7 +12,7 @@ export function Navbar() {
     () => [
       { label: 'Dashboard', to: '/dashboard' },
       { label: 'States', to: '/states' },
-      { label: 'LGAs', to: '/lgas/1' }, // Placeholder, should be dynamic
+      { label: 'LGAs', to: '/lgas' }, // Placeholder, should be dynamic
       { label: 'Wards', to: '/wards' },
       { label: 'Polling Units', to: '/polling-units' },
       { label: 'Voters', to: '/voters' },
@@ -34,15 +34,20 @@ export function Navbar() {
   if (!isAuthenticated) return null;
 
   return (
-    <nav className="sticky top-0 z-30 bg-surface/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <nav className="sticky top-0 z-30 bg-[#141417]/95 backdrop-blur border-b border-[#2a2a2e] shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <Link to="/" className="text-xl font-semibold text-primary tracking-tight">
-              MANDATE
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-[#ca8a04] rounded-sm flex items-center justify-center">
+                <span className="font-bold text-[#0d0d0f] text-lg">C</span>
+              </div>
+              <span className="text-xl font-semibold tracking-tight text-white">
+                CONTROL<span className="text-[#ca8a04]">HQ</span>
+              </span>
             </Link>
-            <span className="hidden sm:inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <span className="hidden sm:inline-flex items-center rounded-full bg-[#ca8a04]/10 px-3 py-1 text-xs font-medium text-[#ca8a04]">
               Field Command
             </span>
           </div>
@@ -55,8 +60,8 @@ export function Navbar() {
                 to={link.to}
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive(link.to)
-                    ? 'text-primary bg-primary/10'
-                    : 'text-slate-600 hover:text-primary hover:bg-slate-100'
+                    ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                    : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
                 }`}
               >
                 {link.label}
@@ -68,22 +73,22 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-full bg-blue-800 text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800"
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-full bg-[#ca8a04] text-[#0d0d0f] shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#141417] focus:ring-[#ca8a04]"
             >
               <span>Logout</span>
             </button>
             <div className="hidden sm:flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white text-sm font-semibold shadow-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#ca8a04] text-[#0d0d0f] text-sm font-semibold shadow-sm">
                 {initial}
               </div>
               <div className="hidden md:block leading-tight">
-                <p className="text-sm font-semibold text-primary">{user?.fullName}</p>
-                <p className="text-xs text-slate-500">{user?.role}</p>
+                <p className="text-sm font-semibold text-white">{user?.fullName}</p>
+                <p className="text-xs text-[#888]">{user?.role}</p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen((open) => !open)}
-              className="inline-flex md:hidden items-center justify-center p-2 rounded-md text-slate-600 hover:text-primary hover:bg-slate-100"
+              className="inline-flex md:hidden items-center justify-center p-2 rounded-md text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]"
               aria-label="Toggle navigation"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +105,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-surface/95 backdrop-blur">
+        <div className="md:hidden border-t border-[#2a2a2e] bg-[#141417]/95 backdrop-blur">
           <div className="px-4 py-3 space-y-1">
             {navLinks.map((link) => (
               <Link
@@ -109,8 +114,8 @@ export function Navbar() {
                 onClick={() => setIsOpen(false)}
                 className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive(link.to)
-                    ? 'text-primary bg-primary/10'
-                    : 'text-slate-600 hover:text-primary hover:bg-slate-100'
+                    ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                    : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
                 }`}
               >
                 {link.label}
@@ -118,7 +123,7 @@ export function Navbar() {
             ))}
             <button
               onClick={handleLogout}
-              className="mt-2 w-full inline-flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md bg-blue-800 text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 transition-colors"
+              className="mt-2 w-full inline-flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md bg-[#ca8a04] text-[#0d0d0f] shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#141417] focus:ring-[#ca8a04] transition-colors"
             >
               Logout
             </button>

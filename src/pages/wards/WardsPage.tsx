@@ -42,45 +42,45 @@ export function WardsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Wards</h1>
-          <p className="text-sm text-slate-600">Browse, search, and manage wards</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">Wards</h1>
+          <p className="text-sm text-[#888]">Browse, search, and manage wards</p>
         </div>
         <Link
           to="/wards/new"
-          className="mt-4 sm:mt-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-800 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 transition-colors"
+          className="mt-4 sm:mt-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#ca8a04] text-[#0d0d0f] font-semibold rounded-lg shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
         >
           + Add Ward
         </Link>
       </div>
 
       {!loading && error && wards.length === 0 && (
-        <div className="mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg p-4">{error}</div>
+        <div className="mb-4 text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-4">{error}</div>
       )}
 
-      <div className="bg-surface rounded-2xl shadow-card border border-slate-100 overflow-hidden">
-        <form onSubmit={handleSearch} className="border-b border-slate-100 bg-slate-50/60 px-4 sm:px-6 py-4">
+      <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
+        <form onSubmit={handleSearch} className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1 flex items-center gap-2">
-              <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">🔍</div>
+              <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-[#ca8a04]/10 text-[#ca8a04]">🔍</div>
               <input
                 type="text"
                 placeholder="Search by ward name or code"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent placeholder:text-[#666]"
               />
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="submit"
-                className="px-4 py-2.5 rounded-lg bg-blue-800 text-white font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 transition-colors"
+                className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
               >
                 Search
               </button>
               <button
                 type="button"
                 onClick={() => { setSearch(''); setPage(1); }}
-                className="px-3 py-2.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 font-semibold hover:bg-blue-100 hover:border-blue-300 transition-colors"
+                className="px-3 py-2.5 rounded-lg border border-[#ca8a04] bg-transparent text-[#ca8a04] font-semibold hover:bg-[#ca8a04]/10 transition-colors"
               >
                 Reset
               </button>
@@ -88,38 +88,38 @@ export function WardsPage() {
           </div>
         </form>
         {loading ? (
-          <div className="p-10 text-center text-slate-500">Loading...</div>
+          <div className="p-10 text-center text-[#888]">Loading...</div>
         ) : wards.length === 0 ? (
-          <div className="p-10 text-center text-slate-500">No wards found</div>
+          <div className="p-10 text-center text-[#888]">No wards found</div>
         ) : (
           <>
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-[#1a1a1d] border-b border-[#2a2a2e]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">LGA</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Coordinator</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">LGA</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Coordinator</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#2a2a2e]">
                   {wards.map((ward) => (
-                    <tr key={ward.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-primary">{getWardName(ward)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{getWardLgaName(ward)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{ward.coordinator?.fullName || '-'}</td>
+                    <tr key={ward.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-white">{getWardName(ward)}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{getWardLgaName(ward)}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{ward.coordinator?.fullName || '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
-                          ward.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'
+                          ward.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'
                         }`}>
                           {ward.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link to={`/wards/${ward.id}`} className="text-secondary hover:underline text-sm font-semibold">
+                        <Link to={`/wards/${ward.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
                           View
                         </Link>
                       </td>
@@ -130,25 +130,25 @@ export function WardsPage() {
             </div>
 
             {/* Mobile Cards */}
-            <div className="md:hidden divide-y divide-slate-100">
+            <div className="md:hidden divide-y divide-[#2a2a2e]">
               {wards.map((ward) => (
                 <div key={ward.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-medium text-primary">{getWardName(ward)}</h3>
-                      <p className="text-sm text-slate-500">{getWardLgaName(ward)}</p>
+                      <h3 className="font-medium text-white">{getWardName(ward)}</h3>
+                      <p className="text-sm text-[#888]">{getWardLgaName(ward)}</p>
                     </div>
-                    <Link to={`/wards/${ward.id}`} className="text-secondary text-sm font-semibold">
+                    <Link to={`/wards/${ward.id}`} className="text-[#ca8a04] text-sm font-semibold">
                       View →
                     </Link>
                   </div>
                   <div className="flex gap-2">
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
-                      ward.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'
+                      ward.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'
                     }`}>
                       {ward.isActive ? 'Active' : 'Inactive'}
                     </span>
-                    <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
+                    <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-[#2a2a2e] text-[#888]">
                       {ward.coordinator?.fullName || 'No coordinator'}
                     </span>
                   </div>
@@ -157,21 +157,21 @@ export function WardsPage() {
             </div>
             {/* Pagination */}
             {!loading && wards.length > 0 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
+              <div className="flex items-center justify-between px-4 py-3 border-t border-[#2a2a2e] bg-[#1a1a1d]">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1.5 text-sm border border-slate-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+                  className="px-3 py-1.5 text-sm border border-[#2a2a2e] rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#2a2a2e] transition-colors"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-slate-600">
+                <span className="text-sm text-[#888]">
                   Page {page} of {totalPages}
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-3 py-1.5 text-sm border border-slate-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors"
+                  className="px-3 py-1.5 text-sm border border-[#2a2a2e] rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#2a2a2e] transition-colors"
                 >
                   Next
                 </button>

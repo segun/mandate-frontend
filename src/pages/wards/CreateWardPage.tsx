@@ -141,26 +141,26 @@ export function CreateWardPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Add Wards</h1>
-          <p className="text-sm text-slate-600 mt-1">Select wards from the reference database to add to your tenant</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">Add Wards</h1>
+          <p className="text-sm text-[#888] mt-1">Select wards from the reference database to add to your tenant</p>
         </div>
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 font-semibold hover:bg-blue-100 hover:border-blue-300 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#ca8a04] bg-transparent text-[#ca8a04] font-semibold hover:bg-[#ca8a04]/10 transition-colors"
         >
           ← Back
         </button>
       </div>
 
-      <div className="bg-surface rounded-2xl shadow-card border border-slate-100 p-6 sm:p-8">
+      <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-6 sm:p-8">
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {error}
           </div>
         )}
         {success && (
-          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
             {success}
           </div>
         )}
@@ -169,7 +169,7 @@ export function CreateWardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {/* State Selection */}
             <div className="space-y-1">
-              <label htmlFor="state" className="text-sm font-medium text-slate-700">
+              <label htmlFor="state" className="text-sm font-medium text-white">
                 Select State
               </label>
               <select
@@ -177,7 +177,7 @@ export function CreateWardPage() {
                 value={selectedStateId}
                 onChange={(e) => setSelectedStateId(e.target.value)}
                 disabled={loadingStates}
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                className="w-full rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent"
               >
                 <option value="">{loadingStates ? 'Loading...' : '-- Select State --'}</option>
                 {geoStates.map((state) => (
@@ -190,7 +190,7 @@ export function CreateWardPage() {
 
             {/* LGA Selection */}
             <div className="space-y-1">
-              <label htmlFor="lga" className="text-sm font-medium text-slate-700">
+              <label htmlFor="lga" className="text-sm font-medium text-white">
                 Select LGA
               </label>
               <select
@@ -198,7 +198,7 @@ export function CreateWardPage() {
                 value={selectedLgaId}
                 onChange={(e) => setSelectedLgaId(e.target.value)}
                 disabled={!selectedStateId || loadingLgas}
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:bg-slate-100"
+                className="w-full rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent disabled:bg-[#1a1a1d] disabled:text-[#666]"
               >
                 <option value="">{loadingLgas ? 'Loading...' : '-- Select LGA --'}</option>
                 {geoLgas.map((lga) => (
@@ -213,14 +213,14 @@ export function CreateWardPage() {
           {/* Ward Selection */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-white">
                 Select Wards {selectedWardIds.length > 0 && `(${selectedWardIds.length} selected)`}
               </label>
               {geoWards.length > 0 && (
                 <button
                   type="button"
                   onClick={handleSelectAll}
-                  className="text-sm text-secondary hover:underline"
+                  className="text-sm text-[#ca8a04] hover:text-[#d4940a]"
                 >
                   {selectedWardIds.length === geoWards.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -228,29 +228,29 @@ export function CreateWardPage() {
             </div>
 
             {loadingWards ? (
-              <div className="p-4 text-center text-slate-500">Loading wards...</div>
+              <div className="p-4 text-center text-[#888]">Loading wards...</div>
             ) : !selectedLgaId ? (
-              <div className="p-4 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">
+              <div className="p-4 text-center text-[#888] border border-dashed border-[#2a2a2e] rounded-lg">
                 Select a state and LGA to view available wards
               </div>
             ) : geoWards.length === 0 ? (
-              <div className="p-4 text-center text-slate-500 border border-dashed border-slate-200 rounded-lg">
+              <div className="p-4 text-center text-[#888] border border-dashed border-[#2a2a2e] rounded-lg">
                 No wards found for the selected LGA
               </div>
             ) : (
-              <div className="border border-slate-200 rounded-lg max-h-64 overflow-y-auto">
+              <div className="border border-[#2a2a2e] rounded-lg max-h-64 overflow-y-auto">
                 {geoWards.map((ward) => (
                   <label
                     key={ward.id}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#1a1a1d] cursor-pointer border-b border-[#2a2a2e] last:border-b-0"
                   >
                     <input
                       type="checkbox"
                       checked={selectedWardIds.includes(ward.id)}
                       onChange={() => handleWardToggle(ward.id)}
-                      className="w-4 h-4 text-secondary rounded focus:ring-secondary"
+                      className="w-4 h-4 text-[#ca8a04] rounded focus:ring-[#ca8a04] bg-[#0d0d0f] border-[#2a2a2e] accent-[#ca8a04]"
                     />
-                    <span className="text-sm text-slate-700">{ward.name}</span>
+                    <span className="text-sm text-white">{ward.name}</span>
                   </label>
                 ))}
               </div>
@@ -261,14 +261,14 @@ export function CreateWardPage() {
             <button
               type="submit"
               disabled={loading || selectedWardIds.length === 0}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-800 text-white font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Adding…' : `Add ${selectedWardIds.length || ''} Ward${selectedWardIds.length !== 1 ? 's' : ''}`}
             </button>
             <button
               type="button"
               onClick={() => navigate('/wards')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 font-semibold hover:bg-blue-100 hover:border-blue-300 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#ca8a04] bg-transparent text-[#ca8a04] font-semibold hover:bg-[#ca8a04]/10 transition-colors"
             >
               Cancel
             </button>

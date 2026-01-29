@@ -90,39 +90,39 @@ export function CreateStatePage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Add States</h1>
-          <p className="text-sm text-slate-600 mt-1">Select states from the reference database to add to your tenant</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">Add States</h1>
+          <p className="text-sm text-[#888] mt-1">Select states from the reference database to add to your tenant</p>
         </div>
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 font-semibold hover:bg-blue-100 hover:border-blue-300 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e] transition-colors"
         >
           ← Back
         </button>
       </div>
 
       {error && (
-        <div className="mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg p-4">{error}</div>
+        <div className="mb-4 text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-4">{error}</div>
       )}
       {success && (
-        <div className="mb-4 text-green-700 bg-green-50 border border-green-200 rounded-lg p-4">{success}</div>
+        <div className="mb-4 text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg p-4">{success}</div>
       )}
 
-      <div className="bg-surface rounded-2xl shadow-card border border-slate-100 p-6 sm:p-8">
+      <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-6 sm:p-8">
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* State Selection */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-white">
                 Select States {selectedStateIds.length > 0 && `(${selectedStateIds.length} selected)`}
               </label>
               {geoStates.length > 0 && (
                 <button
                   type="button"
                   onClick={handleSelectAll}
-                  className="text-sm text-secondary hover:underline"
+                  className="text-sm text-[#ca8a04] hover:text-[#d4940a]"
                 >
                   {selectedStateIds.length === geoStates.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -130,25 +130,25 @@ export function CreateStatePage() {
             </div>
 
             {loadingStates ? (
-              <div className="p-4 text-center text-slate-500">Loading states...</div>
+              <div className="p-4 text-center text-[#888]">Loading states...</div>
             ) : geoStates.length === 0 ? (
-              <div className="p-4 text-center text-slate-500 border border-dashed border-slate-200 rounded-lg">
+              <div className="p-4 text-center text-[#888] border border-dashed border-[#2a2a2e] rounded-lg">
                 No states found in the reference database
               </div>
             ) : (
-              <div className="border border-slate-200 rounded-lg max-h-96 overflow-y-auto">
+              <div className="border border-[#2a2a2e] rounded-lg max-h-96 overflow-y-auto">
                 {geoStates.map((state) => (
                   <label
                     key={state.id}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#1a1a1d] cursor-pointer border-b border-[#2a2a2e] last:border-b-0"
                   >
                     <input
                       type="checkbox"
                       checked={selectedStateIds.includes(state.id)}
                       onChange={() => handleStateToggle(state.id)}
-                      className="w-4 h-4 text-secondary rounded focus:ring-secondary"
+                      className="w-4 h-4 text-[#ca8a04] rounded focus:ring-[#ca8a04] accent-[#ca8a04]"
                     />
-                    <span className="text-sm text-slate-700">{state.name}</span>
+                    <span className="text-sm text-white">{state.name}</span>
                   </label>
                 ))}
               </div>
@@ -159,14 +159,14 @@ export function CreateStatePage() {
             <button
               type="submit"
               disabled={loading || selectedStateIds.length === 0}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-800 text-white font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Adding…' : `Add ${selectedStateIds.length || ''} State${selectedStateIds.length !== 1 ? 's' : ''}`}
             </button>
             <button
               type="button"
               onClick={() => navigate('/states')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 font-semibold hover:bg-blue-100 hover:border-blue-300 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e] transition-colors"
             >
               Cancel
             </button>

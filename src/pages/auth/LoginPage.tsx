@@ -29,18 +29,24 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <div className="relative w-full max-w-md bg-slate-100/95 px-6 sm:px-8 py-8 rounded-2xl shadow-card border border-slate-200">
+    <div className="min-h-screen flex items-center justify-center bg-[#0d0d0f] px-4" style={{ background: 'radial-gradient(ellipse at bottom, rgba(202, 138, 4, 0.1) 0%, #0d0d0f 50%)' }}>
+      <div className="relative w-full max-w-md bg-[#141417] px-6 sm:px-8 py-8 rounded-2xl shadow-2xl border border-[#2a2a2e]">
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-blue-800 text-white flex items-center justify-center shadow-sm">
-            <span className="text-lg font-semibold">M</span>
+          {/* CONTROLHQ Logo */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="h-10 w-10 rounded bg-[#ca8a04] flex items-center justify-center">
+              <span className="text-lg font-bold text-[#0d0d0f]">C</span>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-primary">MANDATE</h1>
-          <p className="text-sm text-slate-600 mt-1">Calm, credible field operations</p>
+          <h1 className="text-2xl font-bold">
+            <span className="text-white">CONTROL</span>
+            <span className="text-[#ca8a04]">HQ</span>
+          </h1>
+          <p className="text-sm text-[#888] mt-1">Political Infrastructure for Modern Governance</p>
         </div>
         
         {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-danger/20 bg-red-50 px-3 py-2 text-sm text-danger mb-4">
+          <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400 mb-4">
             <span aria-hidden>⚠️</span>
             <span>{error}</span>
           </div>
@@ -48,7 +54,7 @@ export function LoginPage() {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="email" className="block text-sm font-medium text-[#eee]">
               Email
             </label>
             <input
@@ -57,13 +63,13 @@ export function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="name@mandate.ng"
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all"
+              placeholder="name@controlhq.ng"
+              className="w-full rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white px-3 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent transition-all placeholder:text-[#666]"
             />
           </div>
           
           <div className="space-y-1">
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="password" className="block text-sm font-medium text-[#eee]">
               Password
             </label>
             <input
@@ -73,22 +79,22 @@ export function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="Enter your password"
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all"
+              className="w-full rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white px-3 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent transition-all placeholder:text-[#666]"
             />
           </div>
           
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-800 py-2.5 text-white font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#ca8a04] py-2.5 text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#141417] focus:ring-[#ca8a04] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
           >
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Signing in…' : 'Secure Login'}
           </button>
         </form>
         
-        <p className="text-center mt-6 text-slate-500 text-sm">
+        <p className="text-center mt-6 text-[#888] text-sm">
           Need access?{' '}
-          <Link to="/register" className="text-secondary hover:underline font-semibold">
+          <Link to="/register" className="text-[#ca8a04] hover:text-[#d4940a] font-semibold">
             Request account
           </Link>
         </p>
