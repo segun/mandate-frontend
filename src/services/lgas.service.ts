@@ -1,12 +1,47 @@
 import { api } from '../lib/api';
 
-export interface LGA {
+// Geo reference data (read-only)
+export interface GeoLga {
   id: string;
   name: string;
-  code: string;
   stateId: string;
-  description?: string;
+}
+
+export interface GeoState {
+  id: string;
+  name: string;
+}
+
+export interface State {
+  id: string;
+  geoStateId: string;
+  geoState?: GeoState;
+}
+
+// Tenant-scoped LGA (references GeoLga)
+export interface LGA {
+  id: string;
+  geoLgaId: string;
+  geoLga?: GeoLga;
+  stateId: string;
+  state?: State;
+  coordinatorId?: string;
+  coordinator?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+  isActive: boolean;
+  tenantId: string;
   createdAt: string;
+  updatedAt: string;
+  wards?: Ward[];
+}
+
+export interface Ward {
+  id: string;
+  geoWardId: string;
+  geoWard?: { id: string; name: string };
 }
 
 export interface PaginatedResponse<T> {
@@ -20,10 +55,21 @@ export interface PaginatedResponse<T> {
   };
 }
 
+// Helper to get LGA name from nested geoLga
+export function getLgaName(lga: LGA): string {
+  return lga.geoLga?.name || '';
+}
+
+// Helper to get state name from nested state.geoState
+export function getLgaStateName(lga: LGA): string {
+  return lga.state?.geoState?.name || '';
+}
+
 export const lgasService = {
-  async getAll(stateId?: string, page = 1, limit = 50): Promise<PaginatedResponse<LGA>> {
-    const params: { page: number; limit: number; stateId?: string } = { page, limit };
-    if (stateId && stateId !== '1') params.stateId = stateId;
+  async getAll(stateId?: string, page = 1, limit = 50, name?: string): Promise<PaginatedResponse<LGA>> {
+    const params: Record<string, unknown> = { page, limit };
+    if (stateId) params.stateId = stateId;
+    if (name) params.name = name;
     const response = await api.get('/lgas', { params });
     return response.data;
   },
@@ -31,21 +77,31 @@ export const lgasService = {
     const response = await api.get(`/lgas/${id}`);
     return response.data.data;
   },
-  async create(data: Partial<LGA>): Promise<LGA> {
-    const response = await api.post('/lgas', data);
+  async addLgas(geoLgaIds: string[]): Promise<{ added: LGA[]; skipped: string[] }> {
+    const response = await api.post('/lgas', { geoLgaIds });
     return response.data.data;
   },
-  async update(id: string, data: Partial<LGA>): Promise<LGA> {
+  async update(id: string, data: { isActive?: boolean }): Promise<LGA> {
     const response = await api.patch(`/lgas/${id}`, data);
     return response.data.data;
   },
   async delete(id: string): Promise<void> {
     await api.delete(`/lgas/${id}`);
   },
-  async search(query: string, stateId?: string, page = 1, limit = 50): Promise<PaginatedResponse<LGA>> {
-    const params: { q: string; page: number; limit: number; stateId?: string } = { q: query, page, limit };
-    if (stateId && stateId !== '1') params.stateId = stateId;
-    const response = await api.get('/lgas/search', { params });
-    return response.data;
+  async deleteBulk(lgaIds: string[]): Promise<{ removed: string[]; notFound: string[] }> {
+    const response = await api.delete('/lgas/bulk', { data: { lgaIds } });
+    return response.data.data;
+  },
+  async assignCoordinator(id: string, coordinatorId: string): Promise<LGA> {
+    const response = await api.post(`/lgas/${id}/coordinator/${coordinatorId}`);
+    return response.data.data;
+  },
+  async removeCoordinator(id: string): Promise<LGA> {
+    const response = await api.delete(`/lgas/${id}/coordinator`);
+    return response.data.data;
+  },
+  async getStatistics(id: string) {
+    const response = await api.get(`/lgas/${id}/statistics`);
+    return response.data.data;
   },
 };

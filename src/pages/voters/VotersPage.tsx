@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import type { Voter, PaginatedResponse } from '../../services/voters.service';
-import { votersService } from '../../services/voters.service';
+import { votersService, getVoterWardName, getVoterPollingUnitName } from '../../services/voters.service';
 
 export function VotersPage() {
   const [voters, setVoters] = useState<Voter[]>([]);
@@ -9,6 +9,7 @@ export function VotersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
 
   const fetchVoters = useCallback(async () => {
     setLoading(true);
@@ -20,9 +21,10 @@ export function VotersPage() {
         response = await votersService.getAll(page);
       }
       setVoters(response.data);
-      setTotalPages(response.meta.totalPages);
-    } catch (error) {
-      console.error('Failed to fetch voters:', error);
+      setTotalPages(response.meta?.totalPages || 1);
+      setError('');
+    } catch {
+      setError('Failed to fetch voters');
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,10 @@ export function VotersPage() {
         </Link>
       </div>
 
-      {/* Content */}
+      {!loading && error && voters.length === 0 && (
+        <div className="mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg p-4">{error}</div>
+      )}
+
       <div className="bg-surface rounded-2xl shadow-card border border-slate-100 overflow-hidden">
         <form onSubmit={handleSearch} className="border-b border-slate-100 bg-slate-50/60 px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -119,6 +124,8 @@ export function VotersPage() {
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Name</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Phone</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Ward</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Polling Unit</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">PVC Status</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Support Level</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
@@ -129,6 +136,8 @@ export function VotersPage() {
                     <tr key={voter.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium text-primary">{voter.fullName}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{voter.phone}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{getVoterWardName(voter)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{getVoterPollingUnitName(voter)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getPvcBadge(voter.pvcStatus)}`}>
                           {voter.pvcStatus}
@@ -160,8 +169,9 @@ export function VotersPage() {
                       View →
                     </Link>
                   </div>
-                  <p className="text-sm text-slate-500 mb-2">{voter.phone}</p>
-                  <div className="flex gap-2">
+                  <p className="text-sm text-slate-500 mb-1">{voter.phone}</p>
+                  <p className="text-sm text-slate-400 mb-2">{getVoterWardName(voter)} • {getVoterPollingUnitName(voter)}</p>
+                  <div className="flex gap-2 flex-wrap">
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getPvcBadge(voter.pvcStatus)}`}>
                       PVC: {voter.pvcStatus}
                     </span>

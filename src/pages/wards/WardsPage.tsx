@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Ward, PaginatedResponse } from '../../services/wards.service';
-import { wardsService } from '../../services/wards.service';
+import { wardsService, getWardName, getWardLgaName } from '../../services/wards.service';
 
 export function WardsPage() {
   const [wards, setWards] = useState<Ward[]>([]);
@@ -14,17 +14,13 @@ export function WardsPage() {
   const fetchWards = async () => {
     setLoading(true);
     try {
-      let response: PaginatedResponse<Ward>;
-      if (search) {
-        response = await wardsService.search(search, page);
-      } else {
-        response = await wardsService.getAll(page);
-      }
+      // Use name filter for search
+      const response: PaginatedResponse<Ward> = await wardsService.getAll(page, 20, undefined, search || undefined);
       setWards(response.data);
-      setTotalPages(response.meta.totalPages);
+      setTotalPages(response.meta?.totalPages || 1);
       setError('');
     } catch {
-      setError('Failed to load wards.');
+      setError('Failed to fetch wards');
     } finally {
       setLoading(false);
     }
@@ -57,13 +53,11 @@ export function WardsPage() {
         </Link>
       </div>
 
-      {/* Content */}
+      {!loading && error && wards.length === 0 && (
+        <div className="mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg p-4">{error}</div>
+      )}
+
       <div className="bg-surface rounded-2xl shadow-card border border-slate-100 overflow-hidden">
-        {error && (
-          <div className="border-b border-red-100 bg-red-50 text-red-700 px-4 sm:px-6 py-3 text-sm">
-            {error}
-          </div>
-        )}
         <form onSubmit={handleSearch} className="border-b border-slate-100 bg-slate-50/60 px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1 flex items-center gap-2">
@@ -104,8 +98,9 @@ export function WardsPage() {
               <table className="w-full">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Code</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">LGA</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Coordinator</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
@@ -113,8 +108,9 @@ export function WardsPage() {
                 <tbody className="divide-y divide-slate-100">
                   {wards.map((ward) => (
                     <tr key={ward.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-mono text-slate-600">{ward.code}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-primary">{ward.name}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{getWardName(ward)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{getWardLgaName(ward)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{ward.coordinator?.fullName || '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
                           ward.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'
@@ -139,18 +135,23 @@ export function WardsPage() {
                 <div key={ward.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-medium text-primary">{ward.name}</h3>
-                      <p className="text-sm font-mono text-slate-500">{ward.code}</p>
+                      <h3 className="font-medium text-primary">{getWardName(ward)}</h3>
+                      <p className="text-sm text-slate-500">{getWardLgaName(ward)}</p>
                     </div>
                     <Link to={`/wards/${ward.id}`} className="text-secondary text-sm font-semibold">
                       View →
                     </Link>
                   </div>
-                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
-                    ward.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'
-                  }`}>
-                    {ward.isActive ? 'Active' : 'Inactive'}
-                  </span>
+                  <div className="flex gap-2">
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
+                      ward.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {ward.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
+                      {ward.coordinator?.fullName || 'No coordinator'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

@@ -31,7 +31,6 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/states" element={<StatesPage />} />
                 <Route path="/lgas" element={<LGAsPage />} />
-                <Route path="/lgas/:stateId" element={<LGAsPage />} />
                 <Route path="/wards" element={<WardsPage />} />
                 <Route path="/wards/new" element={<CreateWardPage />} />
                 <Route path="/voters" element={<VotersPage />} />

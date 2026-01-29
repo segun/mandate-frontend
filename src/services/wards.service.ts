@@ -1,14 +1,51 @@
 import { api } from '../lib/api';
 
-export interface Ward {
+// Geo reference data (read-only)
+export interface GeoWard {
   id: string;
   name: string;
-  code: string;
-  description?: string;
-  coordinatorId?: string;
-  tenantId?: string;
+  lgaId: string;
+  stateId: string;
+}
+
+export interface GeoLga {
+  id: string;
+  name: string;
+  stateId: string;
+}
+
+export interface GeoState {
+  id: string;
+  name: string;
+}
+
+export interface Lga {
+  id: string;
+  geoLgaId: string;
+  geoLga?: GeoLga;
+  state?: {
+    id: string;
+    geoState?: GeoState;
+  };
+}
+
+// Tenant-scoped Ward (references GeoWard)
+export interface Ward {
+  id: string;
+  geoWardId: string;
+  geoWard?: GeoWard;
+  lgaId: string;
+  lga?: Lga;
+  coordinatorId?: string | null;
+  coordinator?: {
+    id: string;
+    fullName: string;
+    email: string;
+  } | null;
   isActive: boolean;
+  tenantId: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -22,14 +59,27 @@ export interface PaginatedResponse<T> {
   };
 }
 
-export const wardsService = {
-  async getAll(page = 1, limit = 20): Promise<PaginatedResponse<Ward>> {
-    const response = await api.get('/wards', { params: { page, limit } });
-    return response.data;
-  },
+// Helper to get ward name from nested geoWard
+export function getWardName(ward: Ward): string {
+  return ward.geoWard?.name || '';
+}
 
-  async search(query: string, page = 1, limit = 20): Promise<PaginatedResponse<Ward>> {
-    const response = await api.get('/wards/search', { params: { q: query, page, limit } });
+// Helper to get LGA name from nested lga.geoLga
+export function getWardLgaName(ward: Ward): string {
+  return ward.lga?.geoLga?.name || '';
+}
+
+// Helper to get state name from nested lga.state.geoState
+export function getWardStateName(ward: Ward): string {
+  return ward.lga?.state?.geoState?.name || '';
+}
+
+export const wardsService = {
+  async getAll(page = 1, limit = 20, lgaId?: string, name?: string): Promise<PaginatedResponse<Ward>> {
+    const params: Record<string, unknown> = { page, limit };
+    if (lgaId) params.lgaId = lgaId;
+    if (name) params.name = name;
+    const response = await api.get('/wards', { params });
     return response.data;
   },
 
@@ -38,18 +88,33 @@ export const wardsService = {
     return response.data.data;
   },
 
-  async create(data: Partial<Ward>): Promise<Ward> {
-    const response = await api.post('/wards', data);
+  async addWards(geoWardIds: string[]): Promise<{ added: Ward[]; skipped: string[] }> {
+    const response = await api.post('/wards', { geoWardIds });
     return response.data.data;
   },
 
-  async update(id: string, data: Partial<Ward>): Promise<Ward> {
+  async update(id: string, data: { isActive?: boolean }): Promise<Ward> {
     const response = await api.patch(`/wards/${id}`, data);
     return response.data.data;
   },
 
   async delete(id: string): Promise<void> {
     await api.delete(`/wards/${id}`);
+  },
+
+  async deleteBulk(wardIds: string[]): Promise<{ removed: string[]; notFound: string[] }> {
+    const response = await api.delete('/wards/bulk', { data: { wardIds } });
+    return response.data.data;
+  },
+
+  async assignCoordinator(id: string, coordinatorId: string): Promise<Ward> {
+    const response = await api.post(`/wards/${id}/coordinator/${coordinatorId}`);
+    return response.data.data;
+  },
+
+  async removeCoordinator(id: string): Promise<Ward> {
+    const response = await api.delete(`/wards/${id}/coordinator`);
+    return response.data.data;
   },
 
   async getStatistics(id: string) {

@@ -1,11 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { LGA, PaginatedResponse } from '../../services/lgas.service';
-import { lgasService } from '../../services/lgas.service';
+import { lgasService, getLgaName, getLgaStateName } from '../../services/lgas.service';
 
 export function LGAsPage() {
-  const { stateId } = useParams<{ stateId?: string }>();
   const [lgas, setLGAs] = useState<LGA[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
@@ -16,14 +15,10 @@ export function LGAsPage() {
   const fetchLGAs = async () => {
     setLoading(true);
     try {
-      let response: PaginatedResponse<LGA>;
-      if (search) {
-        response = await (lgasService.search ? lgasService.search(search, stateId, page) : lgasService.getAll(stateId, page));
-      } else {
-        response = await lgasService.getAll(stateId, page);
-      }
+      // Use name filter for search
+      const response: PaginatedResponse<LGA> = await lgasService.getAll(undefined, page, 50, search || undefined);
       setLGAs(response.data);
-      setTotalPages(response.meta.totalPages);
+      setTotalPages(response.meta?.totalPages || 1);
       setError('');
     } catch (err) {
       if (
@@ -45,7 +40,7 @@ export function LGAsPage() {
   useEffect(() => {
     fetchLGAs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateId, page, search]);
+  }, [page, search]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,17 +110,23 @@ export function LGAsPage() {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Code</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Description</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">State</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Coordinator</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {lgas.map((lga: LGA) => (
                     <tr key={lga.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-primary">{lga.name}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{lga.code}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{lga.description}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{getLgaName(lga)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{getLgaStateName(lga)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{lga.coordinator?.fullName || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${lga.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'}`}>
+                          {lga.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <Link to={`/lgas/${lga.id}`} className="text-secondary hover:underline text-sm font-semibold">
                           View
@@ -142,15 +143,18 @@ export function LGAsPage() {
               {lgas.map((lga: LGA) => (
                 <div key={lga.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-primary">{lga.name}</h3>
+                    <h3 className="font-medium text-primary">{getLgaName(lga)}</h3>
                     <Link to={`/lgas/${lga.id}`} className="text-secondary text-sm font-semibold">
                       View →
                     </Link>
                   </div>
-                  <p className="text-sm text-slate-500 mb-2">{lga.code}</p>
+                  <p className="text-sm text-slate-500 mb-2">{getLgaStateName(lga)}</p>
                   <div className="flex gap-2">
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${lga.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      {lga.isActive ? 'Active' : 'Inactive'}
+                    </span>
                     <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
-                      {lga.description}
+                      {lga.coordinator?.fullName || 'No coordinator'}
                     </span>
                   </div>
                 </div>

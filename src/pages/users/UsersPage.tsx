@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import type { User, PaginatedResponse } from '../../services/users.service';
-import { usersService } from '../../services/users.service';
+import { usersService, getUserAssignedLocation } from '../../services/users.service';
 
 export function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -9,6 +9,7 @@ export function UsersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -20,9 +21,10 @@ export function UsersPage() {
         response = await usersService.getAll(page);
       }
       setUsers(response.data);
-      setTotalPages(response.meta.totalPages);
+      setTotalPages(response.meta?.totalPages || 1);
+      setError('');
     } catch {
-      // Optionally handle error
+      setError('Failed to fetch users');
     } finally {
       setLoading(false);
     }
@@ -53,6 +55,11 @@ export function UsersPage() {
           + Add User
         </Link>
       </div>
+
+      {!loading && error && users.length === 0 && (
+        <div className="mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg p-4">{error}</div>
+      )}
+
       <div className="bg-surface rounded-2xl shadow-card border border-slate-100 overflow-hidden">
         <form onSubmit={handleSearch} className="border-b border-slate-100 bg-slate-50/60 px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -98,6 +105,7 @@ export function UsersPage() {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Email</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Phone</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Role</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Assignment</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
@@ -105,10 +113,11 @@ export function UsersPage() {
                 <tbody className="divide-y divide-slate-100">
                   {users.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-primary">{user.name}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{user.fullName}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{user.email}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{user.phone || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{user.role}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{user.role.replace(/_/g, ' ')}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{getUserAssignedLocation(user)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${user.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'}`}>
                           {user.isActive ? 'Active' : 'Inactive'}
@@ -129,18 +138,20 @@ export function UsersPage() {
               {users.map((user) => (
                 <div key={user.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-primary">{user.name}</h3>
+                    <h3 className="font-medium text-primary">{user.fullName}</h3>
                     <Link to={`/users/${user.id}`} className="text-secondary text-sm font-semibold">
                       View →
                     </Link>
                   </div>
                   <p className="text-sm text-slate-500 mb-2">{user.email}</p>
-                  <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
-                    {user.role}
-                  </span>
-                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${user.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'} ml-2`}>
-                    {user.isActive ? 'Active' : 'Inactive'}
-                  </span>
+                  <div className="flex gap-2 flex-wrap">
+                    <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
+                      {user.role.replace(/_/g, ' ')}
+                    </span>
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${user.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      {user.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

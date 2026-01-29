@@ -1,5 +1,20 @@
 import { api } from '../lib/api';
 
+export interface Ward {
+  id: string;
+  geoWardId: string;
+  geoWard?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface PollingUnit {
+  id: string;
+  name: string;
+  code: string;
+}
+
 export interface Voter {
   id: string;
   fullName: string;
@@ -11,10 +26,18 @@ export interface Voter {
   engagementStatus: string;
   votingCommitment: string;
   wardId: string;
+  ward?: Ward;
   pollingUnitId: string;
-  assignedCanvasserId: string;
+  pollingUnit?: PollingUnit;
+  assignedCanvasserId?: string;
+  assignedCanvasser?: {
+    id: string;
+    fullName: string;
+  };
   isActive: boolean;
+  tenantId: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -26,6 +49,16 @@ export interface PaginatedResponse<T> {
     total: number;
     totalPages: number;
   };
+}
+
+// Helper to get ward name
+export function getVoterWardName(voter: Voter): string {
+  return voter.ward?.geoWard?.name || '';
+}
+
+// Helper to get polling unit name
+export function getVoterPollingUnitName(voter: Voter): string {
+  return voter.pollingUnit?.name || '';
 }
 
 export const votersService = {
@@ -44,12 +77,37 @@ export const votersService = {
     return response.data;
   },
 
-  async create(data: Partial<Voter>): Promise<Voter> {
+  async create(data: {
+    fullName: string;
+    phone: string;
+    houseAddress?: string;
+    pvcNumber?: string;
+    pvcStatus?: string;
+    supportLevel?: string;
+    engagementStatus?: string;
+    votingCommitment?: string;
+    wardId: string;
+    pollingUnitId: string;
+    assignedCanvasserId?: string;
+  }): Promise<Voter> {
     const response = await api.post('/voters', data);
     return response.data.data;
   },
 
-  async update(id: string, data: Partial<Voter>): Promise<Voter> {
+  async update(id: string, data: Partial<{
+    fullName: string;
+    phone: string;
+    houseAddress: string;
+    pvcNumber: string;
+    pvcStatus: string;
+    supportLevel: string;
+    engagementStatus: string;
+    votingCommitment: string;
+    wardId: string;
+    pollingUnitId: string;
+    assignedCanvasserId: string;
+    isActive: boolean;
+  }>): Promise<Voter> {
     const response = await api.patch(`/voters/${id}`, data);
     return response.data.data;
   },

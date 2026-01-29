@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { State, PaginatedResponse } from '../../services/states.service';
-import { statesService } from '../../services/states.service';
+import { statesService, getStateName } from '../../services/states.service';
 
 export function StatesPage() {
   const [states, setStates] = useState<State[]>([]);
@@ -15,14 +15,10 @@ export function StatesPage() {
   const fetchStates = async () => {
     setLoading(true);
     try {
-      let response: PaginatedResponse<State>;
-      if (search) {
-        response = await (statesService.search ? statesService.search(search, page) : statesService.getAll(page));
-      } else {
-        response = await statesService.getAll(page);
-      }
+      // Use name filter for search
+      const response: PaginatedResponse<State> = await statesService.getAll(page, 50, search || undefined);
       setStates(response.data);
-      setTotalPages(response.meta.totalPages);
+      setTotalPages(response.meta?.totalPages || 1);
       setError('');
     } catch {
       setError('Failed to fetch states');
@@ -104,17 +100,23 @@ export function StatesPage() {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Code</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Description</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Coordinator</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">LGAs</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {states.map((state: State) => (
                     <tr key={state.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-primary">{state.name}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{state.code}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{state.description}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{getStateName(state)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{state.coordinator?.fullName || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${state.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'}`}>
+                          {state.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{state.lgas?.length || 0}</td>
                       <td className="px-4 py-3">
                         <Link to={`/states/${state.id}`} className="text-secondary hover:underline text-sm font-semibold">
                           View
@@ -131,15 +133,18 @@ export function StatesPage() {
               {states.map((state: State) => (
                 <div key={state.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-primary">{state.name}</h3>
+                    <h3 className="font-medium text-primary">{getStateName(state)}</h3>
                     <Link to={`/states/${state.id}`} className="text-secondary text-sm font-semibold">
                       View →
                     </Link>
                   </div>
-                  <p className="text-sm text-slate-500 mb-2">{state.code}</p>
+                  <p className="text-sm text-slate-500 mb-2">{state.coordinator?.fullName || 'No coordinator'}</p>
                   <div className="flex gap-2">
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${state.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      {state.isActive ? 'Active' : 'Inactive'}
+                    </span>
                     <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
-                      {state.description}
+                      {state.lgas?.length || 0} LGAs
                     </span>
                   </div>
                 </div>

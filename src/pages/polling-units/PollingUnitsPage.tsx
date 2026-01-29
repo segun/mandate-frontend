@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import type { PollingUnit, PaginatedResponse } from '../../services/polling-units.service';
-import { pollingUnitsService } from '../../services/polling-units.service';
+import { pollingUnitsService, getPollingUnitWardName } from '../../services/polling-units.service';
 
 export function PollingUnitsPage() {
   const [pollingUnits, setPollingUnits] = useState<PollingUnit[]>([]);
@@ -9,6 +9,7 @@ export function PollingUnitsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
 
   const fetchPollingUnits = useCallback(async () => {
     setLoading(true);
@@ -20,9 +21,10 @@ export function PollingUnitsPage() {
         response = await pollingUnitsService.getAll(page);
       }
       setPollingUnits(response.data);
-      setTotalPages(response.meta.totalPages);
+      setTotalPages(response.meta?.totalPages || 1);
+      setError('');
     } catch {
-      // Optionally handle error
+      setError('Failed to fetch polling units');
     } finally {
       setLoading(false);
     }
@@ -53,6 +55,11 @@ export function PollingUnitsPage() {
           + Add Polling Unit
         </Link>
       </div>
+
+      {!loading && error && pollingUnits.length === 0 && (
+        <div className="mb-4 text-red-700 bg-red-50 border border-red-200 rounded-lg p-4">{error}</div>
+      )}
+
       <div className="bg-surface rounded-2xl shadow-card border border-slate-100 overflow-hidden">
         <form onSubmit={handleSearch} className="border-b border-slate-100 bg-slate-50/60 px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -97,6 +104,8 @@ export function PollingUnitsPage() {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Name</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Code</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Ward</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Supervisor</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
@@ -105,7 +114,13 @@ export function PollingUnitsPage() {
                     <tr key={unit.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium text-primary">{unit.name}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{unit.code}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{unit.wardId}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{getPollingUnitWardName(unit)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{unit.supervisor?.fullName || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'}`}>
+                          {unit.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <Link to={`/polling-units/${unit.id}`} className="text-secondary hover:underline text-sm font-semibold">
                           View
@@ -127,9 +142,14 @@ export function PollingUnitsPage() {
                     </Link>
                   </div>
                   <p className="text-sm text-slate-500 mb-2">{unit.code}</p>
-                  <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
-                    Ward: {unit.wardId}
-                  </span>
+                  <div className="flex gap-2 flex-wrap">
+                    <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-slate-100 text-slate-600">
+                      Ward: {getPollingUnitWardName(unit)}
+                    </span>
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-secondary text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      {unit.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
