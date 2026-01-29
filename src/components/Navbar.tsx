@@ -40,12 +40,11 @@ export function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-[#ca8a04] rounded-sm flex items-center justify-center">
-                <span className="font-bold text-[#0d0d0f] text-lg">C</span>
-              </div>
-              <span className="text-xl font-semibold tracking-tight text-white">
-                CONTROL<span className="text-[#ca8a04]">HQ</span>
-              </span>
+              <img 
+                src="/images/logo.png" 
+                alt="ControlHQ" 
+                className="h-10 w-auto"
+              />
             </Link>
             <span className="hidden sm:inline-flex items-center rounded-full bg-[#ca8a04]/10 px-3 py-1 text-xs font-medium text-[#ca8a04]">
               Field Command

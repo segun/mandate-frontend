@@ -33,16 +33,14 @@ export function LoginPage() {
       <div className="relative w-full max-w-md bg-[#141417] px-6 sm:px-8 py-8 rounded-2xl shadow-2xl border border-[#2a2a2e]">
         <div className="text-center mb-8">
           {/* CONTROLHQ Logo */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="h-10 w-10 rounded bg-[#ca8a04] flex items-center justify-center">
-              <span className="text-lg font-bold text-[#0d0d0f]">C</span>
-            </div>
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src="/images/logo.png" 
+              alt="ControlHQ" 
+              className="h-16 w-auto"
+            />
           </div>
-          <h1 className="text-2xl font-bold">
-            <span className="text-white">CONTROL</span>
-            <span className="text-[#ca8a04]">HQ</span>
-          </h1>
-          <p className="text-sm text-[#888] mt-1">Political Infrastructure for Modern Governance</p>
+          <p className="text-sm text-[#888] mt-1">Political Operations & Governance</p>
         </div>
         
         {error && (
