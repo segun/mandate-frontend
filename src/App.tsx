@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ToastContainer } from './components/Toast';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { VotersPage } from './pages/voters/VotersPage';
@@ -22,6 +23,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <div className="min-h-screen bg-[#0d0d0f] text-[#f2f2f2]">
+          <ToastContainer />
           <Navbar />
           <main className="main-content px-4 sm:px-6 lg:px-8 pb-12 pt-6">
             <Routes>

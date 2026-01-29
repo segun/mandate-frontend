@@ -3,14 +3,21 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { State, PaginatedResponse } from '../../services/states.service';
 import { statesService, getStateName } from '../../services/states.service';
+import { useAuthStore } from '../../stores/auth.store';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 export function StatesPage() {
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  
   const [states, setStates] = useState<State[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [search, setSearch] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; state: State | null }>({ isOpen: false, state: null });
 
   const fetchStates = async () => {
     setLoading(true);
@@ -38,8 +45,49 @@ export function StatesPage() {
     fetchStates();
   };
 
+  const openDeleteModal = (state: State) => {
+    setDeleteModal({ isOpen: true, state });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, state: null });
+  };
+
+  const handleDelete = async () => {
+    const state = deleteModal.state;
+    if (!state) return;
+    
+    setDeleting(state.id);
+    closeDeleteModal();
+    try {
+      await statesService.delete(state.id);
+      setStates((prev) => prev.filter((s) => s.id !== state.id));
+    } catch {
+      setError(`Failed to delete ${getStateName(state)}`);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Delete Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={deleteModal.isOpen}
+        title="Delete State"
+        message={
+          <>
+            Are you sure you want to delete <span className="text-[#ca8a04] font-medium">"{deleteModal.state ? getStateName(deleteModal.state) : ''}"</span>? 
+            This action cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={closeDeleteModal}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
@@ -112,15 +160,26 @@ export function StatesPage() {
                       <td className="px-4 py-3 text-sm font-medium text-[#ca8a04]">{getStateName(state)}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{state.coordinator?.fullName || '-'}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${state.isActive ? 'bg-green-500/20 text-green-400' : 'bg-[#2a2a2e] text-[#888]'}`}>
+                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${state.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                           {state.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-[#888]">{state.lgas?.length || 0}</td>
                       <td className="px-4 py-3">
-                        <Link to={`/states/${state.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
-                          View
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          <Link to={`/states/${state.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
+                            View
+                          </Link>
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => openDeleteModal(state)}
+                              disabled={deleting === state.id}
+                              className="text-red-400 hover:text-red-300 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {deleting === state.id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -134,13 +193,24 @@ export function StatesPage() {
                 <div key={state.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-[#ca8a04]">{getStateName(state)}</h3>
-                    <Link to={`/states/${state.id}`} className="text-[#ca8a04] text-sm font-semibold">
-                      View →
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link to={`/states/${state.id}`} className="text-[#ca8a04] text-sm font-semibold">
+                        View →
+                      </Link>
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => openDeleteModal(state)}
+                          disabled={deleting === state.id}
+                          className="text-red-400 text-sm font-semibold disabled:opacity-50"
+                        >
+                          {deleting === state.id ? '...' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-[#888] mb-2">{state.coordinator?.fullName || 'No coordinator'}</p>
                   <div className="flex gap-2">
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${state.isActive ? 'bg-green-500/20 text-green-400' : 'bg-[#2a2a2e] text-[#888]'}`}>
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${state.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                       {state.isActive ? 'Active' : 'Inactive'}
                     </span>
                     <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-[#2a2a2e] text-[#888]">

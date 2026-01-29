@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { statesService } from '../../services/states.service';
 import { geodataService } from '../../services/geodata.service';
 import type { GeoState } from '../../services/geodata.service';
+import { toast } from '../../stores/toast.store';
 
 export function CreateStatePage() {
   const navigate = useNavigate();
@@ -60,6 +61,10 @@ export function CreateStatePage() {
       return;
     }
 
+    // Show immediate feedback
+    const selectedCount = selectedStateIds.length;
+    toast.info(`Adding ${selectedCount} state(s)... This may take a moment.`, 0); // Persistent until done
+
     setLoading(true);
     try {
       const result = await statesService.addStates(selectedStateIds);
@@ -67,19 +72,21 @@ export function CreateStatePage() {
       const skippedCount = Array.isArray(result?.skipped) ? result.skipped.length : 0;
 
       if (addedCount > 0) {
-        setSuccess(`Successfully added ${addedCount} state(s)${skippedCount > 0 ? `. ${skippedCount} already existed.` : ''}`);
+        toast.success(`Successfully added ${addedCount} state(s)${skippedCount > 0 ? `. ${skippedCount} already existed.` : ''}`);
         setSelectedStateIds([]);
-        setTimeout(() => navigate('/states'), 1500);
+        setTimeout(() => navigate('/states'), 1000);
       } else if (skippedCount > 0) {
+        toast.warning(`All ${skippedCount} selected state(s) already exist in your tenant.`);
         setError(`All ${skippedCount} selected state(s) already exist in your tenant.`);
       } else {
         // Fallback success case when response structure is different
-        setSuccess('States added successfully');
+        toast.success('States added successfully! Redirecting...');
         setSelectedStateIds([]);
-        setTimeout(() => navigate('/states'), 1500);
+        setTimeout(() => navigate('/states'), 1000);
       }
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to add states';
+      toast.error(message);
       setError(message);
     } finally {
       setLoading(false);
