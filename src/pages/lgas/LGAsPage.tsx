@@ -1,22 +1,35 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { LGA, PaginatedResponse } from '../../services/lgas.service';
 import { lgasService, getLgaName, getLgaStateName } from '../../services/lgas.service';
+import { useAuthStore } from '../../stores/auth.store';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { DEFAULT_PAGE_LIMIT } from '../../lib/api';
 
 export function LGAsPage() {
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const [lgas, setLGAs] = useState<LGA[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [search, setSearch] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; lga: LGA | null }>({ isOpen: false, lga: null });
 
   const fetchLGAs = async () => {
     setLoading(true);
     try {
       // Use name filter for search
-      const response: PaginatedResponse<LGA> = await lgasService.getAll(undefined, page, 50, search || undefined);
+      const response: PaginatedResponse<LGA> = await lgasService.getAll(
+        undefined,
+        page,
+        DEFAULT_PAGE_LIMIT,
+        search || undefined
+      );
       setLGAs(response.data);
       setTotalPages(response.meta?.totalPages || 1);
       setError('');
@@ -48,8 +61,50 @@ export function LGAsPage() {
     fetchLGAs();
   };
 
+  const openDeleteModal = (lga: LGA) => {
+    setDeleteModal({ isOpen: true, lga });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, lga: null });
+  };
+
+  const handleDelete = async () => {
+    const lga = deleteModal.lga;
+    if (!lga) return;
+
+    setDeleting(lga.id);
+    closeDeleteModal();
+    try {
+      await lgasService.delete(lga.id);
+      setLGAs((prev) => prev.filter((item) => item.id !== lga.id));
+    } catch {
+      const name = getLgaName(lga) || 'LGA';
+      setError(`Failed to delete ${name}`);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Delete Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={deleteModal.isOpen}
+        title="Delete LGA"
+        message={
+          <>
+            Are you sure you want to delete <span className="text-[#ca8a04] font-medium">"{deleteModal.lga ? getLgaName(deleteModal.lga) : ''}"</span>?
+            This action cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={closeDeleteModal}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
@@ -118,7 +173,11 @@ export function LGAsPage() {
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
                   {lgas.map((lga: LGA) => (
-                    <tr key={lga.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
+                    <tr
+                      key={lga.id}
+                      onClick={() => navigate(`/lgas/${lga.id}`)}
+                      className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-white">{getLgaName(lga)}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{getLgaStateName(lga)}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{lga.coordinator?.fullName || '-'}</td>
@@ -128,9 +187,20 @@ export function LGAsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link to={`/lgas/${lga.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
-                          View
-                        </Link>
+                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                          <Link to={`/lgas/${lga.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
+                            View
+                          </Link>
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => openDeleteModal(lga)}
+                              disabled={deleting === lga.id}
+                              className="text-red-400 hover:text-red-300 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {deleting === lga.id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -144,9 +214,20 @@ export function LGAsPage() {
                 <div key={lga.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-white">{getLgaName(lga)}</h3>
-                    <Link to={`/lgas/${lga.id}`} className="text-[#ca8a04] text-sm font-semibold">
-                      View →
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link to={`/lgas/${lga.id}`} className="text-[#ca8a04] text-sm font-semibold">
+                        View →
+                      </Link>
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => openDeleteModal(lga)}
+                          disabled={deleting === lga.id}
+                          className="text-red-400 text-sm font-semibold disabled:opacity-50"
+                        >
+                          {deleting === lga.id ? '...' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-[#888] mb-2">{getLgaStateName(lga)}</p>
                   <div className="flex gap-2">
