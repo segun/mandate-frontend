@@ -71,29 +71,30 @@ export const usersService = {
     const response = await api.get('/users', { params: { page, limit, ...filters } });
     return response.data;
   },
+
   async search(query: string, page = 1, limit = 50): Promise<PaginatedResponse<User>> {
     const response = await api.get('/users/search', { params: { q: query, page, limit } });
     return response.data;
   },
+
   async getById(id: string): Promise<User> {
     const response = await api.get(`/users/${id}`);
     return response.data.data;
   },
+
   async create(data: {
     fullName: string;
     email: string;
     password: string;
     phone?: string;
     role: string;
-    parentOfficerId?: string;
-    assignedStateId?: string;
-    assignedLgaId?: string;
-    assignedWardId?: string;
-    assignedPollingUnitId?: string;
+    tenantId?: string;
+    requirePasswordChange?: boolean;
   }): Promise<User> {
     const response = await api.post('/users', data);
     return response.data.data;
   },
+
   async update(id: string, data: Partial<{
     fullName: string;
     email: string;
@@ -109,6 +110,7 @@ export const usersService = {
     const response = await api.patch(`/users/${id}`, data);
     return response.data.data;
   },
+
   async delete(id: string): Promise<void> {
     await api.delete(`/users/${id}`);
   },

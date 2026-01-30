@@ -15,6 +15,7 @@ import { LGAsPage } from './pages/lgas/LGAsPage';
 import { PollingUnitsPage } from './pages/polling-units/PollingUnitsPage';
 import { UsersPage } from './pages/users/UsersPage';
 import './App.css';
+import CreateUserPage from "./pages/users/CreateUserPage";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/voters" element={<VotersPage />} />
                 <Route path="/polling-units" element={<PollingUnitsPage />} />
                 <Route path="/users" element={<UsersPage />} />
+                <Route path="/users/new" element={<CreateUserPage />} />
               </Route>
               
               {/* Redirect */}
