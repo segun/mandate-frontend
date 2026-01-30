@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api, DEFAULT_PAGE_LIMIT } from '../lib/api';
 
 // Geo reference data (read-only)
 export interface GeoLga {
@@ -66,7 +66,7 @@ export function getLgaStateName(lga: LGA): string {
 }
 
 export const lgasService = {
-  async getAll(stateId?: string, page = 1, limit = 50, name?: string): Promise<PaginatedResponse<LGA>> {
+  async getAll(stateId?: string, page = 1, limit = DEFAULT_PAGE_LIMIT, name?: string): Promise<PaginatedResponse<LGA>> {
     const params: Record<string, unknown> = { page, limit };
     if (stateId) params.stateId = stateId;
     if (name) params.name = name;

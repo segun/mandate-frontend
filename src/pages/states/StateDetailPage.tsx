@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { statesService, getStateName } from '../../services/states.service';
 import type { State } from '../../services/states.service';
+import { usersService } from '../../services/users.service';
+import type { User } from '../../services/users.service';
+import { UserSelectionModal } from '../../components/UserSelectionModal';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { DEFAULT_PAGE_LIMIT } from '../../lib/api';
 
 export function StateDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -9,6 +14,16 @@ export function StateDetailPage() {
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // User selection modal state
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState('');
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [assigningCoordinator, setAssigningCoordinator] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchState = async () => {
@@ -29,6 +44,82 @@ export function StateDetailPage() {
 
     fetchState();
   }, [id]);
+
+  const loadUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const response = await usersService.getAll(1, DEFAULT_PAGE_LIMIT);
+      setUsers(response.data);
+      setUsersError('');
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load users';
+      setUsers([]);
+      setUsersError(message);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const openUserModal = async () => {
+    setShowUserModal(true);
+    setUserSearchTerm('');
+    await loadUsers();
+  };
+
+  const handleOpenUserModal = () => {
+    openUserModal();
+  };
+
+  const handleSearchUsers = async (term: string) => {
+    const previousTerm = userSearchTerm;
+    setUserSearchTerm(term);
+    const trimmed = term.trim();
+
+    if (trimmed.length < 3) {
+      if (previousTerm.trim().length >= 3) {
+        await loadUsers();
+      }
+      return;
+    }
+
+    setUsersLoading(true);
+    try {
+      const response = await usersService.search(trimmed, 1, DEFAULT_PAGE_LIMIT);
+      setUsers(response.data);
+      setUsersError('');
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to search users';
+      setUsers([]);
+      setUsersError(message);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  // Assign coordinator to state
+  const handleSelectCoordinator = (user: User) => {
+    setSelectedUser(user);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmAssign = async () => {
+    if (!id || !selectedUser) return;
+
+    setAssigningCoordinator(true);
+    try {
+      const updatedState = await statesService.assignCoordinator(id, selectedUser.id);
+      setState(updatedState);
+      setError('');
+      setShowUserModal(false);
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to assign coordinator';
+      setError(message);
+    } finally {
+      setAssigningCoordinator(false);
+      setShowConfirmDialog(false);
+      setSelectedUser(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -111,13 +202,11 @@ export function StateDetailPage() {
         <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
           <button
             type="button"
-            onClick={() => {
-              // TODO: Implement coordinator assignment in next phase
-              alert('Coordinator assignment will be implemented in the next phase');
-            }}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
+            onClick={handleOpenUserModal}
+            disabled={assigningCoordinator}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {state.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+            {assigningCoordinator ? 'Assigning...' : (state.coordinator ? 'Change Coordinator' : 'Assign Coordinator')}
           </button>
         </div>
       </div>
@@ -184,6 +273,33 @@ export function StateDetailPage() {
           </>
         )}
       </div>
+
+      {/* User Selection Modal */}
+      <UserSelectionModal
+        isOpen={showUserModal}
+        title={state.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+        users={users}
+        loading={usersLoading}
+        error={usersError}
+        searchTerm={userSearchTerm}
+        onSearchChange={handleSearchUsers}
+        onSelect={handleSelectCoordinator}
+        onCancel={() => setShowUserModal(false)}
+      />
+
+      {/* Confirm Assign/Change Coordinator */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        variant="info"
+        title={state?.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+        message={state?.coordinator
+          ? 'Are you sure you want to change the coordinator for this state?'
+          : 'Are you sure you want to assign a coordinator to this state?'}
+        confirmLabel="Yes, continue"
+        cancelLabel="No, cancel"
+        onConfirm={handleConfirmAssign}
+        onCancel={() => { setShowConfirmDialog(false); setSelectedUser(null); }}
+      />
     </div>
   );
 }

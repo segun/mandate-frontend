@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api, DEFAULT_PAGE_LIMIT } from '../lib/api';
 
 // Geo reference entities (read-only)
 export interface GeoState {
@@ -35,37 +35,37 @@ export interface PaginatedResponse<T> {
 
 export const geodataService = {
   // Get all reference states
-  async getAllStates(page = 1, limit = 50): Promise<PaginatedResponse<GeoState>> {
+  async getAllStates(page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoState>> {
     const response = await api.get('/geodata/states', { params: { page, limit } });
     return response.data;
   },
 
   // Get all reference LGAs
-  async getAllLgas(page = 1, limit = 50): Promise<PaginatedResponse<GeoLga>> {
+  async getAllLgas(page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoLga>> {
     const response = await api.get('/geodata/lgas', { params: { page, limit } });
     return response.data;
   },
 
   // Get reference LGAs by state
-  async getLgasByState(stateId: string, page = 1, limit = 50): Promise<PaginatedResponse<GeoLga>> {
+  async getLgasByState(stateId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoLga>> {
     const response = await api.get(`/geodata/states/${stateId}/lgas`, { params: { page, limit } });
     return response.data;
   },
 
   // Get all reference wards
-  async getAllWards(page = 1, limit = 50): Promise<PaginatedResponse<GeoWard>> {
+  async getAllWards(page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoWard>> {
     const response = await api.get('/geodata/wards', { params: { page, limit } });
     return response.data;
   },
 
   // Get reference wards by LGA
-  async getWardsByLga(lgaId: string, page = 1, limit = 50): Promise<PaginatedResponse<GeoWard>> {
+  async getWardsByLga(lgaId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoWard>> {
     const response = await api.get(`/geodata/lgas/${lgaId}/wards`, { params: { page, limit } });
     return response.data;
   },
 
   // Get reference wards by state
-  async getWardsByState(stateId: string, page = 1, limit = 50): Promise<PaginatedResponse<GeoWard>> {
+  async getWardsByState(stateId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoWard>> {
     const response = await api.get(`/geodata/states/${stateId}/wards`, { params: { page, limit } });
     return response.data;
   },

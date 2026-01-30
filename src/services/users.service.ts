@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api, DEFAULT_PAGE_LIMIT } from '../lib/api';
 
 export interface User {
   id: string;
@@ -67,12 +67,12 @@ export function getUserAssignedLocation(user: User): string {
 }
 
 export const usersService = {
-  async getAll(page = 1, limit = 50, filters?: Record<string, string>): Promise<PaginatedResponse<User>> {
+  async getAll(page = 1, limit = DEFAULT_PAGE_LIMIT, filters?: Record<string, string>): Promise<PaginatedResponse<User>> {
     const response = await api.get('/users', { params: { page, limit, ...filters } });
     return response.data;
   },
 
-  async search(query: string, page = 1, limit = 50): Promise<PaginatedResponse<User>> {
+  async search(query: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<User>> {
     const response = await api.get('/users/search', { params: { q: query, page, limit } });
     return response.data;
   },

@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api, DEFAULT_PAGE_LIMIT } from '../lib/api';
 
 // Geo reference data (read-only)
 export interface GeoState {
@@ -53,7 +53,7 @@ export function getStateName(state: State): string {
 }
 
 export const statesService = {
-  async getAll(page = 1, limit = 50, name?: string): Promise<PaginatedResponse<State>> {
+  async getAll(page = 1, limit = DEFAULT_PAGE_LIMIT, name?: string): Promise<PaginatedResponse<State>> {
     const params: Record<string, unknown> = { page, limit };
     if (name) params.name = name;
     const response = await api.get('/states', { params });
@@ -82,11 +82,12 @@ export const statesService = {
   },
   async assignCoordinator(id: string, coordinatorId: string): Promise<State> {
     const response = await api.post(`/states/${id}/coordinator/${coordinatorId}`);
-    return response.data.data;
+    // API may return the state directly or wrapped in { data }
+    return response.data.data || response.data;
   },
   async removeCoordinator(id: string): Promise<State> {
     const response = await api.delete(`/states/${id}/coordinator`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
   async getStatistics(id: string) {
     const response = await api.get(`/states/${id}/statistics`);

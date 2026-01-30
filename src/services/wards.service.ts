@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api, DEFAULT_PAGE_LIMIT } from '../lib/api';
 
 // Geo reference data (read-only)
 export interface GeoWard {
@@ -75,7 +75,7 @@ export function getWardStateName(ward: Ward): string {
 }
 
 export const wardsService = {
-  async getAll(page = 1, limit = 20, lgaId?: string, name?: string): Promise<PaginatedResponse<Ward>> {
+  async getAll(page = 1, limit = DEFAULT_PAGE_LIMIT, lgaId?: string, name?: string): Promise<PaginatedResponse<Ward>> {
     const params: Record<string, unknown> = { page, limit };
     if (lgaId) params.lgaId = lgaId;
     if (name) params.name = name;

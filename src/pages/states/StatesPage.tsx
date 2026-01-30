@@ -1,12 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { State, PaginatedResponse } from '../../services/states.service';
 import { statesService, getStateName } from '../../services/states.service';
 import { useAuthStore } from '../../stores/auth.store';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 export function StatesPage() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   
@@ -156,9 +157,14 @@ export function StatesPage() {
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
                   {states.map((state: State) => (
-                    <tr key={state.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
+                    <tr
+                      key={state.id}
+                      onClick={() => navigate(`/states/${state.id}`)}
+                      className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-[#ca8a04]">{getStateName(state)}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{state.coordinator?.fullName || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{state.coordinator?.fullName || '-'}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${state.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                           {state.isActive ? 'Active' : 'Inactive'}
@@ -166,7 +172,7 @@ export function StatesPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-[#888]">{state.lgas?.length || 0}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                           <Link to={`/states/${state.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
                             View
                           </Link>

@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api, DEFAULT_PAGE_LIMIT } from '../lib/api';
 
 export interface Ward {
   id: string;
@@ -62,7 +62,7 @@ export function getVoterPollingUnitName(voter: Voter): string {
 }
 
 export const votersService = {
-  async getAll(page = 1, limit = 20, filters?: Record<string, string>): Promise<PaginatedResponse<Voter>> {
+  async getAll(page = 1, limit = DEFAULT_PAGE_LIMIT, filters?: Record<string, string>): Promise<PaginatedResponse<Voter>> {
     const response = await api.get('/voters', { params: { page, limit, ...filters } });
     return response.data;
   },
@@ -72,7 +72,7 @@ export const votersService = {
     return response.data.data;
   },
 
-  async search(query: string, page = 1, limit = 20): Promise<PaginatedResponse<Voter>> {
+  async search(query: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<Voter>> {
     const response = await api.get('/voters/search', { params: { q: query, page, limit } });
     return response.data;
   },
