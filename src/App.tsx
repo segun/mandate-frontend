@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { VotersPage } from './pages/voters/VotersPage';
 import { WardsPage } from './pages/wards/WardsPage';
 import { CreateWardPage } from './pages/wards/CreateWardPage';
+import { WardDetailPage } from './pages/wards/WardDetailPage';
 import { StatesPage } from './pages/states/StatesPage';
 import { CreateStatePage } from './pages/states/CreateStatePage';
 import { StateDetailPage } from './pages/states/StateDetailPage';
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/lgas/:id" element={<LGADetailPage />} />
                 <Route path="/wards" element={<WardsPage />} />
                 <Route path="/wards/new" element={<CreateWardPage />} />
+                <Route path="/wards/:id" element={<WardDetailPage />} />
                 <Route path="/voters" element={<VotersPage />} />
                 <Route path="/polling-units" element={<PollingUnitsPage />} />
                 <Route path="/users" element={<UsersPage />} />

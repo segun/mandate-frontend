@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { wardsService } from '../../services/wards.service';
 import { geodataService } from '../../services/geodata.service';
 import type { GeoState, GeoLga, GeoWard } from '../../services/geodata.service';
+import { DEFAULT_PAGE_LIMIT } from '../../lib/api';
+import { toast } from '../../stores/toast.store';
 
 export function CreateWardPage() {
   const navigate = useNavigate();
@@ -18,7 +20,11 @@ export function CreateWardPage() {
   // Selections
   const [selectedStateId, setSelectedStateId] = useState<string>('');
   const [selectedLgaId, setSelectedLgaId] = useState<string>('');
-  const [selectedWardIds, setSelectedWardIds] = useState<string[]>([]);
+  // Tenant wards already added (by geoWardId)
+  const [existingGeoWardIds, setExistingGeoWardIds] = useState<string[]>([]);
+
+  // New selections only
+  const [selectedNewWardIds, setSelectedNewWardIds] = useState<string[]>([]);
 
   // Loading states
   const [loadingStates, setLoadingStates] = useState(true);
@@ -29,7 +35,7 @@ export function CreateWardPage() {
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const response = await geodataService.getAllStates(1, 100);
+        const response = await geodataService.getAllStates(1, DEFAULT_PAGE_LIMIT);
         setGeoStates(response.data);
       } catch {
         setError('Failed to load states');
@@ -40,24 +46,51 @@ export function CreateWardPage() {
     fetchStates();
   }, []);
 
+  // Fetch tenant wards once to know which reference wards are already present
+  useEffect(() => {
+    const fetchExistingWards = async () => {
+      try {
+        const pageSize = DEFAULT_PAGE_LIMIT;
+        let page = 1;
+        let collected: string[] = [];
+        let hasMore = true;
+
+        while (hasMore) {
+          const response = await wardsService.getAll(page, pageSize);
+          collected = collected.concat(response.data.map((ward) => String(ward.geoWardId)));
+
+          const total = response.meta?.total ?? Number.POSITIVE_INFINITY;
+          hasMore = response.data.length === pageSize && collected.length < total;
+          page += 1;
+        }
+
+        setExistingGeoWardIds(collected);
+      } catch {
+        setError('Failed to load existing wards');
+      }
+    };
+
+    fetchExistingWards();
+  }, []);
+
   // Fetch LGAs when state changes
   useEffect(() => {
     if (!selectedStateId) {
       setGeoLgas([]);
       setGeoWards([]);
       setSelectedLgaId('');
-      setSelectedWardIds([]);
+      setSelectedNewWardIds([]);
       return;
     }
 
     const fetchLgas = async () => {
       setLoadingLgas(true);
       try {
-        const response = await geodataService.getLgasByState(selectedStateId, 1, 200);
+        const response = await geodataService.getLgasByState(selectedStateId, 1, DEFAULT_PAGE_LIMIT);
         setGeoLgas(response.data);
         setSelectedLgaId('');
         setGeoWards([]);
-        setSelectedWardIds([]);
+        setSelectedNewWardIds([]);
       } catch {
         setError('Failed to load LGAs');
       } finally {
@@ -71,16 +104,16 @@ export function CreateWardPage() {
   useEffect(() => {
     if (!selectedLgaId) {
       setGeoWards([]);
-      setSelectedWardIds([]);
+      setSelectedNewWardIds([]);
       return;
     }
 
     const fetchWards = async () => {
       setLoadingWards(true);
       try {
-        const response = await geodataService.getWardsByLga(selectedLgaId, 1, 200);
+        const response = await geodataService.getWardsByLga(selectedLgaId, 1, DEFAULT_PAGE_LIMIT);
         setGeoWards(response.data);
-        setSelectedWardIds([]);
+        setSelectedNewWardIds([]);
       } catch {
         setError('Failed to load wards');
       } finally {
@@ -91,19 +124,19 @@ export function CreateWardPage() {
   }, [selectedLgaId]);
 
   const handleWardToggle = (wardId: string) => {
-    setSelectedWardIds((prev) =>
-      prev.includes(wardId)
-        ? prev.filter((id) => id !== wardId)
-        : [...prev, wardId]
+    setSelectedNewWardIds((prev) =>
+      prev.includes(wardId) ? prev.filter((id) => id !== wardId) : [...prev, wardId]
     );
   };
 
   const handleSelectAll = () => {
-    if (selectedWardIds.length === geoWards.length) {
-      setSelectedWardIds([]);
-    } else {
-      setSelectedWardIds(geoWards.map((w) => w.id));
-    }
+    const selectableIds = geoWards
+      .filter((ward) => !existingGeoWardIds.includes(String(ward.id)))
+      .map((ward) => String(ward.id));
+    const allSelectableChosen =
+      selectableIds.length > 0 && selectableIds.every((id) => selectedNewWardIds.includes(id));
+
+    setSelectedNewWardIds(allSelectableChosen ? [] : selectableIds);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,27 +144,39 @@ export function CreateWardPage() {
     setError('');
     setSuccess('');
 
-    if (selectedWardIds.length === 0) {
-      setError('Please select at least one ward to add');
+    if (selectedNewWardIds.length === 0) {
+      setError('Please select at least one new ward to add');
       return;
     }
 
+    const selectedCount = selectedNewWardIds.length;
+    toast.info(`Adding ${selectedCount} ward(s)... This may take a moment.`, 0);
+
     setLoading(true);
     try {
-      const result = await wardsService.addWards(selectedWardIds);
+      const result = await wardsService.addWards(selectedNewWardIds);
       const addedCount = result.added?.length || 0;
       const skippedCount = result.skipped?.length || 0;
 
       if (addedCount > 0) {
-        setSuccess(`Successfully added ${addedCount} ward(s)${skippedCount > 0 ? `. ${skippedCount} already existed.` : ''}`);
-        setSelectedWardIds([]);
-        setTimeout(() => navigate('/wards'), 1500);
+        const message = `Successfully added ${addedCount} ward(s)${skippedCount > 0 ? `. ${skippedCount} already existed.` : ''}`;
+        setSuccess(message);
+        toast.success(message);
+        setSelectedNewWardIds([]);
+        setTimeout(() => navigate('/wards'), 1200);
       } else if (skippedCount > 0) {
-        setError(`All ${skippedCount} selected ward(s) already exist in your tenant.`);
+        const message = `All ${skippedCount} selected ward(s) already exist in your tenant.`;
+        setError(message);
+        toast.warning(message);
+      } else {
+        setSuccess('Wards added successfully');
+        toast.success('Wards added successfully');
+        setTimeout(() => navigate('/wards'), 1000);
       }
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to add wards';
       setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -214,15 +259,20 @@ export function CreateWardPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-white">
-                Select Wards {selectedWardIds.length > 0 && `(${selectedWardIds.length} selected)`}
+                Select Wards {selectedNewWardIds.length > 0 && `(${selectedNewWardIds.length} new selected)`}
               </label>
               {geoWards.length > 0 && (
                 <button
                   type="button"
                   onClick={handleSelectAll}
-                  className="text-sm text-[#ca8a04] hover:text-[#d4940a]"
+                  disabled={geoWards.every((ward) => existingGeoWardIds.includes(String(ward.id)))}
+                  className="text-sm text-[#ca8a04] hover:text-[#d4940a] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {selectedWardIds.length === geoWards.length ? 'Deselect All' : 'Select All'}
+                  {geoWards
+                    .filter((ward) => !existingGeoWardIds.includes(String(ward.id)))
+                    .every((ward) => selectedNewWardIds.includes(String(ward.id)))
+                    ? 'Deselect All New'
+                    : 'Select All New'}
                 </button>
               )}
             </div>
@@ -239,20 +289,41 @@ export function CreateWardPage() {
               </div>
             ) : (
               <div className="border border-[#2a2a2e] rounded-lg max-h-64 overflow-y-auto">
-                {geoWards.map((ward) => (
-                  <label
-                    key={ward.id}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#1a1a1d] cursor-pointer border-b border-[#2a2a2e] last:border-b-0"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedWardIds.includes(ward.id)}
-                      onChange={() => handleWardToggle(ward.id)}
-                      className="w-4 h-4 text-[#ca8a04] rounded focus:ring-[#ca8a04] bg-[#0d0d0f] border-[#2a2a2e] accent-[#ca8a04]"
-                    />
-                    <span className="text-sm text-white">{ward.name}</span>
-                  </label>
-                ))}
+                <div className="px-4 py-2 text-sm text-[#888] border-b border-[#2a2a2e] bg-[#0f0f12]">
+                  {(() => {
+                    const total = geoWards.length;
+                    const available = geoWards.filter((ward) => !existingGeoWardIds.includes(String(ward.id))).length;
+                    if (total === 0) return null;
+                    if (available === 0) return `${total} reference ward(s); all already added`;
+                    return `${available} new available (${total} total)`;
+                  })()}
+                </div>
+                {geoWards.map((ward) => {
+                  const geoId = String(ward.id);
+                  const isExisting = existingGeoWardIds.includes(geoId);
+                  const isChecked = isExisting || selectedNewWardIds.includes(geoId);
+
+                  return (
+                    <label
+                      key={ward.id}
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#1a1a1d] cursor-pointer border-b border-[#2a2a2e] last:border-b-0"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleWardToggle(geoId)}
+                        disabled={isExisting}
+                        className="w-4 h-4 text-[#ca8a04] rounded focus:ring-[#ca8a04] bg-[#0d0d0f] border-[#2a2a2e] accent-[#ca8a04] disabled:opacity-60 disabled:cursor-not-allowed"
+                      />
+                      <span className="text-sm text-white">
+                        {ward.name}
+                        {isExisting && (
+                          <span className="ml-2 text-xs text-[#888]">(Already added)</span>
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -260,10 +331,10 @@ export function CreateWardPage() {
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
-              disabled={loading || selectedWardIds.length === 0}
+              disabled={loading || selectedNewWardIds.length === 0}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Adding…' : `Add ${selectedWardIds.length || ''} Ward${selectedWardIds.length !== 1 ? 's' : ''}`}
+              {loading ? 'Adding…' : `Add ${selectedNewWardIds.length || ''} Ward${selectedNewWardIds.length !== 1 ? 's' : ''}`}
             </button>
             <button
               type="button"

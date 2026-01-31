@@ -1,26 +1,28 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { lgasService, getLgaName, getLgaStateName } from '../../services/lgas.service';
-import type { LGA } from '../../services/lgas.service';
-import { wardsService } from '../../services/wards.service';
+import { wardsService, getWardLgaName, getWardName, getWardStateName } from '../../services/wards.service';
 import type { Ward } from '../../services/wards.service';
+import { lgasService, getLgaStateName } from '../../services/lgas.service';
+import { pollingUnitsService } from '../../services/polling-units.service';
+import type { PollingUnit } from '../../services/polling-units.service';
 import { usersService } from '../../services/users.service';
 import type { User } from '../../services/users.service';
 import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DEFAULT_MODAL_PAGE_LIMIT, DEFAULT_PAGE_LIMIT } from '../../lib/api';
 
-export function LGADetailPage() {
+export function WardDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [lga, setLga] = useState<LGA | null>(null);
+  const [ward, setWard] = useState<Ward | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [stateName, setStateName] = useState('');
 
-  const [wards, setWards] = useState<Ward[]>([]);
-  const [wardsLoading, setWardsLoading] = useState(false);
-  const [wardsError, setWardsError] = useState('');
+  const [pollingUnits, setPollingUnits] = useState<PollingUnit[]>([]);
+  const [pollingUnitsLoading, setPollingUnitsLoading] = useState(false);
+  const [pollingUnitsError, setPollingUnitsError] = useState('');
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
@@ -32,39 +34,49 @@ export function LGADetailPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchLga = async () => {
+    const fetchWard = async () => {
       if (!id) return;
       setLoading(true);
       try {
-        const data = await lgasService.getById(id);
-        setLga(data);
+        const data = await wardsService.getById(id);
+        setWard(data);
+        const wardState = getWardStateName(data);
+        setStateName(wardState);
+        if (!wardState && data.lgaId) {
+          try {
+            const lga = await lgasService.getById(data.lgaId);
+            setStateName(getLgaStateName(lga));
+          } catch {
+            // Ignore; keep existing stateName fallback
+          }
+        }
         setError('');
       } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load LGA';
+        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load ward';
         setError(message);
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchWards = async () => {
+    const fetchPollingUnits = async () => {
       if (!id) return;
-      setWardsLoading(true);
+      setPollingUnitsLoading(true);
       try {
-        const response = await wardsService.getAll(1, DEFAULT_PAGE_LIMIT, id);
-        setWards(response.data);
-        setWardsError('');
+        const response = await pollingUnitsService.getAll(1, DEFAULT_PAGE_LIMIT, id);
+        setPollingUnits(response.data);
+        setPollingUnitsError('');
       } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load wards';
-        setWards([]);
-        setWardsError(message);
+        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load polling units';
+        setPollingUnits([]);
+        setPollingUnitsError(message);
       } finally {
-        setWardsLoading(false);
+        setPollingUnitsLoading(false);
       }
     };
 
-    fetchLga();
-    fetchWards();
+    fetchWard();
+    fetchPollingUnits();
   }, [id]);
 
   const loadUsers = async () => {
@@ -123,8 +135,8 @@ export function LGADetailPage() {
     if (!id || !selectedUser) return;
     setAssigningCoordinator(true);
     try {
-      const updatedLga = await lgasService.assignCoordinator(id, selectedUser.id);
-      setLga(updatedLga);
+      const updatedWard = await wardsService.assignCoordinator(id, selectedUser.id);
+      setWard(updatedWard);
       setError('');
       setShowUserModal(false);
     } catch (err: unknown) {
@@ -145,72 +157,72 @@ export function LGADetailPage() {
     );
   }
 
-  if (error || !lga) {
+  if (error || !ward) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-4 text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-          {error || 'LGA not found'}
+          {error || 'Ward not found'}
         </div>
         <button
           type="button"
-          onClick={() => navigate('/lgas')}
+          onClick={() => navigate('/wards')}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e] transition-colors"
         >
-          ← Back to LGAs
+          Back to Wards
         </button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">{getLgaName(lga)}</h1>
-          <p className="text-sm text-[#888] mt-1">LGA details and wards</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">{getWardName(ward)}</h1>
+          <p className="text-sm text-[#888] mt-1">Ward details and polling units</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate('/lgas')}
+            onClick={() => navigate('/wards')}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e] transition-colors"
           >
-            ← Back
+            Back
           </button>
         </div>
       </div>
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-6 sm:p-8 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-          <h2 className="text-lg font-semibold text-white">LGA Information</h2>
-          <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${lga.isActive ? 'bg-green-500/20 text-green-400' : 'bg-[#2a2a2e] text-[#888]'}`}>
-            {lga.isActive ? 'Active' : 'Inactive'}
+          <h2 className="text-lg font-semibold text-white">Ward Information</h2>
+          <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${ward.isActive ? 'bg-green-500/20 text-green-400' : 'bg-[#2a2a2e] text-[#888]'}`}>
+            {ward.isActive ? 'Active' : 'Inactive'}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
-            <label className="text-sm font-medium text-[#888]">LGA Name</label>
-            <p className="text-base text-white mt-1">{getLgaName(lga)}</p>
+            <label className="text-sm font-medium text-[#888]">Ward Name</label>
+            <p className="text-base text-white mt-1">{getWardName(ward)}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[#888]">LGA</label>
+            <p className="text-base text-white mt-1">{getWardLgaName(ward) || 'Unknown LGA'}</p>
           </div>
           <div>
             <label className="text-sm font-medium text-[#888]">State</label>
-            <p className="text-base text-white mt-1">{getLgaStateName(lga) || 'Unknown state'}</p>
+            <p className="text-base text-white mt-1">{stateName || getWardStateName(ward) || 'Unknown state'}</p>
           </div>
           <div>
             <label className="text-sm font-medium text-[#888]">Coordinator</label>
-            <p className="text-base text-white mt-1">{lga.coordinator?.fullName || 'Not assigned'}</p>
-            {lga.coordinator?.email && (
-              <p className="text-sm text-[#888]">{lga.coordinator.email}</p>
+            <p className="text-base text-white mt-1">{ward.coordinator?.fullName || 'Not assigned'}</p>
+            {ward.coordinator?.email && (
+              <p className="text-sm text-[#888]">{ward.coordinator.email}</p>
             )}
           </div>
           <div>
             <label className="text-sm font-medium text-[#888]">Created</label>
-            <p className="text-base text-white mt-1">{new Date(lga.createdAt).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-[#888]">Total Wards</label>
-            <p className="text-base text-white mt-1">{wards.length}</p>
+            <p className="text-base text-white mt-1">{new Date(ward.createdAt).toLocaleDateString()}</p>
           </div>
         </div>
 
@@ -221,52 +233,50 @@ export function LGADetailPage() {
             disabled={assigningCoordinator}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {assigningCoordinator ? 'Assigning...' : (lga.coordinator ? 'Change Coordinator' : 'Assign Coordinator')}
+            {assigningCoordinator ? 'Assigning...' : (ward.coordinator ? 'Change Coordinator' : 'Assign Coordinator')}
           </button>
         </div>
       </div>
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d]">
-          <h2 className="text-lg font-semibold text-white">
-            Wards ({wards.length})
-          </h2>
+        <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d] flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">Polling Units ({pollingUnits.length})</h2>
+          <Link
+            to="/polling-units"
+            className="text-sm text-[#ca8a04] hover:text-[#d4940a] font-semibold"
+          >
+            Manage Polling Units
+          </Link>
         </div>
 
-        {wardsLoading ? (
-          <div className="p-6 text-center text-[#888]">Loading wards...</div>
-        ) : wardsError ? (
-          <div className="p-6 text-center text-red-400">{wardsError}</div>
-        ) : wards.length === 0 ? (
-          <div className="p-6 text-center text-[#888]">
-            No wards have been added for this LGA yet.
-            <div className="mt-4">
-              <Link
-                to="/wards/new"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
-              >
-                + Add Wards
-              </Link>
-            </div>
-          </div>
+        {pollingUnitsLoading ? (
+          <div className="p-6 text-center text-[#888]">Loading polling units...</div>
+        ) : pollingUnitsError ? (
+          <div className="p-6 text-center text-red-400">{pollingUnitsError}</div>
+        ) : pollingUnits.length === 0 ? (
+          <div className="p-6 text-center text-[#888]">No polling units have been added for this ward yet.</div>
         ) : (
           <>
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#1a1a1d] border-b border-[#2a2a2e]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Ward Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Code</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Supervisor</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
-                  {wards.map((ward) => (
-                    <tr
-                      key={ward.id}
-                      onClick={() => navigate(`/wards/${ward.id}`)}
-                      className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-[#ca8a04]">
-                        {ward.geoWard?.name || ward.geoWardId}
+                  {pollingUnits.map((unit) => (
+                    <tr key={unit.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-white">{unit.name}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{unit.code}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{unit.supervisor?.fullName || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
+                          {unit.isActive ? 'Active' : 'Inactive'}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -275,16 +285,16 @@ export function LGADetailPage() {
             </div>
 
             <div className="md:hidden divide-y divide-[#2a2a2e]">
-              {wards.map((ward) => (
-                <div
-                  key={ward.id}
-                  onClick={() => navigate(`/wards/${ward.id}`)}
-                  className="p-4 flex justify-between items-center cursor-pointer hover:bg-[#1a1a1d]/50 transition-colors"
-                >
-                  <div>
-                    <h3 className="font-medium text-[#ca8a04]">{ward.geoWard?.name || ward.geoWardId}</h3>
+              {pollingUnits.map((unit) => (
+                <div key={unit.id} className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium text-white">{unit.name}</h3>
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
+                      {unit.isActive ? 'Active' : 'Inactive'}
+                    </span>
                   </div>
-                  <span className="text-sm text-[#ca8a04] font-semibold">View</span>
+                  <p className="text-sm text-[#888] mb-1">Code: {unit.code}</p>
+                  <p className="text-sm text-[#888]">Supervisor: {unit.supervisor?.fullName || 'Not assigned'}</p>
                 </div>
               ))}
             </div>
@@ -294,7 +304,7 @@ export function LGADetailPage() {
 
       <UserSelectionModal
         isOpen={showUserModal}
-        title={lga.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+        title={ward.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
         users={users}
         loading={usersLoading}
         error={usersError}
@@ -307,10 +317,10 @@ export function LGADetailPage() {
       <ConfirmDialog
         isOpen={showConfirmDialog}
         variant="info"
-        title={lga?.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
-        message={lga?.coordinator
-          ? 'Are you sure you want to change the coordinator for this LGA?'
-          : 'Are you sure you want to assign a coordinator to this LGA?'}
+        title={ward?.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+        message={ward?.coordinator
+          ? 'Are you sure you want to change the coordinator for this ward?'
+          : 'Are you sure you want to assign a coordinator to this ward?'}
         confirmLabel="Yes, continue"
         cancelLabel="No, cancel"
         onConfirm={handleConfirmAssign}
