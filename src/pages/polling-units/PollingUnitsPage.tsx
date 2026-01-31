@@ -14,12 +14,9 @@ export function PollingUnitsPage() {
   const fetchPollingUnits = useCallback(async () => {
     setLoading(true);
     try {
-      let response: PaginatedResponse<PollingUnit>;
-      if (search) {
-        response = await pollingUnitsService.search(search, page);
-      } else {
-        response = await pollingUnitsService.getAll(page);
-      }
+      // Use name filter for search - only search if 3+ characters
+      const searchTerm = search.length >= 3 ? search : undefined;
+      const response: PaginatedResponse<PollingUnit> = await pollingUnitsService.getAll(page, 50, undefined, searchTerm);
       setPollingUnits(response.data);
       setTotalPages(response.meta?.totalPages || 1);
       setError('');
