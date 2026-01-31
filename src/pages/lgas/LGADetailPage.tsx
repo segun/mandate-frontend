@@ -227,10 +227,16 @@ export function LGADetailPage() {
       </div>
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d]">
+        <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d] flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
             Wards ({wards.length})
           </h2>
+          <Link
+            to="/wards"
+            className="text-sm text-[#ca8a04] hover:text-[#d4940a] font-semibold"
+          >
+            Manage Wards
+          </Link>
         </div>
 
         {wardsLoading ? (
