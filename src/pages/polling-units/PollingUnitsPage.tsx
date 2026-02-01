@@ -1,15 +1,19 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { PollingUnit, PaginatedResponse } from '../../services/polling-units.service';
 import { pollingUnitsService, getPollingUnitWardName } from '../../services/polling-units.service';
+import { wardsService } from '../../services/wards.service';
+import type { Ward } from '../../services/wards.service';
 
 export function PollingUnitsPage() {
+  const navigate = useNavigate();
   const [pollingUnits, setPollingUnits] = useState<PollingUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const [wardMap, setWardMap] = useState<Map<string, string>>(new Map());
 
   const fetchPollingUnits = useCallback(async () => {
     setLoading(true);
@@ -20,6 +24,26 @@ export function PollingUnitsPage() {
       setPollingUnits(response.data);
       setTotalPages(response.meta?.totalPages || 1);
       setError('');
+      
+      // Fetch ward details for each unique ward ID
+      const uniqueWardIds = [...new Set(response.data.map(unit => unit.wardId).filter(Boolean))];
+      const wardNameMap = new Map<string, string>();
+      
+      await Promise.all(
+        uniqueWardIds.map(async (wardId) => {
+          try {
+            const ward = await wardsService.getById(wardId);
+            if (ward.geoWard?.name) {
+              wardNameMap.set(wardId, ward.geoWard.name);
+            }
+          } catch {
+            // If ward fetch fails, ignore and continue
+            wardNameMap.set(wardId, 'N/A');
+          }
+        })
+      );
+      
+      setWardMap(wardNameMap);
     } catch {
       setError('Failed to fetch polling units');
     } finally {
@@ -108,10 +132,14 @@ export function PollingUnitsPage() {
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
                   {pollingUnits.map((unit) => (
-                    <tr key={unit.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
+                    <tr 
+                      key={unit.id} 
+                      onClick={() => navigate(`/polling-units/${unit.id}`)}
+                      className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-white">{unit.name}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{unit.code}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{getPollingUnitWardName(unit)}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{wardMap.get(unit.wardId) || 'N/A'}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{unit.supervisor?.fullName || '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
@@ -119,7 +147,11 @@ export function PollingUnitsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link to={`/polling-units/${unit.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
+                        <Link 
+                          to={`/polling-units/${unit.id}`} 
+                          className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           View
                         </Link>
                       </td>
@@ -131,17 +163,25 @@ export function PollingUnitsPage() {
             {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-[#2a2a2e]">
               {pollingUnits.map((unit) => (
-                <div key={unit.id} className="p-4">
+                <div 
+                  key={unit.id} 
+                  className="p-4 cursor-pointer hover:bg-[#1a1a1d]/50 transition-colors"
+                  onClick={() => navigate(`/polling-units/${unit.id}`)}
+                >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-white">{unit.name}</h3>
-                    <Link to={`/polling-units/${unit.id}`} className="text-[#ca8a04] text-sm font-semibold">
+                    <Link 
+                      to={`/polling-units/${unit.id}`} 
+                      className="text-[#ca8a04] text-sm font-semibold"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       View →
                     </Link>
                   </div>
                   <p className="text-sm text-[#888] mb-2">{unit.code}</p>
                   <div className="flex gap-2 flex-wrap">
                     <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-[#2a2a2e] text-[#888]">
-                      Ward: {getPollingUnitWardName(unit)}
+                      Ward: {wardMap.get(unit.wardId) || 'N/A'}
                     </span>
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                       {unit.isActive ? 'Active' : 'Inactive'}

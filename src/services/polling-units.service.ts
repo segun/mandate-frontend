@@ -24,6 +24,7 @@ export interface PollingUnit {
   description?: string;
   wardId: string;
   ward?: Ward;
+  geoPollingUnitId?: string;
   supervisorId?: string | null;
   supervisor?: {
     id: string;
@@ -49,7 +50,10 @@ export interface PaginatedResponse<T> {
 
 // Helper to get ward name from nested ward.geoWard
 export function getPollingUnitWardName(unit: PollingUnit): string {
-  return unit.ward?.geoWard?.name || '';
+  if (unit.ward?.geoWard?.name) {
+    return unit.ward.geoWard.name;
+  }
+  return 'N/A';
 }
 
 // Helper to get LGA name from nested ward.lga.geoLga
@@ -71,6 +75,10 @@ export const pollingUnitsService = {
   },
   async getById(id: string): Promise<PollingUnit> {
     const response = await api.get(`/polling-units/${id}`);
+    return response.data.data;
+  },
+  async addPollingUnits(geoPollingUnitIds: string[]): Promise<{ added: PollingUnit[]; skipped: string[] }> {
+    const response = await api.post('/polling-units/bulk', { geoPollingUnitIds });
     return response.data.data;
   },
   async create(data: { name: string; code: string; wardId: string; address?: string; description?: string }): Promise<PollingUnit> {

@@ -1,82 +1,83 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { wardsService, getWardLgaName, getWardName, getWardStateName } from '../../services/wards.service';
-import type { Ward } from '../../services/wards.service';
-import { lgasService, getLgaStateName } from '../../services/lgas.service';
 import { pollingUnitsService } from '../../services/polling-units.service';
 import type { PollingUnit } from '../../services/polling-units.service';
+import { wardsService, getWardName } from '../../services/wards.service';
+import { votersService } from '../../services/voters.service';
+import type { Voter } from '../../services/voters.service';
 import { usersService } from '../../services/users.service';
 import type { User } from '../../services/users.service';
 import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DEFAULT_MODAL_PAGE_LIMIT, DEFAULT_PAGE_LIMIT } from '../../lib/api';
 
-export function WardDetailPage() {
+export function PollingUnitDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [ward, setWard] = useState<Ward | null>(null);
+  const [pollingUnit, setPollingUnit] = useState<PollingUnit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [stateName, setStateName] = useState('');
+  const [wardName, setWardName] = useState<string>('');
 
-  const [pollingUnits, setPollingUnits] = useState<PollingUnit[]>([]);
-  const [pollingUnitsLoading, setPollingUnitsLoading] = useState(false);
-  const [pollingUnitsError, setPollingUnitsError] = useState('');
+  const [voters, setVoters] = useState<Voter[]>([]);
+  const [votersLoading, setVotersLoading] = useState(false);
+  const [votersError, setVotersError] = useState('');
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState('');
   const [userSearchTerm, setUserSearchTerm] = useState('');
-  const [assigningCoordinator, setAssigningCoordinator] = useState(false);
+  const [assigningSupervisor, setAssigningSupervisor] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchWard = async () => {
+    const fetchPollingUnit = async () => {
       if (!id) return;
       setLoading(true);
       try {
-        const data = await wardsService.getById(id);
-        setWard(data);
-        const wardState = getWardStateName(data);
-        setStateName(wardState);
-        if (!wardState && data.lgaId) {
+        const data = await pollingUnitsService.getById(id);
+        setPollingUnit(data);
+        setError('');
+        
+        // Fetch ward details to get the geoWard name
+        if (data.wardId) {
           try {
-            const lga = await lgasService.getById(data.lgaId);
-            setStateName(getLgaStateName(lga));
+            const wardData = await wardsService.getById(data.wardId);
+            setWardName(getWardName(wardData));
           } catch {
-            // Ignore; keep existing stateName fallback
+            // Ward fetch failed, but don't block the page
+            setWardName('Unknown');
           }
         }
-        setError('');
       } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load ward';
+        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load polling unit';
         setError(message);
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchPollingUnits = async () => {
+    const fetchVoters = async () => {
       if (!id) return;
-      setPollingUnitsLoading(true);
+      setVotersLoading(true);
       try {
-        const response = await pollingUnitsService.getAll(1, DEFAULT_PAGE_LIMIT, id);
-        setPollingUnits(response.data);
-        setPollingUnitsError('');
+        const response = await votersService.getAll(1, DEFAULT_PAGE_LIMIT, { pollingUnitId: id });
+        setVoters(response.data);
+        setVotersError('');
       } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load polling units';
-        setPollingUnits([]);
-        setPollingUnitsError(message);
+        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load voters';
+        setVoters([]);
+        setVotersError(message);
       } finally {
-        setPollingUnitsLoading(false);
+        setVotersLoading(false);
       }
     };
 
-    fetchWard();
-    fetchPollingUnits();
+    fetchPollingUnit();
+    fetchVoters();
   }, [id]);
 
   const loadUsers = async () => {
@@ -126,24 +127,24 @@ export function WardDetailPage() {
     }
   };
 
-  const handleSelectCoordinator = (user: User) => {
+  const handleSelectSupervisor = (user: User) => {
     setSelectedUser(user);
     setShowConfirmDialog(true);
   };
 
   const handleConfirmAssign = async () => {
     if (!id || !selectedUser) return;
-    setAssigningCoordinator(true);
+    setAssigningSupervisor(true);
     try {
-      const updatedWard = await wardsService.assignCoordinator(id, selectedUser.id);
-      setWard(updatedWard);
+      const updatedPollingUnit = await pollingUnitsService.assignSupervisor(id, selectedUser.id);
+      setPollingUnit(updatedPollingUnit);
       setError('');
       setShowUserModal(false);
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to assign coordinator';
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to assign supervisor';
       setError(message);
     } finally {
-      setAssigningCoordinator(false);
+      setAssigningSupervisor(false);
       setShowConfirmDialog(false);
       setSelectedUser(null);
     }
@@ -157,18 +158,18 @@ export function WardDetailPage() {
     );
   }
 
-  if (error || !ward) {
+  if (error || !pollingUnit) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-4 text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-          {error || 'Ward not found'}
+          {error || 'Polling unit not found'}
         </div>
         <button
           type="button"
-          onClick={() => navigate('/wards')}
+          onClick={() => navigate('/polling-units')}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e] transition-colors"
         >
-          Back to Wards
+          Back to Polling Units
         </button>
       </div>
     );
@@ -178,13 +179,13 @@ export function WardDetailPage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">{getWardName(ward)}</h1>
-          <p className="text-sm text-[#888] mt-1">Ward details and polling units</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">{pollingUnit.name}</h1>
+          <p className="text-sm text-[#888] mt-1">Polling unit details and voters</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate('/wards')}
+            onClick={() => navigate('/polling-units')}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e] transition-colors"
           >
             Back
@@ -194,35 +195,37 @@ export function WardDetailPage() {
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-6 sm:p-8 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-          <h2 className="text-lg font-semibold text-white">Ward Information</h2>
-          <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${ward.isActive ? 'bg-green-500/20 text-green-400' : 'bg-[#2a2a2e] text-[#888]'}`}>
-            {ward.isActive ? 'Active' : 'Inactive'}
+          <h2 className="text-lg font-semibold text-white">Polling Unit Information</h2>
+          <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${pollingUnit.isActive ? 'bg-green-500/20 text-green-400' : 'bg-[#2a2a2e] text-[#888]'}`}>
+            {pollingUnit.isActive ? 'Active' : 'Inactive'}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
-            <label className="text-sm font-medium text-[#888]">Ward Name</label>
-            <p className="text-base text-white mt-1">{getWardName(ward)}</p>
+            <label className="text-sm font-medium text-[#888]">Name</label>
+            <p className="text-base text-white mt-1">{pollingUnit.name}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-[#888]">LGA</label>
-            <p className="text-base text-white mt-1">{getWardLgaName(ward) || 'Unknown LGA'}</p>
+            <label className="text-sm font-medium text-[#888]">Code</label>
+            <p className="text-base text-white mt-1">{pollingUnit.code}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-[#888]">State</label>
-            <p className="text-base text-white mt-1">{stateName || getWardStateName(ward) || 'Unknown state'}</p>
+            <label className="text-sm font-medium text-[#888]">Ward</label>
+            <p className="text-base text-white mt-1">
+              {wardName || 'Loading...'}
+            </p>
           </div>
           <div>
-            <label className="text-sm font-medium text-[#888]">Coordinator</label>
-            <p className="text-base text-white mt-1">{ward.coordinator?.fullName || 'Not assigned'}</p>
-            {ward.coordinator?.email && (
-              <p className="text-sm text-[#888]">{ward.coordinator.email}</p>
+            <label className="text-sm font-medium text-[#888]">Supervisor</label>
+            <p className="text-base text-white mt-1">{pollingUnit.supervisor?.fullName || 'Not assigned'}</p>
+            {pollingUnit.supervisor?.email && (
+              <p className="text-sm text-[#888]">{pollingUnit.supervisor.email}</p>
             )}
           </div>
           <div>
             <label className="text-sm font-medium text-[#888]">Created</label>
-            <p className="text-base text-white mt-1">{new Date(ward.createdAt).toLocaleDateString()}</p>
+            <p className="text-base text-white mt-1">{new Date(pollingUnit.createdAt).toLocaleDateString()}</p>
           </div>
         </div>
 
@@ -230,31 +233,31 @@ export function WardDetailPage() {
           <button
             type="button"
             onClick={openUserModal}
-            disabled={assigningCoordinator}
+            disabled={assigningSupervisor}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {assigningCoordinator ? 'Assigning...' : (ward.coordinator ? 'Change Coordinator' : 'Assign Coordinator')}
+            {assigningSupervisor ? 'Assigning...' : (pollingUnit.supervisor ? 'Change Supervisor' : 'Assign Supervisor')}
           </button>
         </div>
       </div>
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
         <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d] flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Polling Units ({pollingUnits.length})</h2>
+          <h2 className="text-lg font-semibold text-white">Voters ({voters.length})</h2>
           <Link
-            to="/polling-units"
+            to="/voters"
             className="text-sm text-[#ca8a04] hover:text-[#d4940a] font-semibold"
           >
-            Manage Polling Units
+            Manage Voters
           </Link>
         </div>
 
-        {pollingUnitsLoading ? (
-          <div className="p-6 text-center text-[#888]">Loading polling units...</div>
-        ) : pollingUnitsError ? (
-          <div className="p-6 text-center text-red-400">{pollingUnitsError}</div>
-        ) : pollingUnits.length === 0 ? (
-          <div className="p-6 text-center text-[#888]">No polling units have been added for this ward yet.</div>
+        {votersLoading ? (
+          <div className="p-6 text-center text-[#888]">Loading voters...</div>
+        ) : votersError ? (
+          <div className="p-6 text-center text-red-400">{votersError}</div>
+        ) : voters.length === 0 ? (
+          <div className="p-6 text-center text-[#888]">No voters have been added for this polling unit yet.</div>
         ) : (
           <>
             <div className="hidden md:block overflow-x-auto">
@@ -262,18 +265,18 @@ export function WardDetailPage() {
                 <thead className="bg-[#1a1a1d] border-b border-[#2a2a2e]">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Code</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Phone</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">PVC Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Support Level</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
-                  {pollingUnits.map((unit) => (
-                    <tr 
-                      key={unit.id} 
-                      onClick={() => navigate(`/polling-units/${unit.id}`)}
-                      className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-white">{unit.name}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{unit.code}</td>
+                  {voters.map((voter) => (
+                    <tr key={voter.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-white">{voter.fullName}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{voter.phone}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{voter.pvcStatus}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{voter.supportLevel}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -281,20 +284,14 @@ export function WardDetailPage() {
             </div>
 
             <div className="md:hidden divide-y divide-[#2a2a2e]">
-              {pollingUnits.map((unit) => (
-                <div 
-                  key={unit.id} 
-                  className="p-4 cursor-pointer hover:bg-[#1a1a1d]/50 transition-colors"
-                  onClick={() => navigate(`/polling-units/${unit.id}`)}
-                >
+              {voters.map((voter) => (
+                <div key={voter.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-white">{unit.name}</h3>
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
-                      {unit.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                    <h3 className="font-medium text-white">{voter.fullName}</h3>
                   </div>
-                  <p className="text-sm text-[#888] mb-1">Code: {unit.code}</p>
-                  <p className="text-sm text-[#888]">Supervisor: {unit.supervisor?.fullName || 'Not assigned'}</p>
+                  <p className="text-sm text-[#888] mb-1">Phone: {voter.phone}</p>
+                  <p className="text-sm text-[#888] mb-1">PVC Status: {voter.pvcStatus}</p>
+                  <p className="text-sm text-[#888]">Support Level: {voter.supportLevel}</p>
                 </div>
               ))}
             </div>
@@ -304,23 +301,23 @@ export function WardDetailPage() {
 
       <UserSelectionModal
         isOpen={showUserModal}
-        title={ward.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+        title={pollingUnit.supervisor ? 'Change Supervisor' : 'Assign Supervisor'}
         users={users}
         loading={usersLoading}
         error={usersError}
         searchTerm={userSearchTerm}
         onSearchChange={handleSearchUsers}
-        onSelect={handleSelectCoordinator}
+        onSelect={handleSelectSupervisor}
         onCancel={() => setShowUserModal(false)}
       />
 
       <ConfirmDialog
         isOpen={showConfirmDialog}
         variant="info"
-        title={ward?.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
-        message={ward?.coordinator
-          ? 'Are you sure you want to change the coordinator for this ward?'
-          : 'Are you sure you want to assign a coordinator to this ward?'}
+        title={pollingUnit?.supervisor ? 'Change Supervisor' : 'Assign Supervisor'}
+        message={pollingUnit?.supervisor
+          ? 'Are you sure you want to change the supervisor for this polling unit?'
+          : 'Are you sure you want to assign a supervisor to this polling unit?'}
         confirmLabel="Yes, continue"
         cancelLabel="No, cancel"
         onConfirm={handleConfirmAssign}

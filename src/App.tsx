@@ -16,6 +16,8 @@ import { LGAsPage } from './pages/lgas/LGAsPage';
 import { CreateLGAPage } from './pages/lgas/CreateLGAPage';
 import { LGADetailPage } from './pages/lgas/LGADetailPage';
 import { PollingUnitsPage } from './pages/polling-units/PollingUnitsPage';
+import { PollingUnitDetailPage } from './pages/polling-units/PollingUnitDetailPage';
+import { CreatePollingUnitPage } from './pages/polling-units/CreatePollingUnitPage';
 import { UsersPage } from './pages/users/UsersPage';
 import './App.css';
 import CreateUserPage from "./pages/users/CreateUserPage";
@@ -48,6 +50,8 @@ function App() {
                 <Route path="/wards/:id" element={<WardDetailPage />} />
                 <Route path="/voters" element={<VotersPage />} />
                 <Route path="/polling-units" element={<PollingUnitsPage />} />
+                <Route path="/polling-units/new" element={<CreatePollingUnitPage />} />
+                <Route path="/polling-units/:id" element={<PollingUnitDetailPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/users/new" element={<CreateUserPage />} />
               </Route>

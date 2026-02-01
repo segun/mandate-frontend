@@ -22,6 +22,18 @@ export interface GeoWard {
   state?: GeoState;
 }
 
+export interface GeoPollingUnit {
+  id: string;
+  name: string;
+  code: string;
+  wardId: string;
+  lgaId: string;
+  stateId: string;
+  ward?: GeoWard;
+  lga?: GeoLga;
+  state?: GeoState;
+}
+
 export interface PaginatedResponse<T> {
   success: boolean;
   data: T[];
@@ -67,6 +79,30 @@ export const geodataService = {
   // Get reference wards by state
   async getWardsByState(stateId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoWard>> {
     const response = await api.get(`/geodata/states/${stateId}/wards`, { params: { page, limit } });
+    return response.data;
+  },
+
+  // Get all reference polling units
+  async getAllPollingUnits(page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoPollingUnit>> {
+    const response = await api.get('/geodata/polling-units', { params: { page, limit } });
+    return response.data;
+  },
+
+  // Get reference polling units by ward
+  async getPollingUnitsByWard(wardId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoPollingUnit>> {
+    const response = await api.get(`/geodata/wards/${wardId}/polling-units`, { params: { page, limit } });
+    return response.data;
+  },
+
+  // Get reference polling units by LGA
+  async getPollingUnitsByLga(lgaId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoPollingUnit>> {
+    const response = await api.get(`/geodata/lgas/${lgaId}/polling-units`, { params: { page, limit } });
+    return response.data;
+  },
+
+  // Get reference polling units by state
+  async getPollingUnitsByState(stateId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<GeoPollingUnit>> {
+    const response = await api.get(`/geodata/states/${stateId}/polling-units`, { params: { page, limit } });
     return response.data;
   },
 };
