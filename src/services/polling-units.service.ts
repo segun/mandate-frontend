@@ -104,4 +104,8 @@ export const pollingUnitsService = {
     const response = await api.get(`/polling-units/${id}/statistics`);
     return response.data.data;
   },
+  async createPollingUnitByName(data: { name: string; code: string; geoStateId: string; geoLgaId: string; geoWardId: string; address?: string; description?: string; supervisorId?: string }): Promise<PollingUnit> {
+    const response = await api.post('/polling-units/create-by-name', data);
+    return response.data.data || response.data;
+  },
 };

@@ -121,4 +121,9 @@ export const wardsService = {
     const response = await api.get(`/wards/${id}/statistics`);
     return response.data.data;
   },
+
+  async createWardByName(name: string, geoStateId: string, geoLgaId: string): Promise<Ward> {
+    const response = await api.post('/wards/create-by-name', { name, geoStateId, geoLgaId });
+    return response.data.data || response.data;
+  },
 };

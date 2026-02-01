@@ -93,4 +93,8 @@ export const statesService = {
     const response = await api.get(`/states/${id}/statistics`);
     return response.data.data;
   },
+  async createStateByName(name: string): Promise<State> {
+    const response = await api.post('/states/create-by-name', { name });
+    return response.data.data || response.data;
+  },
 };

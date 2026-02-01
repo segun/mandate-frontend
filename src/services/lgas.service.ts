@@ -104,4 +104,8 @@ export const lgasService = {
     const response = await api.get(`/lgas/${id}/statistics`);
     return response.data;
   },
+  async createLgaByName(name: string, geoStateId: string): Promise<LGA> {
+    const response = await api.post('/lgas/create-by-name', { name, geoStateId });
+    return response.data.data || response.data;
+  },
 };
