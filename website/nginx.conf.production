@@ -55,6 +55,15 @@ server {
         return 301 /app/;
     }
 
+    # 2.1 Static assets for React app (avoid SPA fallback)
+    location ^~ /app/assets/ {
+        alias /var/www/html/app/assets/;
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
     location /app/ {
         alias /var/www/html/app/;
         try_files $uri $uri/ /app/index.html;
