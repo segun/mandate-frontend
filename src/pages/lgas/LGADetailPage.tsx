@@ -2,13 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { lgasService, getLgaName, getLgaStateName } from '../../services/lgas.service';
 import type { LGA } from '../../services/lgas.service';
-import { wardsService } from '../../services/wards.service';
-import type { Ward } from '../../services/wards.service';
 import { usersService } from '../../services/users.service';
 import type { User } from '../../services/users.service';
 import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { DEFAULT_MODAL_PAGE_LIMIT, DEFAULT_PAGE_LIMIT } from '../../lib/api';
+import { DEFAULT_MODAL_PAGE_LIMIT } from '../../lib/api';
 
 export function LGADetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,10 +15,6 @@ export function LGADetailPage() {
   const [lga, setLga] = useState<LGA | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const [wards, setWards] = useState<Ward[]>([]);
-  const [wardsLoading, setWardsLoading] = useState(false);
-  const [wardsError, setWardsError] = useState('');
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
@@ -47,24 +41,7 @@ export function LGADetailPage() {
       }
     };
 
-    const fetchWards = async () => {
-      if (!id) return;
-      setWardsLoading(true);
-      try {
-        const response = await wardsService.getAll(1, DEFAULT_PAGE_LIMIT, id);
-        setWards(response.data);
-        setWardsError('');
-      } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load wards';
-        setWards([]);
-        setWardsError(message);
-      } finally {
-        setWardsLoading(false);
-      }
-    };
-
     fetchLga();
-    fetchWards();
   }, [id]);
 
   const loadUsers = async () => {
@@ -210,7 +187,7 @@ export function LGADetailPage() {
           </div>
           <div>
             <label className="text-sm font-medium text-[#888]">Total Wards</label>
-            <p className="text-base text-white mt-1">{wards.length}</p>
+            <p className="text-base text-white mt-1">{lga.wards?.length || 0}</p>
           </div>
         </div>
 
@@ -229,7 +206,7 @@ export function LGADetailPage() {
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
         <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d] flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
-            Wards ({wards.length})
+            Wards ({lga.wards?.length || 0})
           </h2>
           <Link
             to="/wards"
@@ -239,11 +216,7 @@ export function LGADetailPage() {
           </Link>
         </div>
 
-        {wardsLoading ? (
-          <div className="p-6 text-center text-[#888]">Loading wards...</div>
-        ) : wardsError ? (
-          <div className="p-6 text-center text-red-400">{wardsError}</div>
-        ) : wards.length === 0 ? (
+        {!lga.wards || lga.wards.length === 0 ? (
           <div className="p-6 text-center text-[#888]">
             No wards have been added for this LGA yet.
             <div className="mt-4">
@@ -265,7 +238,7 @@ export function LGADetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
-                  {wards.map((ward) => (
+                  {lga.wards.map((ward) => (
                     <tr
                       key={ward.id}
                       onClick={() => navigate(`/wards/${ward.id}`)}
@@ -281,7 +254,7 @@ export function LGADetailPage() {
             </div>
 
             <div className="md:hidden divide-y divide-[#2a2a2e]">
-              {wards.map((ward) => (
+              {lga.wards.map((ward) => (
                 <div
                   key={ward.id}
                   onClick={() => navigate(`/wards/${ward.id}`)}

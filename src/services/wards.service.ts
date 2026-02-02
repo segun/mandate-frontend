@@ -42,6 +42,26 @@ export interface Ward {
     fullName: string;
     email: string;
   } | null;
+  pollingUnits?: Array<{
+    id: string;
+    address?: string | null;
+    description?: string | null;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    tenantId: string;
+    wardId: string;
+    geoPollingUnitId: string;
+    supervisorId?: string | null;
+    geoPollingUnit?: {
+      id: string;
+      name: string;
+      code: string;
+      wardId: string;
+      lgaId: string;
+      stateId: string;
+    };
+  }>;
   isActive: boolean;
   tenantId: string;
   createdAt: string;

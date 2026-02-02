@@ -39,6 +39,13 @@ export interface PollingUnit {
     fullName: string;
     email: string;
   } | null;
+  voters?: Array<{
+    id: string;
+    fullName: string;
+    phone: string;
+    pvcStatus: string;
+    supportLevel: string;
+  }>;
   isActive: boolean;
   tenantId: string;
   createdAt: string;

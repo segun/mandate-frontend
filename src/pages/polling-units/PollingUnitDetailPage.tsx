@@ -2,14 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { pollingUnitsService, getPollingUnitName, getPollingUnitCode } from '../../services/polling-units.service';
 import type { PollingUnit } from '../../services/polling-units.service';
-import { wardsService, getWardName } from '../../services/wards.service';
-import { votersService } from '../../services/voters.service';
-import type { Voter } from '../../services/voters.service';
 import { usersService } from '../../services/users.service';
 import type { User } from '../../services/users.service';
 import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { DEFAULT_MODAL_PAGE_LIMIT, DEFAULT_PAGE_LIMIT } from '../../lib/api';
+import { DEFAULT_MODAL_PAGE_LIMIT } from '../../lib/api';
 
 export function PollingUnitDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,11 +15,6 @@ export function PollingUnitDetailPage() {
   const [pollingUnit, setPollingUnit] = useState<PollingUnit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [wardName, setWardName] = useState<string>('');
-
-  const [voters, setVoters] = useState<Voter[]>([]);
-  const [votersLoading, setVotersLoading] = useState(false);
-  const [votersError, setVotersError] = useState('');
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
@@ -41,17 +33,6 @@ export function PollingUnitDetailPage() {
         const data = await pollingUnitsService.getById(id);
         setPollingUnit(data);
         setError('');
-        
-        // Fetch ward details to get the geoWard name
-        if (data.wardId) {
-          try {
-            const wardData = await wardsService.getById(data.wardId);
-            setWardName(getWardName(wardData));
-          } catch {
-            // Ward fetch failed, but don't block the page
-            setWardName('Unknown');
-          }
-        }
       } catch (err: unknown) {
         const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load polling unit';
         setError(message);
@@ -60,24 +41,7 @@ export function PollingUnitDetailPage() {
       }
     };
 
-    const fetchVoters = async () => {
-      if (!id) return;
-      setVotersLoading(true);
-      try {
-        const response = await votersService.getAll(1, DEFAULT_PAGE_LIMIT, { pollingUnitId: id });
-        setVoters(response.data);
-        setVotersError('');
-      } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load voters';
-        setVoters([]);
-        setVotersError(message);
-      } finally {
-        setVotersLoading(false);
-      }
-    };
-
     fetchPollingUnit();
-    fetchVoters();
   }, [id]);
 
   const loadUsers = async () => {
@@ -213,7 +177,7 @@ export function PollingUnitDetailPage() {
           <div>
             <label className="text-sm font-medium text-[#888]">Ward</label>
             <p className="text-base text-white mt-1">
-              {wardName || 'Loading...'}
+              {pollingUnit.ward?.geoWard?.name || 'Unknown'}
             </p>
           </div>
           <div>
@@ -243,7 +207,7 @@ export function PollingUnitDetailPage() {
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
         <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d] flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Voters ({voters.length})</h2>
+          <h2 className="text-lg font-semibold text-white">Voters ({pollingUnit.voters?.length || 0})</h2>
           <Link
             to="/voters"
             className="text-sm text-[#ca8a04] hover:text-[#d4940a] font-semibold"
@@ -252,11 +216,7 @@ export function PollingUnitDetailPage() {
           </Link>
         </div>
 
-        {votersLoading ? (
-          <div className="p-6 text-center text-[#888]">Loading voters...</div>
-        ) : votersError ? (
-          <div className="p-6 text-center text-red-400">{votersError}</div>
-        ) : voters.length === 0 ? (
+        {!pollingUnit.voters || pollingUnit.voters.length === 0 ? (
           <div className="p-6 text-center text-[#888]">No voters have been added for this polling unit yet.</div>
         ) : (
           <>
@@ -271,7 +231,7 @@ export function PollingUnitDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
-                  {voters.map((voter) => (
+                  {pollingUnit.voters.map((voter) => (
                     <tr key={voter.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium text-white">{voter.fullName}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{voter.phone}</td>
@@ -284,7 +244,7 @@ export function PollingUnitDetailPage() {
             </div>
 
             <div className="md:hidden divide-y divide-[#2a2a2e]">
-              {voters.map((voter) => (
+              {pollingUnit.voters.map((voter) => (
                 <div key={voter.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-white">{voter.fullName}</h3>

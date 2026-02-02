@@ -2,8 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { PollingUnit, PaginatedResponse } from '../../services/polling-units.service';
 import { pollingUnitsService, getPollingUnitWardName, getPollingUnitName, getPollingUnitCode } from '../../services/polling-units.service';
-import { wardsService } from '../../services/wards.service';
-import type { Ward } from '../../services/wards.service';
 import { useAuthStore } from '../../stores/auth.store';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 
@@ -17,7 +15,6 @@ export function PollingUnitsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
-  const [wardMap, setWardMap] = useState<Map<string, string>>(new Map());
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; unit: PollingUnit | null }>({ isOpen: false, unit: null });
 
@@ -30,26 +27,6 @@ export function PollingUnitsPage() {
       setPollingUnits(response.data);
       setTotalPages(response.meta?.totalPages || 1);
       setError('');
-      
-      // Fetch ward details for each unique ward ID
-      const uniqueWardIds = [...new Set(response.data.map(unit => unit.wardId).filter(Boolean))];
-      const wardNameMap = new Map<string, string>();
-      
-      await Promise.all(
-        uniqueWardIds.map(async (wardId) => {
-          try {
-            const ward = await wardsService.getById(wardId);
-            if (ward.geoWard?.name) {
-              wardNameMap.set(wardId, ward.geoWard.name);
-            }
-          } catch {
-            // If ward fetch fails, ignore and continue
-            wardNameMap.set(wardId, 'N/A');
-          }
-        })
-      );
-      
-      setWardMap(wardNameMap);
     } catch {
       setError('Failed to fetch polling units');
     } finally {
@@ -185,7 +162,7 @@ export function PollingUnitsPage() {
                     >
                       <td className="px-4 py-3 text-sm font-medium text-white">{getPollingUnitName(unit)}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{getPollingUnitCode(unit)}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{wardMap.get(unit.wardId) || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{getPollingUnitWardName(unit)}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{unit.supervisor?.fullName || '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
@@ -247,7 +224,7 @@ export function PollingUnitsPage() {
                   <p className="text-sm text-[#888] mb-2">{getPollingUnitCode(unit)}</p>
                   <div className="flex gap-2 flex-wrap">
                     <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-[#2a2a2e] text-[#888]">
-                      Ward: {wardMap.get(unit.wardId) || 'N/A'}
+                      Ward: {getPollingUnitWardName(unit)}
                     </span>
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                       {unit.isActive ? 'Active' : 'Inactive'}

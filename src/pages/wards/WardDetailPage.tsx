@@ -3,13 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { wardsService, getWardLgaName, getWardName, getWardStateName } from '../../services/wards.service';
 import type { Ward } from '../../services/wards.service';
 import { lgasService, getLgaStateName } from '../../services/lgas.service';
-import { pollingUnitsService } from '../../services/polling-units.service';
-import type { PollingUnit } from '../../services/polling-units.service';
 import { usersService } from '../../services/users.service';
 import type { User } from '../../services/users.service';
 import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { DEFAULT_MODAL_PAGE_LIMIT, DEFAULT_PAGE_LIMIT } from '../../lib/api';
+import { DEFAULT_MODAL_PAGE_LIMIT } from '../../lib/api';
 
 export function WardDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,10 +17,6 @@ export function WardDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [stateName, setStateName] = useState('');
-
-  const [pollingUnits, setPollingUnits] = useState<PollingUnit[]>([]);
-  const [pollingUnitsLoading, setPollingUnitsLoading] = useState(false);
-  const [pollingUnitsError, setPollingUnitsError] = useState('');
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
@@ -59,24 +53,7 @@ export function WardDetailPage() {
       }
     };
 
-    const fetchPollingUnits = async () => {
-      if (!id) return;
-      setPollingUnitsLoading(true);
-      try {
-        const response = await pollingUnitsService.getAll(1, DEFAULT_PAGE_LIMIT, id);
-        setPollingUnits(response.data);
-        setPollingUnitsError('');
-      } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load polling units';
-        setPollingUnits([]);
-        setPollingUnitsError(message);
-      } finally {
-        setPollingUnitsLoading(false);
-      }
-    };
-
     fetchWard();
-    fetchPollingUnits();
   }, [id]);
 
   const loadUsers = async () => {
@@ -240,7 +217,7 @@ export function WardDetailPage() {
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
         <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d] flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Polling Units ({pollingUnits.length})</h2>
+          <h2 className="text-lg font-semibold text-white">Polling Units ({ward.pollingUnits?.length || 0})</h2>
           <Link
             to="/polling-units"
             className="text-sm text-[#ca8a04] hover:text-[#d4940a] font-semibold"
@@ -249,11 +226,7 @@ export function WardDetailPage() {
           </Link>
         </div>
 
-        {pollingUnitsLoading ? (
-          <div className="p-6 text-center text-[#888]">Loading polling units...</div>
-        ) : pollingUnitsError ? (
-          <div className="p-6 text-center text-red-400">{pollingUnitsError}</div>
-        ) : pollingUnits.length === 0 ? (
+        {!ward.pollingUnits || ward.pollingUnits.length === 0 ? (
           <div className="p-6 text-center text-[#888]">No polling units have been added for this ward yet.</div>
         ) : (
           <>
@@ -266,14 +239,14 @@ export function WardDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
-                  {pollingUnits.map((unit) => (
+                  {ward.pollingUnits.map((unit) => (
                     <tr 
                       key={unit.id} 
                       onClick={() => navigate(`/polling-units/${unit.id}`)}
                       className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
                     >
-                      <td className="px-4 py-3 text-sm font-medium text-white">{unit.name}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{unit.code}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-white">{unit.geoPollingUnit?.name || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{unit.geoPollingUnit?.code || 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -281,20 +254,19 @@ export function WardDetailPage() {
             </div>
 
             <div className="md:hidden divide-y divide-[#2a2a2e]">
-              {pollingUnits.map((unit) => (
+              {ward.pollingUnits.map((unit) => (
                 <div 
                   key={unit.id} 
                   className="p-4 cursor-pointer hover:bg-[#1a1a1d]/50 transition-colors"
                   onClick={() => navigate(`/polling-units/${unit.id}`)}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-white">{unit.name}</h3>
+                    <h3 className="font-medium text-white">{unit.geoPollingUnit?.name || 'N/A'}</h3>
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                       {unit.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <p className="text-sm text-[#888] mb-1">Code: {unit.code}</p>
-                  <p className="text-sm text-[#888]">Supervisor: {unit.supervisor?.fullName || 'Not assigned'}</p>
+                  <p className="text-sm text-[#888] mb-1">Code: {unit.geoPollingUnit?.code || 'N/A'}</p>
                 </div>
               ))}
             </div>
