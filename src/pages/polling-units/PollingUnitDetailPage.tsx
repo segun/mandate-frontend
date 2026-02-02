@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { pollingUnitsService } from '../../services/polling-units.service';
+import { pollingUnitsService, getPollingUnitName, getPollingUnitCode } from '../../services/polling-units.service';
 import type { PollingUnit } from '../../services/polling-units.service';
 import { wardsService, getWardName } from '../../services/wards.service';
 import { votersService } from '../../services/voters.service';
@@ -179,7 +179,7 @@ export function PollingUnitDetailPage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">{pollingUnit.name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">{getPollingUnitName(pollingUnit)}</h1>
           <p className="text-sm text-[#888] mt-1">Polling unit details and voters</p>
         </div>
         <div className="flex items-center gap-2">
@@ -204,11 +204,11 @@ export function PollingUnitDetailPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label className="text-sm font-medium text-[#888]">Name</label>
-            <p className="text-base text-white mt-1">{pollingUnit.name}</p>
+            <p className="text-base text-white mt-1">{getPollingUnitName(pollingUnit)}</p>
           </div>
           <div>
             <label className="text-sm font-medium text-[#888]">Code</label>
-            <p className="text-base text-white mt-1">{pollingUnit.code}</p>
+            <p className="text-base text-white mt-1">{getPollingUnitCode(pollingUnit)}</p>
           </div>
           <div>
             <label className="text-sm font-medium text-[#888]">Ward</label>

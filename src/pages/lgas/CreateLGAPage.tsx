@@ -223,7 +223,7 @@ export function CreateLGAPage() {
                 : 'border-transparent text-[#888] hover:text-white'
             }`}
           >
-            Add by Geo ID
+            Add LGA
           </button>
           <button
             onClick={() => setMode('by-name')}

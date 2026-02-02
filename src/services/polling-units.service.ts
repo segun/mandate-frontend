@@ -18,13 +18,21 @@ export interface Ward {
 
 export interface PollingUnit {
   id: string;
-  name: string;
-  code: string;
+  name?: string;
+  code?: string;
   address?: string;
   description?: string;
   wardId: string;
   ward?: Ward;
   geoPollingUnitId?: string;
+  geoPollingUnit?: {
+    id: string;
+    name: string;
+    code: string;
+    wardId: string;
+    lgaId: string;
+    stateId: string;
+  };
   supervisorId?: string | null;
   supervisor?: {
     id: string;
@@ -61,6 +69,16 @@ export function getPollingUnitLgaName(unit: PollingUnit): string {
   return unit.ward?.lga?.geoLga?.name || '';
 }
 
+// Helper to get polling unit name from geoPollingUnit or fallback to name
+export function getPollingUnitName(unit: PollingUnit): string {
+  return unit.geoPollingUnit?.name || unit.name || 'N/A';
+}
+
+// Helper to get polling unit code from geoPollingUnit or fallback to code
+export function getPollingUnitCode(unit: PollingUnit): string {
+  return unit.geoPollingUnit?.code || unit.code || 'N/A';
+}
+
 export const pollingUnitsService = {
   async getAll(page = 1, limit = DEFAULT_PAGE_LIMIT, wardId?: string, name?: string): Promise<PaginatedResponse<PollingUnit>> {
     const params: Record<string, unknown> = { page, limit };
@@ -78,11 +96,7 @@ export const pollingUnitsService = {
     return response.data.data;
   },
   async addPollingUnits(geoPollingUnitIds: string[]): Promise<{ added: PollingUnit[]; skipped: string[] }> {
-    const response = await api.post('/polling-units/bulk', { geoPollingUnitIds });
-    return response.data.data;
-  },
-  async create(data: { name: string; code: string; wardId: string; address?: string; description?: string }): Promise<PollingUnit> {
-    const response = await api.post('/polling-units', data);
+    const response = await api.post('/polling-units', { geoPollingUnitIds });
     return response.data.data;
   },
   async update(id: string, data: Partial<{ name: string; code: string; address: string; description: string; isActive: boolean }>): Promise<PollingUnit> {

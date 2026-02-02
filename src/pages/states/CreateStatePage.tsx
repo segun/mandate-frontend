@@ -183,7 +183,7 @@ export function CreateStatePage() {
                 : 'border-transparent text-[#888] hover:text-white'
             }`}
           >
-            Add by Geo ID
+            Add State
           </button>
           <button
             onClick={() => setMode('by-name')}

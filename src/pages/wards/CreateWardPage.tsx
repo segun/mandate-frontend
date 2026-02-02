@@ -284,7 +284,7 @@ export function CreateWardPage() {
                 : 'border-transparent text-[#888] hover:text-white'
             }`}
           >
-            Add by Geo ID
+            Add Ward
           </button>
           <button
             onClick={() => setMode('by-name')}

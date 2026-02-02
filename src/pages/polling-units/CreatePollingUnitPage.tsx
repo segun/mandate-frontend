@@ -377,7 +377,7 @@ export function CreatePollingUnitPage() {
                 : 'border-transparent text-[#888] hover:text-white'
             }`}
           >
-            Add by Geo ID
+            Add Polling Unit
           </button>
           <button
             onClick={() => setMode('by-name')}

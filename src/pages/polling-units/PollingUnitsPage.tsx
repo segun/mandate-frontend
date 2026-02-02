@@ -1,12 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { PollingUnit, PaginatedResponse } from '../../services/polling-units.service';
-import { pollingUnitsService, getPollingUnitWardName } from '../../services/polling-units.service';
+import { pollingUnitsService, getPollingUnitWardName, getPollingUnitName, getPollingUnitCode } from '../../services/polling-units.service';
 import { wardsService } from '../../services/wards.service';
 import type { Ward } from '../../services/wards.service';
+import { useAuthStore } from '../../stores/auth.store';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 export function PollingUnitsPage() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const [pollingUnits, setPollingUnits] = useState<PollingUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -14,6 +18,8 @@ export function PollingUnitsPage() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [wardMap, setWardMap] = useState<Map<string, string>>(new Map());
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; unit: PollingUnit | null }>({ isOpen: false, unit: null });
 
   const fetchPollingUnits = useCallback(async () => {
     setLoading(true);
@@ -61,8 +67,48 @@ export function PollingUnitsPage() {
     fetchPollingUnits();
   };
 
+  const openDeleteModal = (unit: PollingUnit) => {
+    setDeleteModal({ isOpen: true, unit });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, unit: null });
+  };
+
+  const handleDelete = async () => {
+    const unit = deleteModal.unit;
+    if (!unit) return;
+
+    setDeleting(unit.id);
+    closeDeleteModal();
+    try {
+      await pollingUnitsService.delete(unit.id);
+      setPollingUnits((prev) => prev.filter((item) => item.id !== unit.id));
+    } catch {
+      setError(`Failed to delete ${getPollingUnitName(unit)}`);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <ConfirmDialog
+        isOpen={deleteModal.isOpen}
+        title="Delete Polling Unit"
+        message={
+          <>
+            Are you sure you want to delete <span className="text-[#ca8a04] font-medium">"{deleteModal.unit ? getPollingUnitName(deleteModal.unit) : ''}"</span>?
+            This action cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={closeDeleteModal}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
@@ -137,8 +183,8 @@ export function PollingUnitsPage() {
                       onClick={() => navigate(`/polling-units/${unit.id}`)}
                       className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
                     >
-                      <td className="px-4 py-3 text-sm font-medium text-white">{unit.name}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{unit.code}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-white">{getPollingUnitName(unit)}</td>
+                      <td className="px-4 py-3 text-sm text-[#888]">{getPollingUnitCode(unit)}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{wardMap.get(unit.wardId) || 'N/A'}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{unit.supervisor?.fullName || '-'}</td>
                       <td className="px-4 py-3">
@@ -147,13 +193,23 @@ export function PollingUnitsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link 
-                          to={`/polling-units/${unit.id}`} 
-                          className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          View
-                        </Link>
+                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                          <Link 
+                            to={`/polling-units/${unit.id}`} 
+                            className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold"
+                          >
+                            View
+                          </Link>
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => openDeleteModal(unit)}
+                              disabled={deleting === unit.id}
+                              className="text-red-400 hover:text-red-300 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {deleting === unit.id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -169,16 +225,26 @@ export function PollingUnitsPage() {
                   onClick={() => navigate(`/polling-units/${unit.id}`)}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-white">{unit.name}</h3>
-                    <Link 
-                      to={`/polling-units/${unit.id}`} 
-                      className="text-[#ca8a04] text-sm font-semibold"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      View →
-                    </Link>
+                    <h3 className="font-medium text-white">{getPollingUnitName(unit)}</h3>
+                    <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                      <Link 
+                        to={`/polling-units/${unit.id}`} 
+                        className="text-[#ca8a04] text-sm font-semibold"
+                      >
+                        View →
+                      </Link>
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => openDeleteModal(unit)}
+                          disabled={deleting === unit.id}
+                          className="text-red-400 text-sm font-semibold disabled:opacity-50"
+                        >
+                          {deleting === unit.id ? '...' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-[#888] mb-2">{unit.code}</p>
+                  <p className="text-sm text-[#888] mb-2">{getPollingUnitCode(unit)}</p>
                   <div className="flex gap-2 flex-wrap">
                     <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-[#2a2a2e] text-[#888]">
                       Ward: {wardMap.get(unit.wardId) || 'N/A'}
