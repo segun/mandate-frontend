@@ -43,11 +43,11 @@ server {
     root /var/www/html;
     index index.html;
 
-    # 1. Main Website at /
+    # 1. Main Website at / (SPA routing fallback)
     location / {
-        try_files $uri $uri/ =404;
-        # Cache control for static assets
-        add_header Cache-Control "public, max-age=3600";
+        try_files $uri $uri/ /index.html;
+        # Cache control for HTML files - always check for updates
+        add_header Cache-Control "public, max-age=0, must-revalidate" always;
     }
 
     # 2. React SPA at /app (redirect /app -> /app/)
