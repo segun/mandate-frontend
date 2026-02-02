@@ -171,7 +171,7 @@ export function CreateLGAPage() {
     toast.info('Creating LGA... This may take a moment.', 0);
     setSubmitting(true);
     try {
-      const result = await lgasService.createLgaByName(lgaName, nameFormStateId);
+      await lgasService.createLgaByName(lgaName, nameFormStateId);
       toast.success('LGA created successfully! Redirecting...');
       setLgaName('');
       setNameFormStateId('');

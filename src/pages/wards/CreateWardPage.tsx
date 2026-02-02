@@ -231,7 +231,7 @@ export function CreateWardPage() {
     toast.info('Creating ward... This may take a moment.', 0);
     setLoading(true);
     try {
-      const result = await wardsService.createWardByName(wardName, nameFormStateId, nameFormLgaId);
+      await wardsService.createWardByName(wardName, nameFormStateId, nameFormLgaId);
       toast.success('Ward created successfully! Redirecting...');
       setWardName('');
       setNameFormStateId('');

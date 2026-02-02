@@ -136,7 +136,7 @@ export function CreateStatePage() {
 
     setLoading(true);
     try {
-      const result = await statesService.createStateByName(stateName);
+      await statesService.createStateByName(stateName);
       toast.success('State created successfully! Redirecting...');
       setStateName('');
       setTimeout(() => navigate('/states'), 1000);

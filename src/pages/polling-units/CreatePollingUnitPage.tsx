@@ -312,7 +312,7 @@ export function CreatePollingUnitPage() {
     toast.info('Creating polling unit... This may take a moment.', 0);
     setLoading(true);
     try {
-      const result = await pollingUnitsService.createPollingUnitByName({
+      await pollingUnitsService.createPollingUnitByName({
         name: puName,
         code: puCode,
         geoStateId: nameFormStateId,
