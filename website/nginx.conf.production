@@ -50,9 +50,13 @@ server {
         add_header Cache-Control "public, max-age=3600";
     }
 
-    # 2. React SPA at /app
-    location /app {
-        alias /var/www/html/app;
+    # 2. React SPA at /app (redirect /app -> /app/)
+    location = /app {
+        return 301 /app/;
+    }
+
+    location /app/ {
+        alias /var/www/html/app/;
         try_files $uri $uri/ /app/index.html;
         # Cache control for HTML files - always check for updates
         add_header Cache-Control "public, max-age=0, must-revalidate" always;
@@ -60,7 +64,7 @@ server {
 
     # 3. Cache static assets in /app directory (1 year)
     location ~* ^/app/.*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        alias /var/www/html/app;
+        alias /var/www/html/app/;
         expires 1y;
         add_header Cache-Control "public, immutable";
         access_log off;
