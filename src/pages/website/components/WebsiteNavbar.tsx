@@ -1,10 +1,16 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
 
 const GOLD = "#ca8a04";
 
 export function WebsiteNavbar() {
+  const location = useLocation();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -29,48 +35,48 @@ export function WebsiteNavbar() {
           <Link
             to="/about"
             onClick={scrollToTop}
-            style={{ color: "#ccc" }}
-            className="hover:opacity-80 transition-opacity"
+            style={{ color: isActive("/about") ? GOLD : "#ccc" }}
+            className="hover:opacity-80 transition-opacity font-medium"
           >
             About
           </Link>
           <Link
             to="/product"
             onClick={scrollToTop}
-            style={{ color: "#ccc" }}
-            className="hover:opacity-80 transition-opacity"
+            style={{ color: isActive("/product") ? GOLD : "#ccc" }}
+            className="hover:opacity-80 transition-opacity font-medium"
           >
             Product
           </Link>
           <Link
             to="/solutions"
             onClick={scrollToTop}
-            style={{ color: "#ccc" }}
-            className="hover:opacity-80 transition-opacity"
+            style={{ color: isActive("/solutions") ? GOLD : "#ccc" }}
+            className="hover:opacity-80 transition-opacity font-medium"
           >
             Solutions
           </Link>
           <Link
             to="/platform"
             onClick={scrollToTop}
-            style={{ color: "#ccc" }}
-            className="hover:opacity-80 transition-opacity"
+            style={{ color: isActive("/platform") ? GOLD : "#ccc" }}
+            className="hover:opacity-80 transition-opacity font-medium"
           >
             Platform
           </Link>
           <Link
             to="/partnerships"
             onClick={scrollToTop}
-            style={{ color: "#ccc" }}
-            className="hover:opacity-80 transition-opacity"
+            style={{ color: isActive("/partnerships") ? GOLD : "#ccc" }}
+            className="hover:opacity-80 transition-opacity font-medium"
           >
             Partnerships
           </Link>
           <Link
             to="/contact"
             onClick={scrollToTop}
-            style={{ color: "#ccc" }}
-            className="hover:opacity-80 transition-opacity"
+            style={{ color: isActive("/contact") ? GOLD : "#ccc" }}
+            className="hover:opacity-80 transition-opacity font-medium"
           >
             Contact
           </Link>
