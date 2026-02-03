@@ -1,0 +1,8 @@
+export { HomePage } from './HomePage';
+export { AboutPage } from './AboutPage';
+export { ProductPage } from './ProductPage';
+export { SolutionsPage } from './SolutionsPage';
+export { PlatformPage } from './PlatformPage';
+export { PartnershipsPage } from './PartnershipsPage';
+export { ContactPage } from './ContactPage';
+export { RequestAccessPage } from './RequestAccessPage';

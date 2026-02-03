@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -22,45 +22,90 @@ import { UsersPage } from './pages/users/UsersPage';
 import './App.css';
 import CreateUserPage from "./pages/users/CreateUserPage";
 
+// Website pages
+import { 
+  HomePage, 
+  AboutPage, 
+  ProductPage, 
+  SolutionsPage, 
+  PlatformPage, 
+  PartnershipsPage, 
+  ContactPage, 
+  RequestAccessPage 
+} from './pages/website';
+
 const queryClient = new QueryClient();
+
+// App routes that need the dashboard layout
+const appRoutes = [
+  '/dashboard', '/states', '/lgas', '/wards', '/voters', 
+  '/polling-units', '/users', '/login'
+];
+
+function AppLayout() {
+  const location = useLocation();
+  const isAppRoute = appRoutes.some(route => location.pathname.startsWith(route));
+
+  // Website routes - no dashboard navbar/layout
+  if (!isAppRoute) {
+    return (
+      <Routes>
+        {/* Website public pages */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/product" element={<ProductPage />} />
+        <Route path="/solutions" element={<SolutionsPage />} />
+        <Route path="/platform" element={<PlatformPage />} />
+        <Route path="/partnerships" element={<PartnershipsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/request-access" element={<RequestAccessPage />} />
+        
+        {/* Catch-all for unknown routes - go to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
+  // App routes - with dashboard navbar/layout
+  return (
+    <div className="min-h-screen bg-[#0d0d0f] text-[#f2f2f2]">
+      <ToastContainer />
+      <Navbar />
+      <main className="main-content px-4 sm:px-6 lg:px-8 pb-12 pt-6">
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* Protected routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/states" element={<StatesPage />} />
+            <Route path="/states/new" element={<CreateStatePage />} />
+            <Route path="/states/:id" element={<StateDetailPage />} />
+            <Route path="/lgas" element={<LGAsPage />} />
+            <Route path="/lgas/new" element={<CreateLGAPage />} />
+            <Route path="/lgas/:id" element={<LGADetailPage />} />
+            <Route path="/wards" element={<WardsPage />} />
+            <Route path="/wards/new" element={<CreateWardPage />} />
+            <Route path="/wards/:id" element={<WardDetailPage />} />
+            <Route path="/voters" element={<VotersPage />} />
+            <Route path="/polling-units" element={<PollingUnitsPage />} />
+            <Route path="/polling-units/new" element={<CreatePollingUnitPage />} />
+            <Route path="/polling-units/:id" element={<PollingUnitDetailPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/users/new" element={<CreateUserPage />} />
+          </Route>
+        </Routes>
+      </main>
+    </div>
+  );
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen bg-[#0d0d0f] text-[#f2f2f2]">
-          <ToastContainer />
-          <Navbar />
-          <main className="main-content px-4 sm:px-6 lg:px-8 pb-12 pt-6">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<LoginPage />} />
-              
-              {/* Protected routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/states" element={<StatesPage />} />
-                <Route path="/states/new" element={<CreateStatePage />} />
-                <Route path="/states/:id" element={<StateDetailPage />} />
-                <Route path="/lgas" element={<LGAsPage />} />
-                <Route path="/lgas/new" element={<CreateLGAPage />} />
-                <Route path="/lgas/:id" element={<LGADetailPage />} />
-                <Route path="/wards" element={<WardsPage />} />
-                <Route path="/wards/new" element={<CreateWardPage />} />
-                <Route path="/wards/:id" element={<WardDetailPage />} />
-                <Route path="/voters" element={<VotersPage />} />
-                <Route path="/polling-units" element={<PollingUnitsPage />} />
-                <Route path="/polling-units/new" element={<CreatePollingUnitPage />} />
-                <Route path="/polling-units/:id" element={<PollingUnitDetailPage />} />
-                <Route path="/users" element={<UsersPage />} />
-                <Route path="/users/new" element={<CreateUserPage />} />
-              </Route>
-              
-              {/* Redirect */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </main>
-        </div>
+        <AppLayout />
       </BrowserRouter>
     </QueryClientProvider>
   );
