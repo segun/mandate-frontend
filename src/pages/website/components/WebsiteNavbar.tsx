@@ -5,6 +5,10 @@ import { Lock } from "lucide-react";
 const GOLD = "#ca8a04";
 
 export function WebsiteNavbar() {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <motion.nav
       className="sticky top-0 z-50 backdrop-blur-md py-4"
@@ -17,13 +21,14 @@ export function WebsiteNavbar() {
       transition={{ duration: 0.5 }}
     >
       <div className="section-container flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" onClick={scrollToTop} className="flex items-center gap-3">
           <img src="/images/logo.png" alt="ControlHQ" className="h-10 w-auto" />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
           <Link
             to="/about"
+            onClick={scrollToTop}
             style={{ color: "#ccc" }}
             className="hover:opacity-80 transition-opacity"
           >
@@ -31,6 +36,7 @@ export function WebsiteNavbar() {
           </Link>
           <Link
             to="/product"
+            onClick={scrollToTop}
             style={{ color: "#ccc" }}
             className="hover:opacity-80 transition-opacity"
           >
@@ -38,6 +44,7 @@ export function WebsiteNavbar() {
           </Link>
           <Link
             to="/solutions"
+            onClick={scrollToTop}
             style={{ color: "#ccc" }}
             className="hover:opacity-80 transition-opacity"
           >
@@ -45,6 +52,7 @@ export function WebsiteNavbar() {
           </Link>
           <Link
             to="/platform"
+            onClick={scrollToTop}
             style={{ color: "#ccc" }}
             className="hover:opacity-80 transition-opacity"
           >
@@ -52,6 +60,7 @@ export function WebsiteNavbar() {
           </Link>
           <Link
             to="/partnerships"
+            onClick={scrollToTop}
             style={{ color: "#ccc" }}
             className="hover:opacity-80 transition-opacity"
           >
@@ -59,6 +68,7 @@ export function WebsiteNavbar() {
           </Link>
           <Link
             to="/contact"
+            onClick={scrollToTop}
             style={{ color: "#ccc" }}
             className="hover:opacity-80 transition-opacity"
           >
@@ -79,6 +89,7 @@ export function WebsiteNavbar() {
           </Link>
           <Link
             to="/request-access"
+            onClick={scrollToTop}
             className="px-6 py-2 rounded-lg font-semibold"
             style={{ backgroundColor: GOLD, color: "#000000" }}
           >
