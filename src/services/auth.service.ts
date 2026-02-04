@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { UserRole } from '../lib/permissions';
 
 export interface LoginRequest {
   email: string;
@@ -20,7 +21,7 @@ export interface AuthResponse {
       id: string;
       fullName: string;
       email: string;
-      role: string;
+      role: UserRole;
       tenantId: string;
     };
   };
