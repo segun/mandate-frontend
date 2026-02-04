@@ -1,18 +1,49 @@
 import { api, DEFAULT_PAGE_LIMIT } from '../lib/api';
 
+export interface GeoState {
+  id: string;
+  name: string;
+}
+
+export interface GeoLga {
+  id: string;
+  name: string;
+  stateId?: string;
+}
+
+export interface State {
+  id: string;
+  geoStateId: string;
+  geoState?: GeoState;
+}
+
+export interface LGA {
+  id: string;
+  geoLgaId: string;
+  stateId?: string;
+  geoLga?: GeoLga;
+}
+
 export interface Ward {
   id: string;
   geoWardId: string;
+  lgaId?: string;
   geoWard?: {
     id: string;
     name: string;
+    lgaId?: string;
   };
 }
 
 export interface PollingUnit {
   id: string;
-  name: string;
-  code: string;
+  geoPollingUnitId: string;
+  wardId?: string;
+  geoPollingUnit?: {
+    id: string;
+    name: string;
+    wardId?: string;
+  };
 }
 
 export interface Voter {
@@ -34,10 +65,13 @@ export interface Voter {
     id: string;
     fullName: string;
   };
+  notes?: string;
   isActive: boolean;
   tenantId: string;
   createdAt: string;
   updatedAt: string;
+  state?: State;
+  lga?: LGA;
 }
 
 export interface PaginatedResponse<T> {
@@ -58,7 +92,7 @@ export function getVoterWardName(voter: Voter): string {
 
 // Helper to get polling unit name
 export function getVoterPollingUnitName(voter: Voter): string {
-  return voter.pollingUnit?.name || '';
+  return voter.pollingUnit?.geoPollingUnit?.name || '';
 }
 
 export const votersService = {
@@ -106,6 +140,7 @@ export const votersService = {
     wardId: string;
     pollingUnitId: string;
     assignedCanvasserId: string;
+    notes: string;
     isActive: boolean;
   }>): Promise<Voter> {
     const response = await api.patch(`/voters/${id}`, data);
@@ -118,5 +153,61 @@ export const votersService = {
 
   async recordContact(id: string, data: { type: string; notes?: string }): Promise<void> {
     await api.post(`/voters/${id}/contacts`, data);
+  },
+
+  async deactivate(id: string): Promise<void> {
+    await api.delete(`/voters/${id}/deactivate`);
+  },
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getResponsibilityChain(id: string): Promise<any> {
+    const response = await api.get(`/voters/${id}/responsibility-chain`);
+    return response.data.data;
+  },
+
+  async searchAdvanced(
+    params: Record<string, string | number | undefined>,
+    page = 1,
+    limit = DEFAULT_PAGE_LIMIT
+  ): Promise<PaginatedResponse<Voter>> {
+    const response = await api.get('/voters/search', {
+      params: { ...params, page, limit },
+    });
+    return response.data;
+  },
+
+  async findByState(stateId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<Voter>> {
+    const response = await api.get(`/voters/by-state/${stateId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  async findByLga(lgaId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<Voter>> {
+    const response = await api.get(`/voters/by-lga/${lgaId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  async findByWard(wardId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<Voter>> {
+    const response = await api.get(`/voters/by-ward/${wardId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  async findByPollingUnit(pollingUnitId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<Voter>> {
+    const response = await api.get(`/voters/by-polling-unit/${pollingUnitId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  async findByCanvasser(canvasserId: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<Voter>> {
+    const response = await api.get(`/voters/by-canvasser/${canvasserId}`, {
+      params: { page, limit },
+    });
+    return response.data;
   },
 };

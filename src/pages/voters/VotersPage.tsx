@@ -1,15 +1,21 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Voter, PaginatedResponse } from '../../services/voters.service';
 import { votersService, getVoterWardName, getVoterPollingUnitName } from '../../services/voters.service';
+import { useAuthStore } from '../../stores/auth.store';
+import { toast } from '../../stores/toast.store';
 
 export function VotersPage() {
+  const navigate = useNavigate();
   const [voters, setVoters] = useState<Voter[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const fetchVoters = useCallback(async () => {
     setLoading(true);
@@ -38,6 +44,29 @@ export function VotersPage() {
     e.preventDefault();
     setPage(1);
     fetchVoters();
+  };
+
+  const handleDelete = async (voterId: string) => {
+    if (!isSuperAdmin) {
+      toast.error('Only super admins can delete voters');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to permanently delete this voter? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeleting(voterId);
+    try {
+      await votersService.delete(voterId);
+      setVoters(voters.filter(v => v.id !== voterId));
+      toast.success('Voter deleted successfully');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || 'Failed to delete voter');
+    } finally {
+      setDeleting(null);
+    }
   };
 
   const getSupportLevelBadge = (level: string) => {
@@ -133,7 +162,11 @@ export function VotersPage() {
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
                   {voters.map((voter) => (
-                    <tr key={voter.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
+                    <tr 
+                      key={voter.id} 
+                      onClick={() => navigate(`/voters/${voter.id}`)}
+                      className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-white">{voter.fullName}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{voter.phone}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{getVoterWardName(voter)}</td>
@@ -148,10 +181,24 @@ export function VotersPage() {
                           {voter.supportLevel.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <Link to={`/voters/${voter.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
-                          View
-                        </Link>
+                      <td className="px-4 py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-2">
+                          <Link to={`/voters/${voter.id}`} className="text-[#ca8a04] hover:text-[#d4940a] font-semibold">
+                            View
+                          </Link>
+                          <Link to={`/voters/${voter.id}/edit`} className="text-blue-400 hover:text-blue-300 font-semibold">
+                            Edit
+                          </Link>
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => handleDelete(voter.id)}
+                              disabled={deleting === voter.id}
+                              className="text-red-400 hover:text-red-300 font-semibold disabled:opacity-50"
+                            >
+                              {deleting === voter.id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -165,13 +212,18 @@ export function VotersPage() {
                 <div key={voter.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-white">{voter.fullName}</h3>
-                    <Link to={`/voters/${voter.id}`} className="text-[#ca8a04] text-sm font-semibold">
-                      View →
-                    </Link>
+                    <div className="flex gap-2">
+                      <Link to={`/voters/${voter.id}`} className="text-[#ca8a04] text-sm font-semibold">
+                        View
+                      </Link>
+                      <Link to={`/voters/${voter.id}/edit`} className="text-blue-400 text-sm font-semibold">
+                        Edit
+                      </Link>
+                    </div>
                   </div>
                   <p className="text-sm text-[#888] mb-1">{voter.phone}</p>
                   <p className="text-sm text-[#888] mb-2">{getVoterWardName(voter)} • {getVoterPollingUnitName(voter)}</p>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-2 flex-wrap mb-3">
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getPvcBadge(voter.pvcStatus)}`}>
                       PVC: {voter.pvcStatus}
                     </span>
@@ -179,6 +231,15 @@ export function VotersPage() {
                       {voter.supportLevel.replace(/_/g, ' ')}
                     </span>
                   </div>
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => handleDelete(voter.id)}
+                      disabled={deleting === voter.id}
+                      className="text-red-400 hover:text-red-300 text-sm font-semibold disabled:opacity-50"
+                    >
+                      {deleting === voter.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

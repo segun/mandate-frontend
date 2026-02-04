@@ -6,6 +6,9 @@ import { ToastContainer } from './components/Toast';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { VotersPage } from './pages/voters/VotersPage';
+import CreateVoterPage from './pages/voters/CreateVoterPage';
+import EditVoterPage from './pages/voters/EditVoterPage';
+import ViewVoterPage from './pages/voters/ViewVoterPage';
 import { WardsPage } from './pages/wards/WardsPage';
 import { CreateWardPage } from './pages/wards/CreateWardPage';
 import { WardDetailPage } from './pages/wards/WardDetailPage';
@@ -89,6 +92,9 @@ function AppLayout() {
             <Route path="/wards/new" element={<CreateWardPage />} />
             <Route path="/wards/:id" element={<WardDetailPage />} />
             <Route path="/voters" element={<VotersPage />} />
+            <Route path="/voters/new" element={<CreateVoterPage />} />
+            <Route path="/voters/:id" element={<ViewVoterPage />} />
+            <Route path="/voters/:id/edit" element={<EditVoterPage />} />
             <Route path="/polling-units" element={<PollingUnitsPage />} />
             <Route path="/polling-units/new" element={<CreatePollingUnitPage />} />
             <Route path="/polling-units/:id" element={<PollingUnitDetailPage />} />
