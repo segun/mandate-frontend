@@ -34,6 +34,27 @@ export interface User {
     name: string;
     code: string;
   } | null;
+  assignedVoters?: Array<{
+    id: string;
+    fullName: string;
+    phone: string;
+    houseAddress?: string;
+    pvcStatus: string;
+    supportLevel: string;
+    engagementStatus: string;
+    state?: {
+      geoState?: { name: string };
+    };
+    lga?: {
+      geoLga?: { name: string };
+    };
+    ward?: {
+      geoWard?: { name: string };
+    };
+    pollingUnit?: {
+      geoPollingUnit?: { name: string };
+    };
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +88,11 @@ export function getUserAssignedLocation(user: User): string {
 }
 
 export const usersService = {
+  async getMinimal(): Promise<Array<{ id: string; fullName: string; role: string }>> {
+    const response = await api.get('/users/minimal');
+    return response.data.data; // Assuming the API returns { success: boolean, data: Array<{ id, fullName, role }> }
+  },
+
   async getAll(page = 1, limit = DEFAULT_PAGE_LIMIT, filters?: Record<string, string>): Promise<PaginatedResponse<User>> {
     const response = await api.get('/users', { params: { page, limit, ...filters } });
     return response.data;

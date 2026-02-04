@@ -22,6 +22,7 @@ import { PollingUnitsPage } from './pages/polling-units/PollingUnitsPage';
 import { PollingUnitDetailPage } from './pages/polling-units/PollingUnitDetailPage';
 import { CreatePollingUnitPage } from './pages/polling-units/CreatePollingUnitPage';
 import { UsersPage } from './pages/users/UsersPage';
+import ViewUserPage from './pages/users/ViewUserPage';
 import './App.css';
 import CreateUserPage from "./pages/users/CreateUserPage";
 
@@ -99,6 +100,7 @@ function AppLayout() {
             <Route path="/polling-units/new" element={<CreatePollingUnitPage />} />
             <Route path="/polling-units/:id" element={<PollingUnitDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
+            <Route path="/users/:id" element={<ViewUserPage />} />
             <Route path="/users/new" element={<CreateUserPage />} />
           </Route>
         </Routes>
