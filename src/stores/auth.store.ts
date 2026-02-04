@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { UserRole } from '../lib/permissions';
 
 export interface User {
   id: string;
   fullName: string;
   email: string;
-  role: string;
+  role: UserRole;
   tenantId: string;
 }
 

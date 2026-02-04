@@ -9,6 +9,8 @@ import { pollingUnitsService } from '../../services/polling-units.service';
 import { usersService } from '../../services/users.service';
 import { DEFAULT_PAGE_LIMIT } from '../../lib/api';
 import { toast } from '../../stores/toast.store';
+import { useAuthStore } from '../../stores/auth.store';
+import { hasAccessToResource, Resource } from '../../lib/permissions';
 
 interface FormData {
   fullName: string;
@@ -108,6 +110,7 @@ const validateRequired = (value: string, fieldName: string): string => {
 
 export default function CreateVoterPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [states, setStates] = useState<SelectOption[]>([]);
   const [lgas, setLgas] = useState<SelectOption[]>([]);
@@ -158,16 +161,31 @@ export default function CreateVoterPage() {
     const loadInitialData = async () => {
       try {
         setLoadingOptions(true);
-        const [statesData, canvassersData] = await Promise.all([
-          statesService.getAll(1, DEFAULT_PAGE_LIMIT),
-          usersService.getAll(1, DEFAULT_PAGE_LIMIT),
-        ]);
+        const statesData = await statesService.getAll(1, DEFAULT_PAGE_LIMIT);
         setStates(statesData.data.map((s: any) => ({ id: s.id, name: s.geoState?.name || s.name || 'Unknown' })));
-        setCanvassers(
-          canvassersData.data
-            .filter((u: any) => ['FIELD_OFFICER', 'UNIT_COMMANDER', 'WARD_OFFICER'].includes(u.role))
-            .map((u: any) => ({ id: u.id, name: u.fullName }))
-        );
+        
+        // Load canvassers if user has permission, otherwise just add current user
+        if (hasAccessToResource(user?.role, Resource.USERS)) {
+          try {
+            const canvassersData = await usersService.getAll(1, DEFAULT_PAGE_LIMIT);
+            setCanvassers(
+              canvassersData.data
+                .filter((u: any) => ['FIELD_OFFICER', 'UNIT_COMMANDER', 'WARD_OFFICER'].includes(u.role))
+                .map((u: any) => ({ id: u.id, name: u.fullName }))
+            );
+          } catch (err) {
+            // If API fails, fall back to current user
+            console.warn('Could not load canvassers:', err);
+            if (user) {
+              setCanvassers([{ id: user.id, name: user.fullName }]);
+            }
+          }
+        } else {
+          // User doesn't have permission to read all users, just add themselves
+          if (user) {
+            setCanvassers([{ id: user.id, name: user.fullName }]);
+          }
+        }
       } catch {
         toast.error('Failed to load options');
       } finally {
@@ -175,7 +193,7 @@ export default function CreateVoterPage() {
       }
     };
     loadInitialData();
-  }, []);
+  }, [user]);
 
   // Load LGAs when state changes
   useEffect(() => {

@@ -8,6 +8,8 @@ import { pollingUnitsService } from '../../services/polling-units.service';
 import { usersService } from '../../services/users.service';
 import { DEFAULT_PAGE_LIMIT } from '../../lib/api';
 import { toast } from '../../stores/toast.store';
+import { useAuthStore } from '../../stores/auth.store';
+import { hasAccessToResource, Resource } from '../../lib/permissions';
 
 interface FormData {
   fullName: string;
@@ -103,6 +105,7 @@ const validateRequired = (value: string, fieldName: string): string => {
 export default function EditVoterPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [wards, setWards] = useState<SelectOption[]>([]);
@@ -187,19 +190,31 @@ export default function EditVoterPage() {
   // Load wards and canvassers
   useEffect(() => {
     const loadData = async () => {
-      try {
-        const [canvassersData] = await Promise.all([usersService.getAll(1, DEFAULT_PAGE_LIMIT)]);
-        setCanvassers(
-          canvassersData.data
-            .filter((u: any) => ['FIELD_OFFICER', 'UNIT_COMMANDER', 'WARD_OFFICER'].includes(u.role))
-            .map((u: any) => ({ id: u.id, name: u.fullName }))
-        );
-      } catch (err) {
-        toast.error('Failed to load options');
+      // Load canvassers if user has permission, otherwise just add current user
+      if (hasAccessToResource(user?.role, Resource.USERS)) {
+        try {
+          const canvassersData = await usersService.getAll(1, DEFAULT_PAGE_LIMIT);
+          setCanvassers(
+            canvassersData.data
+              .filter((u: any) => ['FIELD_OFFICER', 'UNIT_COMMANDER', 'WARD_OFFICER'].includes(u.role))
+              .map((u: any) => ({ id: u.id, name: u.fullName }))
+          );
+        } catch (err) {
+          // If API fails, fall back to current user
+          console.warn('Could not load canvassers:', err);
+          if (user) {
+            setCanvassers([{ id: user.id, name: user.fullName }]);
+          }
+        }
+      } else {
+        // User doesn't have permission to read all users, just add themselves
+        if (user) {
+          setCanvassers([{ id: user.id, name: user.fullName }]);
+        }
       }
     };
     loadData();
-  }, []);
+  }, [user?.role, user?.id, user?.fullName]);
 
   // Load wards when LGA is known
   useEffect(() => {
