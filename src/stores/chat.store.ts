@@ -24,10 +24,14 @@ interface ChatState {
   // Receipt tracking
   _markedMessageIds: Set<string>;
 
+  // Unread tracking
+  unreadThreadIds: Set<string>;
+
   // Socket
   _socket: ChatSocket | null;
   _joinedThreadId: string | null;
   _currentUserId: string | null;
+  _socketConnected: boolean;
 
   // Actions
   fetchThreads: (reset?: boolean) => Promise<void>;
@@ -39,6 +43,7 @@ interface ChatState {
   connectSocket: (accessToken: string, currentUserId?: string) => void;
   disconnectSocket: () => void;
   setCurrentUserId: (userId: string | null) => void;
+  deleteThread: (threadId: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -55,9 +60,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messagesPage: 1,
   messagesHasMore: true,
   _markedMessageIds: new Set(),
+  unreadThreadIds: new Set(),
   _socket: null,
   _joinedThreadId: null,
   _currentUserId: null,
+  _socketConnected: false,
 
   fetchThreads: async (reset = false) => {
     const page = reset ? 1 : get().threadsPage;
@@ -124,16 +131,38 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   setActiveThread: (threadId, currentUserId) => {
-    set({ activeThreadId: threadId, messages: [], messagesPage: 1, messagesHasMore: true, _markedMessageIds: new Set() });
+    const prevThreadId = get().activeThreadId;
+    set({
+      activeThreadId: threadId,
+      messages: [],
+      messagesPage: 1,
+      messagesHasMore: true,
+      _markedMessageIds: new Set(),
+      unreadThreadIds: (() => {
+        const next = new Set(get().unreadThreadIds);
+        if (threadId) next.delete(threadId);
+        return next;
+      })(),
+    });
+
     if (threadId) {
       get().fetchMessages(threadId, true, currentUserId);
     }
+
     const socket = get()._socket;
-    if (socket && threadId) {
-      if (socket.connected) {
-        socket.emit('thread:join', { threadId });
+    if (socket) {
+      if (prevThreadId && prevThreadId !== threadId) {
+        socket.emit('thread:leave', { threadId: prevThreadId });
       }
-      set({ _joinedThreadId: threadId });
+      if (!threadId && prevThreadId) {
+        socket.emit('thread:leave', { threadId: prevThreadId });
+      }
+      if (threadId) {
+        if (socket.connected) {
+          socket.emit('thread:join', { threadId });
+        }
+        set({ _joinedThreadId: threadId });
+      }
     }
   },
 
@@ -194,10 +223,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
     socket.off('thread:error');
 
     socket.on('connect', () => {
+      set({ _socketConnected: true });
       const threadId = get()._joinedThreadId;
+      const currentUserId = get()._currentUserId ?? undefined;
       if (threadId) {
         socket.emit('thread:join', { threadId });
+        // Resync messages on reconnect to prevent missed events
+        get().fetchMessages(threadId, true, currentUserId).catch(() => {});
       }
+    });
+
+    socket.on('disconnect', () => {
+      set({ _socketConnected: false });
     });
 
     socket.on('message:new', (message: ChatMessage) => {
@@ -212,25 +249,41 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (currentUserId && message.senderId !== currentUserId) {
           chatService.markRead(activeThreadId, message.id).catch(() => {});
         }
+      } else {
+        // Not active thread: add unread marker and show toast
+        set((s) => {
+          const next = new Set(s.unreadThreadIds);
+          next.add(message.threadId);
+          return { unreadThreadIds: next };
+        });
+        if (message.senderId !== currentUserId) {
+          const senderName = message.sender?.fullName;
+          toast.info(senderName ? `New message from ${senderName}` : 'New message received');
+        }
       }
       // Update thread list lastMessage
-      set((s) => ({
-        threads: s.threads.map((t) =>
-          t.id === message.threadId
-            ? {
-                ...t,
-                lastMessage: {
-                  id: message.id,
-                  senderId: message.senderId,
-                  content: message.content,
-                  createdAt: message.createdAt,
-                },
-                lastMessageAt: message.createdAt,
-                lastMessageId: message.id,
-              }
-            : t,
-        ),
-      }));
+      const exists = get().threads.some((t) => t.id === message.threadId);
+      if (exists) {
+        set((s) => ({
+          threads: s.threads.map((t) =>
+            t.id === message.threadId
+              ? {
+                  ...t,
+                  lastMessage: {
+                    id: message.id,
+                    senderId: message.senderId,
+                    content: message.content,
+                    createdAt: message.createdAt,
+                  },
+                  lastMessageAt: message.createdAt,
+                  lastMessageId: message.id,
+                }
+              : t,
+          ),
+        }));
+      } else {
+        get().fetchThreads(true).catch(() => {});
+      }
     });
 
     socket.on('message:read', (payload: { threadId: string; messageId: string; read: boolean; readAt: string | null }) => {
@@ -277,7 +330,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messagesPage: 1,
       messagesHasMore: true,
       _markedMessageIds: new Set(),
+      unreadThreadIds: new Set(),
       _joinedThreadId: null,
     });
+  },
+
+  deleteThread: async (threadId) => {
+    await chatService.deleteThread(threadId);
+    set((s) => ({
+      threads: s.threads.filter((t) => t.id !== threadId),
+      activeThreadId: s.activeThreadId === threadId ? null : s.activeThreadId,
+      messages: s.activeThreadId === threadId ? [] : s.messages,
+    }));
   },
 }));

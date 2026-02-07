@@ -1,8 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastContainer } from './components/Toast';
+import { useAuthStore } from './stores/auth.store';
+import { useChatStore } from './stores/chat.store';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { VotersPage } from './pages/voters/VotersPage';
@@ -49,7 +52,21 @@ const appRoutes = [
 
 function AppLayout() {
   const location = useLocation();
+  const { user, accessToken } = useAuthStore();
+  const { connectSocket, disconnectSocket, setCurrentUserId } = useChatStore();
   const isAppRoute = appRoutes.some(route => location.pathname.startsWith(route));
+
+  useEffect(() => {
+    setCurrentUserId(user?.id ?? null);
+  }, [user?.id, setCurrentUserId]);
+
+  useEffect(() => {
+    if (accessToken) {
+      connectSocket(accessToken, user?.id);
+    } else {
+      disconnectSocket();
+    }
+  }, [accessToken, user?.id, connectSocket, disconnectSocket]);
 
   // Website routes - no dashboard navbar/layout
   if (!isAppRoute) {

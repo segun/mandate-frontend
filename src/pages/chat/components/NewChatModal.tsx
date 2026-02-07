@@ -1,7 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { usersService } from '../../../services/users.service';
 import { useAuthStore } from '../../../stores/auth.store';
-import type { User } from '../../../services/users.service';
+type MinimalUser = {
+  id: string;
+  fullName: string;
+  role: string;
+};
 
 interface NewChatModalProps {
   isOpen: boolean;
@@ -18,10 +22,10 @@ export function NewChatModal({
 }: NewChatModalProps) {
   const { user: currentUser } = useAuthStore();
   const [mode, setMode] = useState<'direct' | 'group'>('direct');
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<MinimalUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<MinimalUser[]>([]);
   const [groupName, setGroupName] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -29,8 +33,8 @@ export function NewChatModal({
     if (!isOpen) return;
     setLoading(true);
     usersService
-      .getAll(1, 100)
-      .then((res) => setUsers(res.data))
+      .getMinimal()
+      .then((res) => setUsers(res))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [isOpen]);
@@ -60,7 +64,7 @@ export function NewChatModal({
       });
   }, [users, searchTerm, currentUser?.id]);
 
-  const toggleUser = (u: User) => {
+  const toggleUser = (u: MinimalUser) => {
     setSelectedUsers((prev) =>
       prev.find((s) => s.id === u.id)
         ? prev.filter((s) => s.id !== u.id)
@@ -226,16 +230,12 @@ export function NewChatModal({
                             {u.fullName}
                           </span>
                           <span
-                            className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
-                              u.isActive
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-[#2a2a2e] text-[#888]'
-                            }`}
+                            className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-[#2a2a2e] text-[#888]"
                           >
-                            {u.isActive ? 'Active' : 'Inactive'}
+                            User
                           </span>
                         </div>
-                        <div className="mt-0.5 text-sm text-[#888] truncate">{u.email}</div>
+                                <div className="mt-0.5 text-sm text-[#888] truncate">{u.role}</div>
                       </div>
                     </div>
                     <span className="inline-block px-2.5 py-1 text-xs font-medium rounded-lg bg-[#ca8a04]/20 text-[#ca8a04] shrink-0">

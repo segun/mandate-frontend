@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useChatStore } from '../../stores/chat.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { toast } from '../../stores/toast.store';
@@ -9,21 +9,8 @@ import { NewChatModal } from './components/NewChatModal';
 export function ChatPage() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
-  const { createThread, setActiveThread, activeThreadId, connectSocket, disconnectSocket, setCurrentUserId } = useChatStore();
-  const { user, accessToken } = useAuthStore();
-
-  useEffect(() => {
-    setCurrentUserId(user?.id ?? null);
-  }, [user?.id, setCurrentUserId]);
-
-  useEffect(() => {
-    if (accessToken) {
-      connectSocket(accessToken, user?.id);
-    }
-    return () => {
-      disconnectSocket();
-    };
-  }, [accessToken, user?.id, connectSocket, disconnectSocket]);
+  const { createThread, setActiveThread, activeThreadId } = useChatStore();
+  const { user } = useAuthStore();
 
   const handleCreateDirect = useCallback(
     async (userId: string) => {

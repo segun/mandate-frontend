@@ -121,4 +121,9 @@ export const chatService = {
     const response = await api.post(`/chats/${threadId}/messages/${messageId}/read`);
     return response.data.data;
   },
+
+  /** Delete a chat thread */
+  async deleteThread(threadId: string): Promise<void> {
+    await api.delete(`/chats/${threadId}`);
+  },
 };
