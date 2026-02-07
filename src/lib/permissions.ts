@@ -29,6 +29,7 @@ export const Resource = {
   POLLING_UNITS: 'polling_units',
   VOTERS: 'voters',
   USERS: 'users',
+  CHAT: 'chat',
 } as const;
 
 export type Resource = typeof Resource[keyof typeof Resource];
@@ -111,6 +112,18 @@ export const RESOURCE_ACCESS: Record<Resource, UserRole[]> = {
     UserRole.STATE_COORDINATOR,
     UserRole.LGA_COORDINATOR,
     UserRole.WARD_COMMANDER,
+  ],
+  [Resource.CHAT]: [
+    UserRole.PLATFORM_ADMIN,
+    UserRole.SUPER_ADMIN,
+    UserRole.CAMPAIGN_DIRECTOR,
+    UserRole.DATA_CONTROLLER,
+    UserRole.STATE_COORDINATOR,
+    UserRole.LGA_COORDINATOR,
+    UserRole.WARD_COMMANDER,
+    UserRole.WARD_OFFICER,
+    UserRole.UNIT_COMMANDER,
+    UserRole.FIELD_OFFICER,
   ],
 };
 

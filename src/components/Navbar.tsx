@@ -24,6 +24,7 @@ export function Navbar() {
       { label: 'Polling Units', to: '/polling-units', resource: Resource.POLLING_UNITS },
       { label: 'Voters', to: '/voters', resource: Resource.VOTERS },
       { label: 'Users', to: '/users', resource: Resource.USERS },
+      { label: 'Chat', to: '/chat', resource: Resource.CHAT },
     ],
     [],
   );

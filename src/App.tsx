@@ -23,6 +23,7 @@ import { PollingUnitDetailPage } from './pages/polling-units/PollingUnitDetailPa
 import { CreatePollingUnitPage } from './pages/polling-units/CreatePollingUnitPage';
 import { UsersPage } from './pages/users/UsersPage';
 import ViewUserPage from './pages/users/ViewUserPage';
+import { ChatPage } from './pages/chat/ChatPage';
 import './App.css';
 import CreateUserPage from "./pages/users/CreateUserPage";
 
@@ -43,7 +44,7 @@ const queryClient = new QueryClient();
 // App routes that need the dashboard layout
 const appRoutes = [
   '/dashboard', '/states', '/lgas', '/wards', '/voters', 
-  '/polling-units', '/users', '/login'
+  '/polling-units', '/users', '/chat', '/login'
 ];
 
 function AppLayout() {
@@ -102,6 +103,7 @@ function AppLayout() {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/users/:id" element={<ViewUserPage />} />
             <Route path="/users/new" element={<CreateUserPage />} />
+            <Route path="/chat" element={<ChatPage />} />
           </Route>
         </Routes>
       </main>
