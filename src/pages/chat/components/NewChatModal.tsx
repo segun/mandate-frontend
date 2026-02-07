@@ -57,8 +57,6 @@ export function NewChatModal({
         const q = searchTerm.toLowerCase();
         return (
           u.fullName.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q) ||
-          (u.phone?.toLowerCase().includes(q) ?? false) ||
           u.role.toLowerCase().includes(q)
         );
       });
