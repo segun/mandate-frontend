@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useChatStore } from '../../stores/chat.store';
+import { useAuthStore } from '../../stores/auth.store';
 import { toast } from '../../stores/toast.store';
 import { ThreadList } from './components/ThreadList';
 import { MessageArea } from './components/MessageArea';
@@ -8,34 +9,45 @@ import { NewChatModal } from './components/NewChatModal';
 export function ChatPage() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
-  const { createThread, setActiveThread, activeThreadId } = useChatStore();
+  const { createThread, setActiveThread, activeThreadId, connectSocket, disconnectSocket } = useChatStore();
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      connectSocket(token, user?.id);
+    }
+    return () => {
+      disconnectSocket();
+    };
+  }, [connectSocket, disconnectSocket]);
 
   const handleCreateDirect = useCallback(
     async (userId: string) => {
       try {
         const thread = await createThread([userId]);
-        setActiveThread(thread.id);
+        setActiveThread(thread.id, user?.id);
         setShowNewChat(false);
         setShowSidebar(false);
       } catch {
         toast.error('Failed to create chat');
       }
     },
-    [createThread, setActiveThread],
+    [createThread, setActiveThread, user],
   );
 
   const handleCreateGroup = useCallback(
     async (userIds: string[], name: string) => {
       try {
         const thread = await createThread(userIds, name || undefined);
-        setActiveThread(thread.id);
+        setActiveThread(thread.id, user?.id);
         setShowNewChat(false);
         setShowSidebar(false);
       } catch {
         toast.error('Failed to create group chat');
       }
     },
-    [createThread, setActiveThread],
+    [createThread, setActiveThread, user],
   );
 
   return (

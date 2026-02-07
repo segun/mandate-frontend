@@ -135,7 +135,7 @@ export function MessageArea() {
         {messagesHasMore && (
           <div className="text-center mb-4">
             <button
-              onClick={() => fetchMessages(activeThreadId)}
+              onClick={() => fetchMessages(activeThreadId, false, user?.id)}
               disabled={messagesLoading}
               className="text-sm text-[#ca8a04] hover:underline disabled:opacity-50"
             >
@@ -185,11 +185,30 @@ export function MessageArea() {
                     )}
                     <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                     <p
-                      className={`text-[10px] mt-1 text-right ${
+                      className={`text-[10px] mt-1 text-right flex items-center justify-end gap-1 ${
                         isOwn ? 'text-[#0d0d0f]/60' : 'text-[#666]'
                       }`}
                     >
                       {formatMessageTime(msg.createdAt)}
+                      {isOwn && (
+                        <span
+                          className="inline-flex ml-0.5"
+                          title={msg.read ? 'Read' : 'Sent'}
+                        >
+                          {msg.read ? (
+                            // Double tick darker grey = read
+                            <svg className="w-3.5 h-3.5 text-[#3b3b3b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M1 12l5 5L17 6" />
+                              <path d="M7 12l5 5L23 6" />
+                            </svg>
+                          ) : (
+                            // Single tick = sent
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 12l5 5L20 6" />
+                            </svg>
+                          )}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

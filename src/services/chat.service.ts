@@ -22,6 +22,10 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
   sender?: ChatMessageSender;
+  delivered?: boolean;
+  deliveredAt?: string | null;
+  read?: boolean;
+  readAt?: string | null;
 }
 
 export interface ChatThread {
@@ -106,6 +110,15 @@ export const chatService = {
       content,
       ...(tenantId ? { tenantId } : {}),
     });
+    return response.data.data;
+  },
+
+  /** Mark a message as read (received messages only) */
+  async markRead(
+    threadId: string,
+    messageId: string,
+  ): Promise<ChatMessage> {
+    const response = await api.post(`/chats/${threadId}/messages/${messageId}/read`);
     return response.data.data;
   },
 };

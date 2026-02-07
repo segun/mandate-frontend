@@ -118,7 +118,7 @@ export function ThreadList({ onNewChat }: ThreadListProps) {
               return (
                 <button
                   key={thread.id}
-                  onClick={() => setActiveThread(thread.id)}
+                  onClick={() => setActiveThread(thread.id, user?.id)}
                   className={`w-full text-left px-4 py-3 border-b border-[#2a2a2e]/50 transition-colors ${
                     isActive
                       ? 'bg-[#ca8a04]/10 border-l-2 border-l-[#ca8a04]'
