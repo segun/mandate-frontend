@@ -189,14 +189,14 @@ export default function ViewUserPage() {
               <div>
                 <p className="text-sm text-gray-400">Polling Unit</p>
                 <p className="text-lg text-white font-semibold mt-2">
-                  {user.assignedPollingUnit?.name || 'N/A'}
+                  {user.assignedPollingUnit?.geoPollingUnit?.name || 'N/A'}
                 </p>
               </div>
-              {user.assignedPollingUnit?.code && (
+              {user.assignedPollingUnit?.geoPollingUnit?.code && (
                 <div>
                   <p className="text-sm text-gray-400">Polling Unit Code</p>
                   <p className="text-lg text-white font-semibold mt-2">
-                    {user.assignedPollingUnit.code}
+                    {user.assignedPollingUnit?.geoPollingUnit?.code}
                   </p>
                 </div>
               )}

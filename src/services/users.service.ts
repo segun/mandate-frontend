@@ -31,8 +31,7 @@ export interface User {
   assignedPollingUnitId?: string | null;
   assignedPollingUnit?: {
     id: string;
-    name: string;
-    code: string;
+    geoPollingUnit?: { name: string; code?: string };
   } | null;
   assignedVoters?: Array<{
     id: string;
@@ -70,27 +69,15 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// Helper functions to get assigned location names
-export function getUserAssignedLocation(user: User): string {
-  if (user.assignedPollingUnit) {
-    return user.assignedPollingUnit.name;
-  }
-  if (user.assignedWard?.geoWard) {
-    return user.assignedWard.geoWard.name;
-  }
-  if (user.assignedLga?.geoLga) {
-    return user.assignedLga.geoLga.name;
-  }
-  if (user.assignedState?.geoState) {
-    return user.assignedState.geoState.name;
-  }
-  return '-';
-}
-
 export const usersService = {
   async getMinimal(): Promise<Array<{ id: string; fullName: string; role: string }>> {
     const response = await api.get('/users/minimal');
-    return response.data.data; // Assuming the API returns { success: boolean, data: Array<{ id, fullName, role }> }
+    // API returns userId, map it to id for consistency
+    return response.data.data.map((u: { userId: string; fullName: string; role: string }) => ({
+      id: u.userId,
+      fullName: u.fullName,
+      role: u.role,
+    }));
   },
 
   async getAll(page = 1, limit = DEFAULT_PAGE_LIMIT, filters?: Record<string, string>): Promise<PaginatedResponse<User>> {

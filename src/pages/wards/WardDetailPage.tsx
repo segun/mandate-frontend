@@ -27,6 +27,19 @@ export function WardDetailPage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  type PollingUnitSummary = {
+    id: string;
+    isActive?: boolean;
+    geoPollingUnit?: {
+      name?: string;
+      code?: string;
+    };
+  };
+
+  type WardWithPollingUnits = Ward & {
+    pollingUnits?: PollingUnitSummary[];
+  };
+
   useEffect(() => {
     const fetchWard = async () => {
       if (!id) return;
@@ -151,6 +164,8 @@ export function WardDetailPage() {
     );
   }
 
+  const wardWithPollingUnits = ward as WardWithPollingUnits;
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -217,7 +232,7 @@ export function WardDetailPage() {
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
         <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d] flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Polling Units ({ward.pollingUnits?.length || 0})</h2>
+          <h2 className="text-lg font-semibold text-white">Polling Units ({wardWithPollingUnits.pollingUnits?.length || 0})</h2>
           <Link
             to="/polling-units"
             className="text-sm text-[#ca8a04] hover:text-[#d4940a] font-semibold"
@@ -226,7 +241,7 @@ export function WardDetailPage() {
           </Link>
         </div>
 
-        {!ward.pollingUnits || ward.pollingUnits.length === 0 ? (
+        {!wardWithPollingUnits.pollingUnits || wardWithPollingUnits.pollingUnits.length === 0 ? (
           <div className="p-6 text-center text-[#888]">No polling units have been added for this ward yet.</div>
         ) : (
           <>
@@ -239,7 +254,7 @@ export function WardDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
-                  {ward.pollingUnits.map((unit) => (
+                  {wardWithPollingUnits.pollingUnits.map((unit) => (
                     <tr 
                       key={unit.id} 
                       onClick={() => navigate(`/polling-units/${unit.id}`)}
@@ -254,7 +269,7 @@ export function WardDetailPage() {
             </div>
 
             <div className="md:hidden divide-y divide-[#2a2a2e]">
-              {ward.pollingUnits.map((unit) => (
+              {wardWithPollingUnits.pollingUnits.map((unit) => (
                 <div 
                   key={unit.id} 
                   className="p-4 cursor-pointer hover:bg-[#1a1a1d]/50 transition-colors"

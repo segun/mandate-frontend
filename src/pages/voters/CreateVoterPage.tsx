@@ -309,10 +309,17 @@ export default function CreateVoterPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      // If PVC status changes and is not YES, clear PVC number and keep it disabled
+      if (name === 'pvcStatus') {
+        if (value !== 'YES') {
+          return { ...prev, pvcStatus: value, pvcNumber: '' };
+        }
+        return { ...prev, pvcStatus: value };
+      }
+
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleBlur = (field: keyof TouchedFields) => {
@@ -667,7 +674,8 @@ export default function CreateVoterPage() {
                   name="pvcNumber"
                   value={formData.pvcNumber}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg bg-[#1a1a1d] border border-[#2a2a2e] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent"
+                  disabled={formData.pvcStatus !== 'YES'}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1a1d] border border-[#2a2a2e] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
                   placeholder="Enter PVC number"
                 />
               </div>

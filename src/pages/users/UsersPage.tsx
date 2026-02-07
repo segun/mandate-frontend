@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import type { User, PaginatedResponse } from '../../services/users.service';
-import { usersService, getUserAssignedLocation } from '../../services/users.service';
+import { usersService } from '../../services/users.service';
 
 export function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -105,7 +105,6 @@ export function UsersPage() {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Email</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Phone</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Role</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Assignment</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Status</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Actions</th>
                   </tr>
@@ -117,7 +116,6 @@ export function UsersPage() {
                       <td className="px-4 py-3 text-sm text-[#888]">{user.email}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{user.phone || '-'}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{user.role.replace(/_/g, ' ')}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{getUserAssignedLocation(user)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${user.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                           {user.isActive ? 'Active' : 'Inactive'}
