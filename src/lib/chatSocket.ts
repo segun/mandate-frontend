@@ -7,8 +7,7 @@ export type ChatSocket = Socket;
 
 let socket: ChatSocket | null = null;
 
-export function getChatSocket(accessToken: string): ChatSocket {
-  console.log('Connecting chat socket with token:', {accessToken, socket});
+export function getChatSocket(accessToken: string): ChatSocket | null {
   if (socket) {
     socket.auth = { token: accessToken };    
     if (!socket.connected) {
@@ -20,6 +19,7 @@ export function getChatSocket(accessToken: string): ChatSocket {
     auth: { token: accessToken },
     transports: ['websocket'],
   });
+
   return socket;
 }
 

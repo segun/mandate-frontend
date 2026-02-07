@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useChatStore } from '../../../stores/chat.store';
 import { useAuthStore } from '../../../stores/auth.store';
+import { usersService } from '../../../services/users.service';
 import type { ChatThread } from '../../../services/chat.service';
 
 interface ThreadListProps {
@@ -40,6 +41,7 @@ function formatTime(dateStr: string | null): string {
 
 export function ThreadList({ onNewChat }: ThreadListProps) {
   const { user } = useAuthStore();
+  const [userMap, setUserMap] = useState<Map<string, string>>(new Map());
   const {
     threads,
     threadsLoading,
@@ -54,16 +56,25 @@ export function ThreadList({ onNewChat }: ThreadListProps) {
     fetchThreads(true).catch(() => {});
   }, [fetchThreads]);
 
-  // Build a userId → name map from thread participants (we only have IDs, names come from messages)
-  const userMap = useMemo(() => {
-    const map = new Map<string, string>();
-    threads.forEach((t) => {
-      if (t.lastMessage?.senderId) {
-        // we don't have names in list, but we can use thread name fallback
-      }
-    });
-    return map;
-  }, [threads]);
+  useEffect(() => {
+    let isMounted = true;
+    usersService
+      .getMinimal()
+      .then((users) => {
+        if (!isMounted) return;
+        const map = new Map<string, string>();
+        users.forEach((u) => map.set(u.id, u.fullName));
+        setUserMap(map);
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const displayNameForThread = useMemo(() => {
+    return (thread: ChatThread) => threadDisplayName(thread, user?.id, userMap);
+  }, [user?.id, userMap]);
 
   return (
     <div className="flex flex-col h-full">
@@ -114,7 +125,7 @@ export function ThreadList({ onNewChat }: ThreadListProps) {
           <>
             {threads.map((thread) => {
               const isActive = thread.id === activeThreadId;
-              const displayName = threadDisplayName(thread, user?.id, userMap);
+              const displayName = displayNameForThread(thread);
               return (
                 <button
                   key={thread.id}

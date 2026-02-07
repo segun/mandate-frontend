@@ -38,6 +38,7 @@ interface ChatState {
   prependMessage: (message: ChatMessage) => void;
   connectSocket: (accessToken: string, currentUserId?: string) => void;
   disconnectSocket: () => void;
+  setCurrentUserId: (userId: string | null) => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -184,6 +185,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ _joinedThreadId: activeThreadId });
     }
 
+    if(!socket) {return}
+
     socket.off('connect');
     socket.off('message:new');
     socket.off('message:read');
@@ -246,12 +249,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
 
     socket.on('thread:error', (payload: { message?: string }) => {
-      toast.error(payload?.message || 'Failed to join chat');
+      const message = payload?.message || 'Failed to join chat';
+      if (message.toLowerCase().includes('unauthorized')) return;
+      toast.error(message);
     });
   },
 
   disconnectSocket: () => {
     disconnectChatSocket();
     set({ _socket: null, _joinedThreadId: null });
+  },
+
+  setCurrentUserId: (userId) => {
+    const prev = get()._currentUserId;
+    if (prev === userId) return;
+    set({
+      _currentUserId: userId,
+      threads: [],
+      threadsLoading: false,
+      threadsError: null,
+      threadsPage: 1,
+      threadsHasMore: true,
+      activeThreadId: null,
+      messages: [],
+      messagesLoading: false,
+      messagesError: null,
+      messagesPage: 1,
+      messagesHasMore: true,
+      _markedMessageIds: new Set(),
+      _joinedThreadId: null,
+    });
   },
 }));

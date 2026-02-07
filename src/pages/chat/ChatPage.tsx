@@ -9,8 +9,12 @@ import { NewChatModal } from './components/NewChatModal';
 export function ChatPage() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
-  const { createThread, setActiveThread, activeThreadId, connectSocket, disconnectSocket } = useChatStore();
+  const { createThread, setActiveThread, activeThreadId, connectSocket, disconnectSocket, setCurrentUserId } = useChatStore();
   const { user, accessToken } = useAuthStore();
+
+  useEffect(() => {
+    setCurrentUserId(user?.id ?? null);
+  }, [user?.id, setCurrentUserId]);
 
   useEffect(() => {
     if (accessToken) {
