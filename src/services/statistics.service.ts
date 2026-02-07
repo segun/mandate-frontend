@@ -5,6 +5,8 @@ import { api } from '../lib/api';
 export interface PvcDistribution {
   YES: number;
   NO: number;
+  PROCESSING: number;
+  LOST: number;
   UNKNOWN: number;
 }
 
@@ -26,6 +28,15 @@ export interface EngagementBreakdown {
   UNREACHABLE: number;
 }
 
+export interface VotingCommitmentBreakdown {
+  WILL_VOTE: number;
+  LIKELY_VOTE: number;
+  UNKNOWN: number;
+  UNLIKELY_VOTE: number;
+  WILL_NOT_VOTE: number;
+  CONFIRMED: number;
+}
+
 export interface AreaStatistics {
   id: string;
   name: string;
@@ -34,6 +45,7 @@ export interface AreaStatistics {
   pvcDistribution: PvcDistribution;
   supportBreakdown: SupportBreakdown;
   engagementBreakdown: EngagementBreakdown;
+  votingCommitmentBreakdown: VotingCommitmentBreakdown;
 }
 
 export type GeoLevel = 'states' | 'lgas' | 'wards' | 'polling-units';
@@ -80,6 +92,8 @@ export const ENGAGEMENT_LABELS: Record<string, string> = {
 export const PVC_COLORS: Record<string, string> = {
   YES: '#22c55e',
   NO: '#ef4444',
+  PROCESSING: '#f59e0b',
+  LOST: '#a855f7',
   UNKNOWN: '#6b7280',
 };
 
@@ -99,6 +113,24 @@ export const ENGAGEMENT_COLORS: Record<string, string> = {
   COMMITTED: '#22c55e',
   MOBILIZED: '#06b6d4',
   UNREACHABLE: '#ef4444',
+};
+
+export const VOTING_COMMITMENT_LABELS: Record<string, string> = {
+  WILL_VOTE: 'Will Vote',
+  LIKELY_VOTE: 'Likely Vote',
+  UNKNOWN: 'Unknown',
+  UNLIKELY_VOTE: 'Unlikely Vote',
+  WILL_NOT_VOTE: 'Will Not Vote',
+  CONFIRMED: 'Confirmed',
+};
+
+export const VOTING_COMMITMENT_COLORS: Record<string, string> = {
+  WILL_VOTE: '#22c55e',
+  LIKELY_VOTE: '#86efac',
+  UNKNOWN: '#6b7280',
+  UNLIKELY_VOTE: '#f97316',
+  WILL_NOT_VOTE: '#ef4444',
+  CONFIRMED: '#06b6d4',
 };
 
 // --- Service ---

@@ -51,9 +51,9 @@ export function PerformanceChart({ data, level, onDrillDown }: PerformanceChartP
   const canDrillDown = NEXT_LEVEL[level] !== null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleChartClick = (state: any) => {
-    if (canDrillDown && state?.activePayload?.[0]?.payload) {
-      onDrillDown(state.activePayload[0].payload);
+  const handleBarClick = (data: any) => {
+    if (canDrillDown && data?.payload) {
+      onDrillDown(data.payload);
     }
   };
 
@@ -73,7 +73,6 @@ export function PerformanceChart({ data, level, onDrillDown }: PerformanceChartP
             data={sortedData}
             layout="vertical"
             margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-            onClick={handleChartClick}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2e" horizontal={false} />
             <XAxis
@@ -97,6 +96,7 @@ export function PerformanceChart({ data, level, onDrillDown }: PerformanceChartP
               dataKey="voterCount"
               radius={[0, 4, 4, 0]}
               cursor={canDrillDown ? 'pointer' : 'default'}
+              onClick={handleBarClick}
             >
               {sortedData.map((_, index) => (
                 <Cell key={index} fill={getBarColor(index)} />

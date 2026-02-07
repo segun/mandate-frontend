@@ -9,7 +9,7 @@ interface StatisticsTableProps {
   onDrillDown: (item: AreaStatistics) => void;
 }
 
-type SortField = 'name' | 'voterCount' | 'pvcReadyCount' | 'pvcPercentage' | 'strongSupporter' | 'engaged';
+type SortField = 'name' | 'voterCount' | 'pvcReadyCount' | 'pvcPercentage' | 'strongSupporter' | 'engaged' | 'willVote';
 type SortDirection = 'asc' | 'desc';
 
 function getSortValue(item: AreaStatistics, field: SortField): number | string {
@@ -30,6 +30,12 @@ function getSortValue(item: AreaStatistics, field: SortField): number | string {
         item.engagementBreakdown.COMMITTED +
         item.engagementBreakdown.MOBILIZED
       );
+    case 'willVote':
+      return (
+        item.votingCommitmentBreakdown.WILL_VOTE +
+        item.votingCommitmentBreakdown.LIKELY_VOTE +
+        item.votingCommitmentBreakdown.CONFIRMED
+      );
   }
 }
 
@@ -40,6 +46,7 @@ function exportToCSV(data: AreaStatistics[], levelLabel: string) {
     'Strong Supporter', 'Lean Supporter', 'Undecided', 'Lean Opposition', 'Strong Opposition',
     'Not Contacted', 'Contacted', 'Follow Up', 'Follow Up Needed',
     'Committed', 'Mobilized', 'Unreachable',
+    'Will Vote', 'Likely Vote', 'Unknown Commitment', 'Unlikely Vote', 'Will Not Vote', 'Confirmed',
   ];
 
   const rows = data.map((item) => [
@@ -64,6 +71,12 @@ function exportToCSV(data: AreaStatistics[], levelLabel: string) {
     item.engagementBreakdown.COMMITTED,
     item.engagementBreakdown.MOBILIZED,
     item.engagementBreakdown.UNREACHABLE,
+    item.votingCommitmentBreakdown.WILL_VOTE,
+    item.votingCommitmentBreakdown.LIKELY_VOTE,
+    item.votingCommitmentBreakdown.UNKNOWN,
+    item.votingCommitmentBreakdown.UNLIKELY_VOTE,
+    item.votingCommitmentBreakdown.WILL_NOT_VOTE,
+    item.votingCommitmentBreakdown.CONFIRMED,
   ]);
 
   const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -101,10 +114,12 @@ export function StatisticsTable({ data, level, onDrillDown }: StatisticsTablePro
       : (bVal as number) - (aVal as number);
   });
 
-  const renderSortHeader = (field: SortField, label: string) => (
+  const renderSortHeader = (field: SortField, label: string, align: 'left' | 'right' = 'right') => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 text-xs font-semibold text-[#888] uppercase tracking-wider hover:text-white transition-colors whitespace-nowrap"
+      className={`flex items-center gap-1 text-xs font-semibold text-[#888] uppercase tracking-wider hover:text-white transition-colors whitespace-nowrap ${
+        align === 'right' ? 'ml-auto' : ''
+      }`}
     >
       {label}
       <ArrowUpDown
@@ -138,7 +153,7 @@ export function StatisticsTable({ data, level, onDrillDown }: StatisticsTablePro
           <thead>
             <tr className="border-b border-[#2a2a2e]">
               <th className="text-left px-5 py-3">
-                {renderSortHeader('name', 'Name')}
+                {renderSortHeader('name', 'Name', 'left')}
               </th>
               <th className="text-right px-5 py-3">
                 {renderSortHeader('voterCount', 'Voters')}
@@ -155,6 +170,9 @@ export function StatisticsTable({ data, level, onDrillDown }: StatisticsTablePro
               <th className="text-right px-5 py-3">
                 {renderSortHeader('engaged', 'Engaged')}
               </th>
+              <th className="text-right px-5 py-3">
+                {renderSortHeader('willVote', 'Will Vote')}
+              </th>
               {canDrillDown && <th className="px-3 py-3 w-10" />}
             </tr>
           </thead>
@@ -168,6 +186,10 @@ export function StatisticsTable({ data, level, onDrillDown }: StatisticsTablePro
                 item.engagementBreakdown.CONTACTED +
                 item.engagementBreakdown.COMMITTED +
                 item.engagementBreakdown.MOBILIZED;
+              const willVote =
+                item.votingCommitmentBreakdown.WILL_VOTE +
+                item.votingCommitmentBreakdown.LIKELY_VOTE +
+                item.votingCommitmentBreakdown.CONFIRMED;
 
               return (
                 <tr
@@ -211,6 +233,9 @@ export function StatisticsTable({ data, level, onDrillDown }: StatisticsTablePro
                   </td>
                   <td className="text-right px-5 py-3 text-[#ccc] tabular-nums">
                     {engaged.toLocaleString()}
+                  </td>
+                  <td className="text-right px-5 py-3 text-[#ccc] tabular-nums">
+                    {willVote.toLocaleString()}
                   </td>
                   {canDrillDown && (
                     <td className="px-3 py-3 text-[#555]">
