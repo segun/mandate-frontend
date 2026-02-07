@@ -129,7 +129,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
     const socket = get()._socket;
     if (socket && threadId) {
-      socket.emit('thread:join', { threadId });
+      if (socket.connected) {
+        socket.emit('thread:join', { threadId });
+      }
       set({ _joinedThreadId: threadId });
     }
   },
@@ -174,16 +176,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   connectSocket: (accessToken: string, currentUserId?: string) => {
-    const existing = get()._socket;
-    if (existing) return;
     const socket = getChatSocket(accessToken);
     set({ _socket: socket, _currentUserId: currentUserId ?? null });
 
     const activeThreadId = get().activeThreadId;
     if (activeThreadId) {
-      socket.emit('thread:join', { threadId: activeThreadId });
       set({ _joinedThreadId: activeThreadId });
     }
+
+    socket.off('connect');
+    socket.off('message:new');
+    socket.off('message:read');
+    socket.off('thread:joined');
+    socket.off('thread:error');
+
+    socket.on('connect', () => {
+      const threadId = get()._joinedThreadId;
+      if (threadId) {
+        socket.emit('thread:join', { threadId });
+      }
+    });
 
     socket.on('message:new', (message: ChatMessage) => {
       const activeThreadId = get().activeThreadId;

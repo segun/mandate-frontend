@@ -8,7 +8,14 @@ export type ChatSocket = Socket;
 let socket: ChatSocket | null = null;
 
 export function getChatSocket(accessToken: string): ChatSocket {
-  if (socket) return socket;
+  console.log('Connecting chat socket with token:', {accessToken, socket});
+  if (socket) {
+    socket.auth = { token: accessToken };    
+    if (!socket.connected) {
+      socket.connect();
+    }
+    return socket;
+  }
   socket = io(`${SOCKET_URL}/chats`, {
     auth: { token: accessToken },
     transports: ['websocket'],

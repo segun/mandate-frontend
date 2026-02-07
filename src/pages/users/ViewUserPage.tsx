@@ -106,13 +106,6 @@ export default function ViewUserPage() {
           )}
           <button
             type="button"
-            onClick={() => toast.info('Chat feature is coming soon')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#ca8a04] text-[#ca8a04] font-semibold hover:bg-[#ca8a04]/10 transition-colors"
-          >
-            Chat
-          </button>
-          <button
-            type="button"
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e] transition-colors"
           >

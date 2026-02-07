@@ -10,17 +10,16 @@ export function ChatPage() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const { createThread, setActiveThread, activeThreadId, connectSocket, disconnectSocket } = useChatStore();
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuthStore();
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      connectSocket(token, user?.id);
+    if (accessToken) {
+      connectSocket(accessToken, user?.id);
     }
     return () => {
       disconnectSocket();
     };
-  }, [connectSocket, disconnectSocket]);
+  }, [accessToken, user?.id, connectSocket, disconnectSocket]);
 
   const handleCreateDirect = useCallback(
     async (userId: string) => {
