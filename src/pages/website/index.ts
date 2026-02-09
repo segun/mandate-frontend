@@ -5,4 +5,5 @@ export { SolutionsPage } from './SolutionsPage';
 export { PlatformPage } from './PlatformPage';
 export { PartnershipsPage } from './PartnershipsPage';
 export { ContactPage } from './ContactPage';
-export { RequestAccessPage } from './RequestAccessPage';
+export { RegisterPage } from './RegisterPage';
+export { RegisterCompletePage } from './RegisterCompletePage';

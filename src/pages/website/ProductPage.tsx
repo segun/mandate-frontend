@@ -182,15 +182,15 @@ export function ProductPage() {
               Deploy the complete political operating system
             </h2>
             <p className="text-lg mb-10" style={{ color: '#888' }}>
-              Request institutional access to explore how CONTROLHQ can transform your political operations.
+              Register your institution to explore how CONTROLHQ can transform your political operations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/request-access"
+                to="/register"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-lg transition-all duration-300"
                 style={{ backgroundColor: GOLD, color: '#000000' }}
               >
-                Request Access
+                Register
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link

@@ -134,7 +134,7 @@ export function SolutionsPage() {
                     {solution.description}
                   </p>
                   <Link
-                    to="/request-access"
+                    to="/register"
                     className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-lg transition-colors"
                     style={{ border: `2px solid ${GOLD}`, color: GOLD }}
                   >
@@ -188,11 +188,11 @@ export function SolutionsPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/request-access"
+                to="/register"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-lg transition-all duration-300"
                 style={{ backgroundColor: GOLD, color: '#000000' }}
               >
-                Request Access
+                Register
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link

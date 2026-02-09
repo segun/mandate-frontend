@@ -94,12 +94,12 @@ export function WebsiteNavbar() {
             Secure Login
           </Link>
           <Link
-            to="/request-access"
+            to="/register"
             onClick={scrollToTop}
             className="px-6 py-2 rounded-lg font-semibold"
             style={{ backgroundColor: GOLD, color: "#000000" }}
           >
-            Request Access
+            Register
           </Link>
         </div>
       </div>

@@ -26,6 +26,7 @@ import { PollingUnitDetailPage } from './pages/polling-units/PollingUnitDetailPa
 import { CreatePollingUnitPage } from './pages/polling-units/CreatePollingUnitPage';
 import { UsersPage } from './pages/users/UsersPage';
 import ViewUserPage from './pages/users/ViewUserPage';
+import UserSettingsPage from './pages/users/UserSettingsPage';
 import { ChatPage } from './pages/chat/ChatPage';
 import './App.css';
 import CreateUserPage from "./pages/users/CreateUserPage";
@@ -39,7 +40,8 @@ import {
   PlatformPage, 
   PartnershipsPage, 
   ContactPage, 
-  RequestAccessPage 
+  RegisterPage,
+  RegisterCompletePage
 } from './pages/website';
 
 const queryClient = new QueryClient();
@@ -47,7 +49,7 @@ const queryClient = new QueryClient();
 // App routes that need the dashboard layout
 const appRoutes = [
   '/dashboard', '/states', '/lgas', '/wards', '/voters', 
-  '/polling-units', '/users', '/chat', '/login'
+  '/polling-units', '/users', '/user', '/chat', '/login'
 ];
 
 function AppLayout() {
@@ -80,7 +82,9 @@ function AppLayout() {
         <Route path="/platform" element={<PlatformPage />} />
         <Route path="/partnerships" element={<PartnershipsPage />} />
         <Route path="/contact" element={<ContactPage />} />
-        <Route path="/request-access" element={<RequestAccessPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register/complete" element={<RegisterCompletePage />} />
+        <Route path="/request-access" element={<Navigate to="/register" replace />} />
         
         {/* Catch-all for unknown routes - go to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -120,6 +124,7 @@ function AppLayout() {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/users/:id" element={<ViewUserPage />} />
             <Route path="/users/new" element={<CreateUserPage />} />
+            <Route path="/user/settings" element={<UserSettingsPage />} />
             <Route path="/chat" element={<ChatPage />} />
           </Route>
         </Routes>

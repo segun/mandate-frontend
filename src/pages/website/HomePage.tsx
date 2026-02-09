@@ -118,15 +118,15 @@ export function HomePage() {
               and electoral processes.
             </motion.p>
 
-            {/* 1. Request Access button - gold bg, black text */}
+            {/* 1. Register button - gold bg, black text */}
             {/* 2. Partner With Us button - gold border */}
             <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4">
               <Link
-                to="/request-access"
+                to="/register"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-lg shadow-lg transition-all duration-300"
                 style={{ backgroundColor: GOLD, color: '#000000' }}
               >
-                Request Access
+                Register
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
@@ -336,7 +336,7 @@ export function HomePage() {
       </section>
 
       {/* CTA Section */}
-      {/* 11. Request Access button - gold bg, black text */}
+      {/* 11. Register button - gold bg, black text */}
       {/* 12. Institutional Partnerships button - gold border */}
       <section 
         className="py-24 lg:py-32 relative overflow-hidden"
@@ -371,11 +371,11 @@ export function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/request-access"
+                to="/register"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-lg shadow-lg transition-all duration-300"
                 style={{ backgroundColor: GOLD, color: '#000000' }}
               >
-                Request Access
+                Register
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link

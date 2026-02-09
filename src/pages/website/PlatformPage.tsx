@@ -232,11 +232,11 @@ export function PlatformPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/request-access"
+                to="/register"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-lg transition-all duration-300"
                 style={{ backgroundColor: GOLD, color: '#000000' }}
               >
-                Request Technical Briefing
+                Register for Access
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
