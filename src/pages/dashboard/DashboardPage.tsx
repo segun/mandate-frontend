@@ -130,7 +130,13 @@ export function DashboardPage() {
         <LoadingSkeleton />
       ) : error ? (
         <ErrorState
-          message={error instanceof Error ? error.message : 'Failed to load statistics'}
+          message={
+            error instanceof Error && 'response' in error && (error as any).response?.status === 403
+              ? "You're not authorized to view these statistics"
+              : error instanceof Error
+              ? error.message
+              : 'Failed to load statistics'
+          }
           onRetry={() => refetch()}
         />
       ) : !data || data.length === 0 ? (

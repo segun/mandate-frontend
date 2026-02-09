@@ -74,6 +74,20 @@ export type RegisterTenantResponse = {
   };
 };
 
+export type SubscribeTenantRequest = {
+  subscriptionInterval: 'MONTHLY' | 'YEARLY';
+  subscriptionMode: 'AUTO' | 'MANUAL';
+};
+
+export type SubscribeTenantResponse = {
+  payment: {
+    authorizationUrl: string;
+    reference: string;
+    accessCode: string;
+    amount: number;
+  };
+};
+
 export const tenantsService = {
   async registerTenant(data: RegisterTenantRequest): Promise<RegisterTenantResponse> {
     const response = await api.post('/tenants/register', data);
@@ -82,6 +96,11 @@ export const tenantsService = {
 
   async getTenant(tenantId: string): Promise<RegisterTenantResponse['tenant']> {
     const response = await api.get(`/tenants/${tenantId}`);
+    return response.data.data;
+  },
+
+  async subscribe(data: SubscribeTenantRequest): Promise<SubscribeTenantResponse> {
+    const response = await api.post('/tenants/subscribe', data);
     return response.data.data;
   }
 };
