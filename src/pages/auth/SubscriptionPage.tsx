@@ -126,7 +126,6 @@ export function SubscriptionPage() {
     setSubmitting(true);
     try {
       const response = await tenantsService.subscribe({
-        subscriptionInterval: 'YEARLY',
         subscriptionMode: selectedMode
       });
 

@@ -77,7 +77,6 @@ export type RegisterTenantResponse = {
 };
 
 export type SubscribeTenantRequest = {
-  subscriptionInterval: 'MONTHLY' | 'YEARLY';
   subscriptionMode: 'AUTO' | 'MANUAL';
 };
 
