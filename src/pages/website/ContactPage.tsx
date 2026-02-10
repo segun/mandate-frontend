@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, MapPin, Phone, ArrowRight } from 'lucide-react';
+import { Mail, MapPin, Phone, ArrowRight, Copy } from 'lucide-react';
 import { WebsiteLayout } from './components';
 
 const GOLD = '#ca8a04';
@@ -11,24 +11,31 @@ const fadeIn = {
   transition: { duration: 0.6 }
 };
 
+const WHATSAPP_MESSAGE = encodeURIComponent('Hello, I would like to learn more about CONTROLHQ.');
+
 const contactMethods = [
   {
     icon: Mail,
     title: 'Email',
     description: 'Reach out with specific inquiries',
-    contact: 'contact@controlhq.io'
+    contact: 'controlhq@gmail.com',
+    link: 'mailto:controlhq@gmail.com',
+    copyValue: 'controlhq@gmail.com'
   },
   {
     icon: Phone,
     title: 'Phone',
     description: 'Speak with our team directly',
-    contact: '+1 (555) 123-4567'
+    contact: '+2348162946163',
+    link: `https://wa.me/2348162946163?text=${WHATSAPP_MESSAGE}`,
+    copyValue: '+2348162946163'
   },
   {
     icon: MapPin,
     title: 'Office',
     description: 'Visit us in person',
-    contact: 'Lagos, Nigeria'
+    contact: '3 Odobo Street, Ogba Ikeja, Lagos',
+    copyValue: '3 Odobo Street, Ogba Ikeja, Lagos'
   }
 ];
 
@@ -53,6 +60,32 @@ export function ContactPage() {
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 3000);
     setFormData({ name: '', email: '', organization: '', message: '' });
+  };
+
+  const copyToClipboard = (value: string) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(value).catch(() => {
+        fallbackCopy(value);
+      });
+      return;
+    }
+    fallbackCopy(value);
+  };
+
+  const fallbackCopy = (value: string) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Copy failed', err);
+    } finally {
+      document.body.removeChild(textarea);
+    }
   };
 
   return (
@@ -119,9 +152,28 @@ export function ContactPage() {
                 <p className="text-sm mb-3" style={{ color: '#888' }}>
                   {method.description}
                 </p>
-                <p className="font-semibold" style={{ color: GOLD }}>
-                  {method.contact}
-                </p>
+                <div className="font-semibold flex items-center justify-center gap-3" style={{ color: GOLD }}>
+                  {method.link ? (
+                    <a
+                      href={method.link}
+                      target={method.title === 'Phone' ? '_blank' : undefined}
+                      rel={method.title === 'Phone' ? 'noreferrer' : undefined}
+                      className="hover:opacity-80"
+                    >
+                      {method.contact}
+                    </a>
+                  ) : (
+                    <span>{method.contact}</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(method.copyValue || method.contact)}
+                    className="p-1 rounded hover:bg-black/20 transition"
+                    aria-label={`Copy ${method.title.toLowerCase()} details`}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
               </motion.div>
             ))}
           </div>
