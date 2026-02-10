@@ -31,6 +31,7 @@ export type TenantMeta = {
   slug: string;
   isActive: boolean;
   subscriptionStatus: string;
+  subscriptionAccessStatus?: TenantSubscriptionAccessStatus;
   subscriptionInterval: 'MONTHLY' | 'YEARLY' | null;
   subscriptionMode: 'AUTO' | 'MANUAL' | null;
   subscriptionEndsAt: string | null;

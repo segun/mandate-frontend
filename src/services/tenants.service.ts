@@ -14,7 +14,6 @@ export type RegisterTenantRequest = {
   email: string;
   phone?: string;
   password: string;
-  subscriptionInterval: 'MONTHLY' | 'YEARLY';
   subscriptionMode: 'AUTO' | 'MANUAL';
 };
 
@@ -28,12 +27,15 @@ export type RegisterTenantResponse = {
     useCases: string | null;
     isActive: boolean;
     subscriptionStatus: 'PENDING_PAYMENT' | 'ACTIVE' | 'PAST_DUE' | 'EXPIRED' | 'CANCELED';
+    subscriptionAccessStatus?: string | null;
     subscriptionInterval: 'MONTHLY' | 'YEARLY' | null;
     subscriptionMode: 'AUTO' | 'MANUAL' | null;
     subscriptionEndsAt: string | null;
     gracePeriodEndsAt: string | null;
-    concurrentUserLimit: number | null;
-    currentActiveSessions: number;
+    maxUsers: number | null;
+    defaultUserLimit?: number | null;
+    totalLicences?: number | null;
+    extraLicencesPurchased?: number | null;
     settings: Record<string, unknown> | null;
     createdAt: string;
     updatedAt: string;

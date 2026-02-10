@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { WebsiteLayout } from './components';
@@ -10,9 +10,12 @@ const GOLD = '#ca8a04';
 
 export function RegisterCompletePage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const reference = searchParams.get('reference');
+  const initialFlow = useMemo<'subscription' | 'licence'>(() => (searchParams.get('flow') === 'licence' ? 'licence' : 'subscription'), [searchParams]);
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
   const [message, setMessage] = useState('Verifying your payment...');
+  const [flow, setFlow] = useState<'subscription' | 'licence'>(initialFlow);
 
   useEffect(() => {
     let mounted = true;
@@ -26,13 +29,19 @@ export function RegisterCompletePage() {
 
       try {
         const response = await paymentsService.verify(reference);
+        const resolvedFlow = response.purpose === 'licence' ? 'licence' : response.purpose === 'subscription' ? 'subscription' : initialFlow;
+        setFlow(resolvedFlow);
         if (!mounted) {
           return;
         }
 
         if (response.status === 'success') {
           setStatus('success');
-          setMessage('Payment verified successfully. Your tenant is now active.');
+          if (resolvedFlow === 'licence') {
+            setMessage('Payment verified successfully. Your licences are now active.');
+          } else {
+            setMessage('Payment verified successfully. Your tenant is now active.');
+          }
           toast.success('Payment verified successfully.');
           return;
         }
@@ -53,7 +62,15 @@ export function RegisterCompletePage() {
     return () => {
       mounted = false;
     };
-  }, [reference]);
+  }, [reference, initialFlow]);
+
+  useEffect(() => {
+    if (status === 'success' && flow === 'licence') {
+      const timer = setTimeout(() => navigate('/user/settings?tab=billing', { replace: true }), 1500);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [status, flow, navigate]);
 
   return (
     <WebsiteLayout>
@@ -74,22 +91,32 @@ export function RegisterCompletePage() {
               className="text-3xl sm:text-4xl font-bold mb-4"
               style={{ fontFamily: 'Space Grotesk, system-ui, sans-serif' }}
             >
-              {status === 'loading' && 'Finalizing your registration'}
-              {status === 'success' && 'Registration complete'}
-              {status === 'failed' && 'Registration pending'}
+              {status === 'loading' && (flow === 'licence' ? 'Finalizing your purchase' : 'Finalizing your registration')}
+              {status === 'success' && (flow === 'licence' ? 'Purchase complete' : 'Registration complete')}
+              {status === 'failed' && (flow === 'licence' ? 'Purchase pending' : 'Registration pending')}
             </h1>
             <p className="text-lg" style={{ color: '#ccc' }}>
               {message}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               {status !== 'loading' && (
-                <Link
-                  to="/login"
-                  className="px-8 py-3 rounded-lg font-semibold"
-                  style={{ backgroundColor: GOLD, color: '#000000' }}
-                >
-                  Go to Login
-                </Link>
+                flow === 'licence' ? (
+                  <Link
+                    to="/user/settings?tab=billing"
+                    className="px-8 py-3 rounded-lg font-semibold"
+                    style={{ backgroundColor: GOLD, color: '#000000' }}
+                  >
+                    Go to Billing
+                  </Link>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="px-8 py-3 rounded-lg font-semibold"
+                    style={{ backgroundColor: GOLD, color: '#000000' }}
+                  >
+                    Go to Login
+                  </Link>
+                )
               )}
               {status === 'failed' && reference && (
                 <button

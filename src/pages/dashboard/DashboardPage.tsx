@@ -131,7 +131,9 @@ export function DashboardPage() {
       ) : error ? (
         <ErrorState
           message={
-            error instanceof Error && 'response' in error && (error as any).response?.status === 403
+            error instanceof Error && 'response' in error &&
+            typeof (error as { response?: { status?: number } }).response?.status === 'number' &&
+            (error as { response?: { status?: number } }).response?.status === 403
               ? "You're not authorized to view these statistics"
               : error instanceof Error
               ? error.message

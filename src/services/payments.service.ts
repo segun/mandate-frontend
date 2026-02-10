@@ -1,13 +1,16 @@
 import { api } from '../lib/api';
 
 export type PaymentPlan = {
-  interval: 'MONTHLY' | 'YEARLY';
+  planCode: string;
+  name: string;
   amount: number;
+  interval: string;
 };
 
 export type PlansResponse = {
   currency: string;
-  plans: PaymentPlan[];
+  subscription: PaymentPlan;
+  licence: PaymentPlan;
 };
 
 export type PaymentVerification = {
@@ -16,8 +19,26 @@ export type PaymentVerification = {
   amount: number;
   currency: string;
   paidAt: string | null;
-  tenantId: string;
+  tenantId: string | null;
   subscriptionId: string | null;
+  licenceQuantity?: number | null;
+  purpose?: 'subscription' | 'licence';
+  raw?: unknown;
+};
+
+export type BuyLicencesRequest = {
+  quantity: number;
+};
+
+export type BuyLicencesResponse = {
+  authorizationUrl: string;
+  accessCode: string;
+  reference: string;
+  amount: number;
+  interval?: string;
+  flow?: 'licence';
+  licenceQuantity?: number;
+  tenantId?: string;
 };
 
 export const paymentsService = {
@@ -28,6 +49,11 @@ export const paymentsService = {
 
   async verify(reference: string): Promise<PaymentVerification> {
     const response = await api.get('/payments/verify', { params: { reference } });
+    return response.data.data;
+  },
+
+  async buyLicences(request: BuyLicencesRequest): Promise<BuyLicencesResponse> {
+    const response = await api.post('/payments/buy-licences', request);
     return response.data.data;
   }
 };

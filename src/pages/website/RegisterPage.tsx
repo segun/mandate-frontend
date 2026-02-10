@@ -44,7 +44,6 @@ type RegisterFormState = {
   phone: string;
   password: string;
   confirmPassword: string;
-  subscriptionInterval: 'MONTHLY' | 'YEARLY' | '';
   subscriptionMode: 'AUTO' | 'MANUAL' | '';
 };
 
@@ -59,11 +58,10 @@ export function RegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    subscriptionInterval: '',
     subscriptionMode: ''
   });
   const [planCurrency, setPlanCurrency] = useState('NGN');
-  const [planOptions, setPlanOptions] = useState<{ interval: 'MONTHLY' | 'YEARLY'; amount: number }[]>([]);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<{ name: string; amount: number; interval: string } | null>(null);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -76,7 +74,7 @@ export function RegisterPage() {
           return;
         }
         setPlanCurrency(response.currency || 'NGN');
-        setPlanOptions(response.plans || []);
+        setSubscriptionPlan(response.subscription || null);
       } catch {
         if (mounted) {
           toast.error('Unable to load pricing plans. Please try again shortly.');
@@ -162,8 +160,8 @@ export function RegisterPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.subscriptionInterval || !formData.subscriptionMode) {
-      toast.error('Please select a subscription interval and mode to continue.');
+    if (!formData.subscriptionMode) {
+      toast.error('Please select a payment mode to continue.');
       return;
     }
 
@@ -198,7 +196,6 @@ export function RegisterPage() {
         email: formData.email,
         phone: formData.phone || undefined,
         password: formData.password,
-        subscriptionInterval: formData.subscriptionInterval,
         subscriptionMode: formData.subscriptionMode
       });
 
@@ -503,48 +500,36 @@ export function RegisterPage() {
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold" style={{ color: '#f5f5f5' }}>
-                          Choose a plan
+                          Your subscription plan
                         </h3>
                         {loadingPlans && (
                           <div className="flex items-center gap-2 text-sm" style={{ color: '#888' }}>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Loading plans
+                            Loading plan
                           </div>
                         )}
                       </div>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        {(['MONTHLY', 'YEARLY'] as const).map((interval) => {
-                          const plan = planOptions.find((option) => option.interval === interval);
-                          return (
-                            <button
-                              key={interval}
-                              type="button"
-                              onClick={() => setFormData((prev) => ({ ...prev, subscriptionInterval: interval }))}
-                              className="text-left p-4 rounded-lg transition-all duration-200"
-                              style={{
-                                backgroundColor:
-                                  formData.subscriptionInterval === interval ? 'rgba(202, 138, 4, 0.15)' : '#0f0f12',
-                                border: `1px solid ${
-                                  formData.subscriptionInterval === interval ? GOLD : '#2a2a2e'
-                                }`
-                              }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm" style={{ color: '#888' }}>
-                                    {interval === 'MONTHLY' ? 'Monthly' : 'Yearly'}
-                                  </p>
-                                  <p className="text-xl font-semibold" style={{ color: '#f5f5f5' }}>
-                                    {plan ? formatAmount(plan.amount) : 'Contact sales'}
-                                  </p>
-                                </div>
-                                {formData.subscriptionInterval === interval && (
-                                  <Check className="w-5 h-5" style={{ color: GOLD }} />
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
+                      <div
+                        className="p-6 rounded-lg"
+                        style={{
+                          backgroundColor: 'rgba(202, 138, 4, 0.15)',
+                          border: `1px solid ${GOLD}`
+                        }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-base font-medium" style={{ color: '#888' }}>
+                              {subscriptionPlan?.name || 'Control HQ Subscription'}
+                            </p>
+                            <p className="text-2xl font-bold mt-1" style={{ color: '#f5f5f5' }}>
+                              {subscriptionPlan ? formatAmount(subscriptionPlan.amount) : 'Loading...'}
+                            </p>
+                            <p className="text-sm mt-1" style={{ color: '#888' }}>
+                              Billed {subscriptionPlan?.interval || 'annually'}
+                            </p>
+                          </div>
+                          <Check className="w-6 h-6" style={{ color: GOLD }} />
+                        </div>
                       </div>
                     </div>
 

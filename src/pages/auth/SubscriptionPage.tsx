@@ -64,10 +64,9 @@ const statusConfig: Record<TenantSubscriptionAccessStatus, { icon: LucideIcon; c
 export function SubscriptionPage() {
   const { subscriptionAccessStatus, tenant, user, logout } = useAuthStore();
   const [planCurrency, setPlanCurrency] = useState('NGN');
-  const [planOptions, setPlanOptions] = useState<{ interval: 'MONTHLY' | 'YEARLY'; amount: number }[]>([]);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<{ name: string; amount: number; interval: string } | null>(null);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedInterval, setSelectedInterval] = useState<'MONTHLY' | 'YEARLY' | ''>('');
   const [selectedMode, setSelectedMode] = useState<'AUTO' | 'MANUAL' | ''>('');
 
   const status = subscriptionAccessStatus || TenantSubscriptionAccessStatus.NO_SUBSCRIPTION;
@@ -89,7 +88,7 @@ export function SubscriptionPage() {
           return;
         }
         setPlanCurrency(response.currency || 'NGN');
-        setPlanOptions(response.plans || []);
+        setSubscriptionPlan(response.subscription || null);
       } catch {
         if (mounted) {
           toast.error('Unable to load pricing plans. Please try again shortly.');
@@ -119,15 +118,15 @@ export function SubscriptionPage() {
   };
 
   const handleSubscribe = async () => {
-    if (!selectedInterval || !selectedMode) {
-      toast.error('Please select a subscription interval and payment mode to continue.');
+    if (!selectedMode) {
+      toast.error('Please select a payment mode to continue.');
       return;
     }
 
     setSubmitting(true);
     try {
       const response = await tenantsService.subscribe({
-        subscriptionInterval: selectedInterval,
+        subscriptionInterval: 'YEARLY',
         subscriptionMode: selectedMode
       });
 
@@ -233,36 +232,80 @@ export function SubscriptionPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-8"
           >
-            {/* Subscription Interval Selection */}
+            {/* Subscription Plan Display */}
             <div>
               <h3
                 className="text-xl font-semibold mb-4 text-center"
                 style={{ fontFamily: 'Space Grotesk, system-ui, sans-serif' }}
               >
-                Choose Your Billing Cycle
+                Your Subscription Plan
+              </h3>
+              <div className="max-w-2xl mx-auto">
+                <div
+                  className="p-6 rounded-lg"
+                  style={{
+                    backgroundColor: 'rgba(202, 138, 4, 0.15)',
+                    border: `2px solid ${GOLD}`
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="text-lg font-semibold" style={{ color: GOLD }}>
+                        {subscriptionPlan?.name || 'Control HQ Subscription'}
+                      </h4>
+                      <p className="text-sm text-[#888]">
+                        Billed {subscriptionPlan?.interval || 'annually'}
+                      </p>
+                    </div>
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: GOLD }}
+                    >
+                      <Check className="w-4 h-4 text-black" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold" style={{ color: GOLD }}>
+                    {subscriptionPlan ? formatAmount(subscriptionPlan.amount) : 'Loading...'}
+                  </p>
+                  <p className="text-xs text-[#888] mt-1">
+                    per {subscriptionPlan?.interval || 'year'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Mode Selection */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <h3
+                className="text-xl font-semibold mb-4 text-center"
+                style={{ fontFamily: 'Space Grotesk, system-ui, sans-serif' }}
+              >
+                Choose Payment Mode
               </h3>
               <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                {planOptions.map((plan) => {
-                  const isSelected = selectedInterval === plan.interval;
+                {[
+                  { value: 'AUTO' as const, label: 'Automatic Renewal', desc: 'Automatically renew your subscription' },
+                  { value: 'MANUAL' as const, label: 'Manual Renewal', desc: 'Manually renew before expiration' }
+                ].map((mode) => {
+                  const isSelected = selectedMode === mode.value;
                   return (
                     <button
-                      key={plan.interval}
-                      onClick={() => setSelectedInterval(plan.interval)}
+                      key={mode.value}
+                      onClick={() => setSelectedMode(mode.value)}
                       className="p-6 rounded-lg text-left transition-all"
                       style={{
                         backgroundColor: isSelected ? 'rgba(202, 138, 4, 0.15)' : '#0f0f12',
                         border: `2px solid ${isSelected ? GOLD : '#2a2a2e'}`
                       }}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="text-lg font-semibold" style={{ color: isSelected ? GOLD : '#f2f2f2' }}>
-                            {plan.interval === 'MONTHLY' ? 'Monthly' : 'Yearly'}
-                          </h4>
-                          <p className="text-sm text-[#888]">
-                            {plan.interval === 'MONTHLY' ? 'Billed monthly' : 'Billed annually'}
-                          </p>
-                        </div>
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="text-lg font-semibold" style={{ color: isSelected ? GOLD : '#f2f2f2' }}>
+                          {mode.label}
+                        </h4>
                         {isSelected && (
                           <div
                             className="w-6 h-6 rounded-full flex items-center justify-center"
@@ -272,70 +315,15 @@ export function SubscriptionPage() {
                           </div>
                         )}
                       </div>
-                      <p className="text-2xl font-bold" style={{ color: isSelected ? GOLD : '#f2f2f2' }}>
-                        {formatAmount(plan.amount)}
-                      </p>
-                      <p className="text-xs text-[#888] mt-1">
-                        per {plan.interval === 'MONTHLY' ? 'month' : 'year'}
-                      </p>
+                      <p className="text-sm text-[#888]">{mode.desc}</p>
                     </button>
                   );
                 })}
               </div>
-            </div>
-
-            {/* Payment Mode Selection */}
-            {selectedInterval && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                <h3
-                  className="text-xl font-semibold mb-4 text-center"
-                  style={{ fontFamily: 'Space Grotesk, system-ui, sans-serif' }}
-                >
-                  Choose Payment Mode
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                  {[
-                    { value: 'AUTO' as const, label: 'Automatic Renewal', desc: 'Automatically renew your subscription' },
-                    { value: 'MANUAL' as const, label: 'Manual Renewal', desc: 'Manually renew before expiration' }
-                  ].map((mode) => {
-                    const isSelected = selectedMode === mode.value;
-                    return (
-                      <button
-                        key={mode.value}
-                        onClick={() => setSelectedMode(mode.value)}
-                        className="p-6 rounded-lg text-left transition-all"
-                        style={{
-                          backgroundColor: isSelected ? 'rgba(202, 138, 4, 0.15)' : '#0f0f12',
-                          border: `2px solid ${isSelected ? GOLD : '#2a2a2e'}`
-                        }}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="text-lg font-semibold" style={{ color: isSelected ? GOLD : '#f2f2f2' }}>
-                            {mode.label}
-                          </h4>
-                          {isSelected && (
-                            <div
-                              className="w-6 h-6 rounded-full flex items-center justify-center"
-                              style={{ backgroundColor: GOLD }}
-                            >
-                              <Check className="w-4 h-4 text-black" />
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-sm text-[#888]">{mode.desc}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
+            </motion.div>
 
             {/* Subscribe Button */}
-            {selectedInterval && selectedMode && (
+            {selectedMode && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
