@@ -77,7 +77,7 @@ export const lgasService = {
   },
   async getById(id: string): Promise<LGA> {
     const response = await api.get(`/lgas/${id}`);
-    return response.data;
+    return response.data.data;
   },
   async addLgas(geoLgaIds: string[]): Promise<{ added: LGA[]; skipped: string[] }> {
     const response = await api.post('/lgas', { geoLgaIds });
