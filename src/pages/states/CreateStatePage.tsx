@@ -27,7 +27,7 @@ export function CreateStatePage() {
     const fetchStates = async () => {
       try {
         const response = await geodataService.getAllStates(1, DEFAULT_PAGE_LIMIT);
-        setGeoStates(response.data);
+        setGeoStates(response.data.data);
       } catch {
         setError('Failed to load states');
       } finally {
@@ -48,10 +48,10 @@ export function CreateStatePage() {
 
         while (hasMore) {
           const response = await statesService.getAll(page, pageSize);
-          collected = collected.concat(response.data.map((state) => state.geoStateId));
+          collected = collected.concat(response.data.data.map((state) => state.geoStateId));
 
           const total = response.meta?.total ?? collected.length;
-          hasMore = collected.length < total && response.data.length === pageSize;
+          hasMore = collected.length < total && response.data.data.length === pageSize;
           page += 1;
         }
 

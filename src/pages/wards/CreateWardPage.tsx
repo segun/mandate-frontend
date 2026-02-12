@@ -39,7 +39,7 @@ export function CreateWardPage() {
     const fetchStates = async () => {
       try {
         const response = await geodataService.getAllStates(1, DEFAULT_PAGE_LIMIT);
-        setGeoStates(response.data);
+        setGeoStates(response.data.data);
       } catch {
         setError('Failed to load states');
       } finally {
@@ -90,7 +90,7 @@ export function CreateWardPage() {
       setLoadingLgas(true);
       try {
         const response = await geodataService.getLgasByState(selectedStateId, 1, DEFAULT_PAGE_LIMIT);
-        setGeoLgas(response.data);
+        setGeoLgas(response.data.data);
         setSelectedLgaId('');
         setGeoWards([]);
         setSelectedNewWardIds([]);
@@ -115,7 +115,7 @@ export function CreateWardPage() {
       setLoadingWards(true);
       try {
         const response = await geodataService.getWardsByLga(selectedLgaId, 1, DEFAULT_PAGE_LIMIT);
-        setGeoWards(response.data);
+        setGeoWards(response.data.data);
         setSelectedNewWardIds([]);
       } catch {
         setError('Failed to load wards');
@@ -144,7 +144,7 @@ export function CreateWardPage() {
       setLoadingNameFormLgas(true);
       try {
         const response = await geodataService.getLgasByState(nameFormStateId, 1, DEFAULT_PAGE_LIMIT);
-        setNameFormLgas(response.data);
+        setNameFormLgas(response.data.data);
         setNameFormLgaId('');
       } catch {
         setError('Failed to load LGAs');

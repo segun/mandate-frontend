@@ -46,7 +46,9 @@ export interface Ward {
 
 export interface PaginatedResponse<T> {
   success: boolean;
-  data: T[];
+  data: {
+    data: T[];
+  };
   meta: {
     page: number;
     limit: number;

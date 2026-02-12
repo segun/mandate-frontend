@@ -31,7 +31,7 @@ export function LGAsPage() {
         DEFAULT_PAGE_LIMIT,
         searchTerm
       );
-      setLGAs(response.data);
+      setLGAs(response.data.data);
       setTotalPages(response.meta?.totalPages || 1);
       setError('');
     } catch (err) {

@@ -31,7 +31,7 @@ export function CreateLGAPage() {
     const fetchStates = async () => {
       try {
         const response = await geodataService.getAllStates(1, DEFAULT_PAGE_LIMIT);
-        setGeoStates(response.data);
+        setGeoStates(response.data.data);
       } catch {
         setError('Failed to load states');
       } finally {
@@ -53,10 +53,10 @@ export function CreateLGAPage() {
 
         while (hasMore) {
           const response = await lgasService.getAll(undefined, page, pageSize);
-          collected = collected.concat(response.data.map((lga) => String(lga.geoLgaId)));
+          collected = collected.concat(response.data.data.map((lga) => String(lga.geoLgaId)));
 
           const total = response.meta?.total ?? Number.POSITIVE_INFINITY;
-          hasMore = response.data.length === pageSize && collected.length < total;
+          hasMore = response.data.data.length === pageSize && collected.length < total;
           page += 1;
         }
 
@@ -80,7 +80,7 @@ export function CreateLGAPage() {
       setLoadingLgas(true);
       try {
         const response = await geodataService.getLgasByState(selectedStateId, 1, DEFAULT_PAGE_LIMIT);
-        setGeoLgas(response.data);
+        setGeoLgas(response.data.data);
         setSelectedNewLgaIds([]);
       } catch {
         setError('Failed to load LGAs for the selected state');

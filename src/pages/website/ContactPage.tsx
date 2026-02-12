@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, MapPin, Phone, ArrowRight, Copy } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, MapPin, Phone, Copy } from 'lucide-react';
 import { WebsiteLayout } from './components';
 
 const GOLD = '#ca8a04';
@@ -40,36 +40,19 @@ const contactMethods = [
 ];
 
 export function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    organization: '',
-    message: ''
-  });
-  const [submitted, setSubmitted] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormData({ name: '', email: '', organization: '', message: '' });
-  };
-
-  const copyToClipboard = (value: string) => {
+  const copyToClipboard = (value: string, index: number) => {
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(value).catch(() => {
         fallbackCopy(value);
       });
-      return;
+    } else {
+      fallbackCopy(value);
     }
-    fallbackCopy(value);
+
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex((current) => (current === index ? null : current)), 1200);
   };
 
   const fallbackCopy = (value: string) => {
@@ -116,7 +99,7 @@ export function ContactPage() {
             </motion.h1>
 
             <motion.p variants={fadeIn} className="text-lg sm:text-xl leading-relaxed" style={{ color: '#ccc' }}>
-              Whether you have questions about CONTROLHQ, want to discuss partnerships, 
+              Whether you have questions about CONTROLHQ, want to discuss partnerships,
               or need technical support, we're here to help.
             </motion.p>
           </motion.div>
@@ -137,13 +120,13 @@ export function ContactPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <div 
+                <div
                   className="w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"
                   style={{ backgroundColor: 'rgba(202, 138, 4, 0.1)' }}
                 >
                   <method.icon className="w-6 h-6" style={{ color: GOLD }} />
                 </div>
-                <h3 
+                <h3
                   className="text-xl font-semibold mb-2"
                   style={{ fontFamily: 'Space Grotesk, system-ui, sans-serif' }}
                 >
@@ -165,148 +148,34 @@ export function ContactPage() {
                   ) : (
                     <span>{method.contact}</span>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(method.copyValue || method.contact)}
-                    className="p-1 rounded hover:bg-black/20 transition"
-                    aria-label={`Copy ${method.title.toLowerCase()} details`}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
+                  <div className="relative flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(method.copyValue || method.contact, index)}
+                      className="p-1 rounded hover:bg-black/20 transition"
+                      aria-label={`Copy ${method.title.toLowerCase()} details`}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <AnimatePresence>
+                      {copiedIndex === index && (
+                        <motion.span
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: -12 }}
+                          exit={{ opacity: 0, y: -18 }}
+                          transition={{ duration: 0.4 }}
+                          className="absolute text-xs font-medium"
+                          style={{ color: GOLD, pointerEvents: 'none' }}
+                        >
+                          Copied
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </motion.div>
             ))}
           </div>
-
-          {/* Contact Form */}
-          <motion.div
-            className="max-w-2xl mx-auto p-12 rounded-lg"
-            style={{ backgroundColor: '#141417', border: '1px solid #2a2a2e' }}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 
-              className="text-2xl font-bold mb-8"
-              style={{ fontFamily: 'Space Grotesk, system-ui, sans-serif' }}
-            >
-              Send us a Message
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label 
-                  className="block text-sm font-medium mb-2" 
-                  style={{ color: '#ccc' }}
-                >
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg text-base"
-                  style={{ 
-                    backgroundColor: '#0f0f12', 
-                    border: '1px solid #2a2a2e',
-                    color: '#f5f5f5'
-                  }}
-                  placeholder="Enter your name"
-                />
-              </div>
-
-              <div>
-                <label 
-                  className="block text-sm font-medium mb-2" 
-                  style={{ color: '#ccc' }}
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg text-base"
-                  style={{ 
-                    backgroundColor: '#0f0f12', 
-                    border: '1px solid #2a2a2e',
-                    color: '#f5f5f5'
-                  }}
-                  placeholder="your@email.com"
-                />
-              </div>
-
-              <div>
-                <label 
-                  className="block text-sm font-medium mb-2" 
-                  style={{ color: '#ccc' }}
-                >
-                  Organization
-                </label>
-                <input
-                  type="text"
-                  name="organization"
-                  value={formData.organization}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg text-base"
-                  style={{ 
-                    backgroundColor: '#0f0f12', 
-                    border: '1px solid #2a2a2e',
-                    color: '#f5f5f5'
-                  }}
-                  placeholder="Your organization"
-                />
-              </div>
-
-              <div>
-                <label 
-                  className="block text-sm font-medium mb-2" 
-                  style={{ color: '#ccc' }}
-                >
-                  Message
-                </label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  rows={6}
-                  className="w-full px-4 py-3 rounded-lg text-base resize-none"
-                  style={{ 
-                    backgroundColor: '#0f0f12', 
-                    border: '1px solid #2a2a2e',
-                    color: '#f5f5f5'
-                  }}
-                  placeholder="Tell us more about your inquiry..."
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300"
-                style={{ backgroundColor: GOLD, color: '#000000' }}
-              >
-                Send Message
-                <ArrowRight className="w-5 h-5" />
-              </button>
-
-              {submitted && (
-                <motion.div
-                  className="p-4 rounded-lg text-center"
-                  style={{ backgroundColor: 'rgba(202, 138, 4, 0.1)', border: `1px solid ${GOLD}` }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <p style={{ color: GOLD }}>Thank you! We'll get back to you soon.</p>
-                </motion.div>
-              )}
-            </form>
-          </motion.div>
         </div>
       </section>
 
@@ -319,7 +188,7 @@ export function ContactPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 
+            <h2
               className="text-3xl lg:text-4xl font-bold mb-6"
               style={{ fontFamily: 'Space Grotesk, system-ui, sans-serif' }}
             >
@@ -327,15 +196,15 @@ export function ContactPage() {
             </h2>
             <div className="max-w-2xl mx-auto space-y-4" style={{ color: '#888' }}>
               <p>
-                <span className="font-semibold" style={{ color: '#f5f5f5' }}>General Inquiries:</span> 
+                <span className="font-semibold" style={{ color: '#f5f5f5' }}>General Inquiries:</span>
                 {' '}Typically responded to within 24 hours
               </p>
               <p>
-                <span className="font-semibold" style={{ color: '#f5f5f5' }}>Partnership Opportunities:</span> 
+                <span className="font-semibold" style={{ color: '#f5f5f5' }}>Partnership Opportunities:</span>
                 {' '}Priority response within 12 hours
               </p>
               <p>
-                <span className="font-semibold" style={{ color: '#f5f5f5' }}>Technical Support:</span> 
+                <span className="font-semibold" style={{ color: '#f5f5f5' }}>Technical Support:</span>
                 {' '}Enterprise support available 24/7
               </p>
             </div>

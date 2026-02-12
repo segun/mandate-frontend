@@ -162,7 +162,7 @@ export default function CreateVoterPage() {
       try {
         setLoadingOptions(true);
         const statesData = await statesService.getAll(1, DEFAULT_PAGE_LIMIT);
-        setStates(statesData.data.map((s: any) => ({ id: s.id, name: s.geoState?.name || s.name || 'Unknown' })));
+        setStates(statesData.data.data.map((s: any) => ({ id: s.id, name: s.geoState?.name || s.name || 'Unknown' })));
         
         // Load canvassers if user has permission, otherwise just add current user
         if (hasAccessToResource(user?.role, Resource.USERS)) {
@@ -201,7 +201,7 @@ export default function CreateVoterPage() {
       const loadLgas = async () => {
         try {
           const data = await lgasService.getAll(formData.stateId, 1, DEFAULT_PAGE_LIMIT);
-          setLgas(data.data.map((l: any) => ({ id: l.id, name: l.geoLga?.name || l.name || 'Unknown' })));
+          setLgas(data.data.data.map((l: any) => ({ id: l.id, name: l.geoLga?.name || l.name || 'Unknown' })));
           setWards([]);
           setPollingUnits([]);
           setFormData((prev) => ({

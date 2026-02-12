@@ -48,7 +48,7 @@ export function CreatePollingUnitPage() {
     const fetchStates = async () => {
       try {
         const response = await geodataService.getAllStates(1, DEFAULT_PAGE_LIMIT);
-        setGeoStates(response.data);
+        setGeoStates(response.data.data);
       } catch {
         setError('Failed to load states');
       } finally {
@@ -105,7 +105,7 @@ export function CreatePollingUnitPage() {
       setLoadingLgas(true);
       try {
         const response = await geodataService.getLgasByState(selectedStateId, 1, DEFAULT_PAGE_LIMIT);
-        setGeoLgas(response.data);
+        setGeoLgas(response.data.data);
         setSelectedLgaId('');
         setGeoWards([]);
         setGeoPollingUnits([]);
@@ -134,7 +134,7 @@ export function CreatePollingUnitPage() {
       setLoadingWards(true);
       try {
         const response = await geodataService.getWardsByLga(selectedLgaId, 1, DEFAULT_PAGE_LIMIT);
-        setGeoWards(response.data);
+        setGeoWards(response.data.data);
         setSelectedWardId('');
         setGeoPollingUnits([]);
         setSelectedNewPollingUnitIds([]);
@@ -159,7 +159,7 @@ export function CreatePollingUnitPage() {
       setLoadingPollingUnits(true);
       try {
         const response = await geodataService.getPollingUnitsByWard(selectedWardId, 1, DEFAULT_PAGE_LIMIT);
-        setGeoPollingUnits(response.data);
+        setGeoPollingUnits(response.data.data);
         setSelectedNewPollingUnitIds([]);
       } catch {
         setError('Failed to load polling units');
@@ -184,7 +184,7 @@ export function CreatePollingUnitPage() {
       setLoadingNameFormLgas(true);
       try {
         const response = await geodataService.getLgasByState(nameFormStateId, 1, DEFAULT_PAGE_LIMIT);
-        setNameFormLgas(response.data);
+        setNameFormLgas(response.data.data);
         setNameFormLgaId('');
         setNameFormWards([]);
         setNameFormWardId('');
@@ -209,7 +209,7 @@ export function CreatePollingUnitPage() {
       setLoadingNameFormWards(true);
       try {
         const response = await geodataService.getWardsByLga(nameFormLgaId, 1, DEFAULT_PAGE_LIMIT);
-        setNameFormWards(response.data);
+        setNameFormWards(response.data.data);
         setNameFormWardId('');
       } catch {
         setError('Failed to load wards');
