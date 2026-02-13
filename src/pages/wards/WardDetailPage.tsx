@@ -260,8 +260,8 @@ export function WardDetailPage() {
                       onClick={() => navigate(`/polling-units/${unit.id}`)}
                       className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
                     >
-                      <td className="px-4 py-3 text-sm font-medium text-white">{unit.geoPollingUnit?.name || 'N/A'}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{unit.geoPollingUnit?.code || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-[#ca8a04]">{unit.geoPollingUnit?.name || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm text-[#ca8a04]">{unit.geoPollingUnit?.code || 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -276,12 +276,12 @@ export function WardDetailPage() {
                   onClick={() => navigate(`/polling-units/${unit.id}`)}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-white">{unit.geoPollingUnit?.name || 'N/A'}</h3>
+                    <h3 className="font-medium text-[#ca8a04]">{unit.geoPollingUnit?.name || 'N/A'}</h3>
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${unit.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                       {unit.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <p className="text-sm text-[#888] mb-1">Code: {unit.geoPollingUnit?.code || 'N/A'}</p>
+                  <p className="text-sm text-[#ca8a04] mb-1">Code: {unit.geoPollingUnit?.code || 'N/A'}</p>
                 </div>
               ))}
             </div>

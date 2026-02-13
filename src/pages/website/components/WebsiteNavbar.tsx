@@ -1,11 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Lock } from "lucide-react";
+import { LayoutDashboard, Lock } from "lucide-react";
+import { useAuthStore } from "../../../stores/auth.store";
 
 const GOLD = "#ca8a04";
 
 export function WebsiteNavbar() {
   const location = useLocation();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const LinkIcon = isAuthenticated ? LayoutDashboard : Lock;
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -84,14 +87,14 @@ export function WebsiteNavbar() {
 
         <div className="relative z-10 flex flex-wrap items-center gap-3 pointer-events-auto">
           <Link
-            to="/login"
-            target="_blank"
-            rel="noopener noreferrer"
+            to={isAuthenticated ? "/dashboard" : "/login"}
+            target={isAuthenticated ? undefined : "_blank"}
+            rel={isAuthenticated ? undefined : "noopener noreferrer"}
             style={{ border: `2px solid ${GOLD}`, color: "#888" }}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border border-border rounded-lg text-foreground hover:bg-muted/50 transition-colors"
           >
-            <Lock className="w-4 h-4" />
-            Secure Login
+            <LinkIcon className="w-4 h-4" />
+            {isAuthenticated ? "Dashboard" : "Secure Login"}
           </Link>
           <Link
             to="/register"

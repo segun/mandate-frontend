@@ -233,10 +233,10 @@ export function PollingUnitDetailPage() {
                 <tbody className="divide-y divide-[#2a2a2e]">
                   {pollingUnit.voters.map((voter) => (
                     <tr key={voter.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-white">{voter.fullName}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{voter.phone}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{voter.pvcStatus}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{voter.supportLevel}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-[#ca8a04]">{voter.fullName}</td>
+                      <td className="px-4 py-3 text-sm text-[#ca8a04]">{voter.phone}</td>
+                      <td className="px-4 py-3 text-sm text-[#ca8a04]">{voter.pvcStatus}</td>
+                      <td className="px-4 py-3 text-sm text-[#ca8a04]">{voter.supportLevel}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -247,11 +247,11 @@ export function PollingUnitDetailPage() {
               {pollingUnit.voters.map((voter) => (
                 <div key={voter.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-white">{voter.fullName}</h3>
+                    <h3 className="font-medium text-[#ca8a04]">{voter.fullName}</h3>
                   </div>
-                  <p className="text-sm text-[#888] mb-1">Phone: {voter.phone}</p>
-                  <p className="text-sm text-[#888] mb-1">PVC Status: {voter.pvcStatus}</p>
-                  <p className="text-sm text-[#888]">Support Level: {voter.supportLevel}</p>
+                  <p className="text-sm text-[#ca8a04] mb-1">Phone: {voter.phone}</p>
+                  <p className="text-sm text-[#ca8a04] mb-1">PVC Status: {voter.pvcStatus}</p>
+                  <p className="text-sm text-[#ca8a04]">Support Level: {voter.supportLevel}</p>
                 </div>
               ))}
             </div>

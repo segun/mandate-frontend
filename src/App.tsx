@@ -80,6 +80,52 @@ function AppLayout() {
     }
   }, [accessToken, user?.id, connectSocket, disconnectSocket]);
 
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+
+    const inactivityMs = 5 * 60 * 1000;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+
+    const resetTimer = () => {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+      timerId = setTimeout(() => {
+        useAuthStore.getState().logout();
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }, inactivityMs);
+    };
+
+    const handleBeforeUnload = () => {
+      useAuthStore.getState().logout();
+    };
+
+    const activityEvents: Array<keyof WindowEventMap> = [
+      'mousemove',
+      'mousedown',
+      'keydown',
+      'scroll',
+      'touchstart',
+      'click'
+    ];
+
+    activityEvents.forEach((event) => window.addEventListener(event, resetTimer, { passive: true }));
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    resetTimer();
+
+    return () => {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+      activityEvents.forEach((event) => window.removeEventListener(event, resetTimer));
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [accessToken]);
+
   // Check if subscription is valid
   const hasValidSubscription = 
     subscriptionAccessStatus === TenantSubscriptionAccessStatus.SUBSCRIPTION_ACTIVE ||

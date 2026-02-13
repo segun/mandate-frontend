@@ -56,9 +56,6 @@ export function Navbar() {
                 className="h-10 w-auto"
               />
             </Link>
-            <span className="hidden sm:inline-flex items-center rounded-full bg-[#ca8a04]/10 px-3 py-1 text-xs font-medium text-[#ca8a04]">
-              Field Command
-            </span>
           </div>
 
           {/* Desktop Menu */}
@@ -94,16 +91,31 @@ export function Navbar() {
             <div className="relative hidden sm:block">
               <button
                 onClick={() => setIsUserMenuOpen((open) => !open)}
-                className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-[#1a1a1e] transition-colors"
+                className="group flex items-center gap-2 rounded-full px-2 py-1 hover:bg-[#1a1a1e] transition-colors cursor-pointer"
                 aria-label="Open user menu"
+                aria-expanded={isUserMenuOpen}
+                aria-haspopup="menu"
+                title="Open user menu"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#ca8a04] text-[#0d0d0f] text-sm font-semibold shadow-sm">
                   {initial}
                 </div>
                 <div className="hidden md:block leading-tight text-left">
-                  <p className="text-sm font-semibold text-white">{user?.fullName}</p>
-                  <p className="text-xs text-[#888]">{user?.role}</p>
+                  <p className="text-sm font-semibold text-white group-hover:text-[#ca8a04] transition-colors">{user?.fullName}</p>
+                  <p className="text-xs text-[#888] group-hover:text-[#ca8a04]/80 transition-colors">{user?.role}</p>
                 </div>
+                <svg
+                  className={`hidden md:block h-4 w-4 text-[#888] transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.25a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </button>
 
               {isUserMenuOpen && (
