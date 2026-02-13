@@ -58,7 +58,7 @@ jobs:
             cd /opt/mandate/mandate-frontend
             git fetch origin ${{ matrix.branch }}
             git reset --hard origin/${{ matrix.branch }}
-            ./deploy/deploy.sh
+            bash deploy/deploy.sh
 
       - name: Health Check
         if: github.ref_name == matrix.branch
