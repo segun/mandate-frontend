@@ -214,7 +214,7 @@ export default function EditVoterPage() {
       }
     };
     loadData();
-  }, [user?.role, user?.id, user?.fullName]);
+  }, [user]);
 
   // Load wards when LGA is known
   useEffect(() => {
