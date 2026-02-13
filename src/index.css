@@ -14,8 +14,8 @@
   --popover: 240 5% 8%;
   --popover-foreground: 0 0% 95%;
 
-  /* Gold accent - Authority & Premium */
-  --primary: 43 74% 49%;
+  /* Gold accent - Authority & Premium - rgb(202, 138, 4) */
+  --primary: 41 96% 40%;
   --primary-foreground: 240 6% 5%;
 
   --secondary: 240 4% 14%;
@@ -24,7 +24,7 @@
   --muted: 240 4% 16%;
   --muted-foreground: 0 0% 55%;
 
-  --accent: 43 74% 49%;
+  --accent: 41 96% 40%;
   --accent-foreground: 240 6% 5%;
 
   --destructive: 0 72% 51%;
@@ -32,20 +32,20 @@
 
   --border: 240 4% 16%;
   --input: 240 4% 16%;
-  --ring: 43 74% 49%;
+  --ring: 41 96% 40%;
 
   --radius: 0.5rem;
 
-  /* Custom CONTROLHQ tokens */
-  --gold: 43 74% 49%;
-  --gold-light: 43 80% 60%;
-  --gold-dark: 43 70% 35%;
+  /* Custom CONTROLHQ tokens - rgb(202, 138, 4) */
+  --gold: 41 96% 40%;
+  --gold-light: 41 96% 50%;
+  --gold-dark: 41 96% 30%;
   --charcoal: 240 6% 5%;
   --charcoal-light: 240 5% 12%;
   --charcoal-medium: 240 4% 18%;
 
   /* Shadows */
-  --shadow-gold: 0 0 40px -10px hsl(43 74% 49% / 0.3);
+  --shadow-gold: 0 0 40px -10px rgb(202 138 4 / 0.3);
   --shadow-card: 0 4px 24px -8px hsl(0 0% 0% / 0.5);
   --shadow-elevated: 0 8px 40px -12px hsl(0 0% 0% / 0.6);
 }
@@ -61,8 +61,8 @@
   }
 
   body {
-    background-color: #0d0d0f;
-    color: #f2f2f2;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, sans-serif;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
@@ -71,7 +71,7 @@
 
   #root {
     min-height: 100vh;
-    background-color: #0d0d0f;
+    background-color: hsl(var(--background));
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -86,7 +86,7 @@
 
 @layer components {
   .text-gradient-gold {
-    background: linear-gradient(135deg, #ca8a04 0%, #d4940a 100%);
+    background: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(var(--gold-light)) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -97,30 +97,26 @@
   }
 
   .card-elevated {
-    background-color: #141417;
+    background-color: hsl(var(--card));
     border-radius: 0.5rem;
-    border: 1px solid #2a2a2e;
+    border: 1px solid hsl(var(--border));
     box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5);
   }
 
   .hero-gradient {
-    background: radial-gradient(ellipse at bottom, rgba(202, 138, 4, 0.1) 0%, #0d0d0f 50%);
+    background: radial-gradient(ellipse at top, hsl(var(--charcoal-light)) 0%, hsl(var(--background)) 70%);
+  }
+
+  .section-container {
+    width: 100%;
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
   }
 }
-
-/* Toast animation */
-@keyframes slide-in {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
-}
-

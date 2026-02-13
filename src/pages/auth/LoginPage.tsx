@@ -18,7 +18,12 @@ export function LoginPage() {
 
     try {
       const response = await authService.login({ email, password });
-      login(response.data.user, response.data.accessToken);
+      login(
+        response.data.user,
+        response.data.accessToken,
+        response.meta?.subscriptionAccessStatus,
+        response.meta?.tenant
+      );
       navigate('/dashboard');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

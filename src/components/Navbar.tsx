@@ -1,26 +1,34 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useAuthStore } from '../stores/auth.store';
+import { Resource, hasAccessToResource } from '../lib/permissions';
+
+interface NavLink {
+  label: string;
+  to: string;
+  resource: Resource;
+}
 
 export function Navbar() {
   const { user, logout, isAuthenticated } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const navLinks = useMemo(
+  const navLinks: NavLink[] = useMemo(
     () => [
-      { label: 'Dashboard', to: '/dashboard' },
-      { label: 'States', to: '/states' },
-      { label: 'LGAs', to: '/lgas' }, // Placeholder, should be dynamic
-      { label: 'Wards', to: '/wards' },
-      { label: 'Polling Units', to: '/polling-units' },
-      { label: 'Voters', to: '/voters' },
-      { label: 'Users', to: '/users' },
+      { label: 'Dashboard', to: '/dashboard', resource: Resource.DASHBOARD },
+      { label: 'States', to: '/states', resource: Resource.STATES },
+      { label: 'LGAs', to: '/lgas', resource: Resource.LGAS },
+      { label: 'Wards', to: '/wards', resource: Resource.WARDS },
+      { label: 'Polling Units', to: '/polling-units', resource: Resource.POLLING_UNITS },
+      { label: 'Voters', to: '/voters', resource: Resource.VOTERS },
+      { label: 'Users', to: '/users', resource: Resource.USERS },
+      { label: 'Chat', to: '/chat', resource: Resource.CHAT },
     ],
     [],
   );
-
 
   const handleLogout = () => {
     logout();
@@ -28,6 +36,8 @@ export function Navbar() {
   };
 
   const isActive = (path: string) => location.pathname.startsWith(path);
+
+  const canAccessLink = (resource: Resource) => hasAccessToResource(user?.role, resource);
 
   const initial = user?.fullName?.[0]?.toUpperCase() ?? 'M';
 
@@ -53,37 +63,73 @@ export function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  isActive(link.to)
-                    ? 'text-[#ca8a04] bg-[#ca8a04]/10'
-                    : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const hasAccess = canAccessLink(link.resource);
+              return hasAccess ? (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isActive(link.to)
+                      ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                      : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <span
+                  key={link.to}
+                  className="px-3 py-2 text-sm font-medium rounded-lg text-[#4a4a4e] cursor-not-allowed"
+                  title="You don't have access to this section"
+                >
+                  {link.label}
+                </span>
+              );
+            })}
           </div>
 
           {/* User Menu */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-full bg-[#ca8a04] text-[#0d0d0f] shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#141417] focus:ring-[#ca8a04]"
-            >
-              <span>Logout</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#ca8a04] text-[#0d0d0f] text-sm font-semibold shadow-sm">
-                {initial}
-              </div>
-              <div className="hidden md:block leading-tight">
-                <p className="text-sm font-semibold text-white">{user?.fullName}</p>
-                <p className="text-xs text-[#888]">{user?.role}</p>
-              </div>
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setIsUserMenuOpen((open) => !open)}
+                className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-[#1a1a1e] transition-colors"
+                aria-label="Open user menu"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#ca8a04] text-[#0d0d0f] text-sm font-semibold shadow-sm">
+                  {initial}
+                </div>
+                <div className="hidden md:block leading-tight text-left">
+                  <p className="text-sm font-semibold text-white">{user?.fullName}</p>
+                  <p className="text-xs text-[#888]">{user?.role}</p>
+                </div>
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-xl border border-[#2a2a2e] bg-[#141417] shadow-xl p-3 z-50">
+                  <div className="px-2 pb-3 border-b border-[#2a2a2e]">
+                    <p className="text-xs uppercase tracking-wide text-[#888]">Signed in as</p>
+                    <p className="text-sm font-semibold text-white mt-1">{user?.fullName}</p>
+                    <p className="text-xs text-[#888]">{user?.email}</p>
+                  </div>
+                  <div className="pt-3 flex flex-col gap-2">
+                    <Link
+                      to="/user/settings"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="px-3 py-2 rounded-lg text-sm font-semibold text-[#f5f5f5] hover:bg-[#1a1a1e]"
+                    >
+                      User Settings
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="px-3 py-2 rounded-lg text-sm font-semibold text-[#ca8a04] hover:bg-[#1a1a1e] text-left"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
             <button
               onClick={() => setIsOpen((open) => !open)}
@@ -106,20 +152,38 @@ export function Navbar() {
       {isOpen && (
         <div className="md:hidden border-t border-[#2a2a2e] bg-[#141417]/95 backdrop-blur">
           <div className="px-4 py-3 space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setIsOpen(false)}
-                className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive(link.to)
-                    ? 'text-[#ca8a04] bg-[#ca8a04]/10'
-                    : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const hasAccess = canAccessLink(link.resource);
+              return hasAccess ? (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setIsOpen(false)}
+                  className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive(link.to)
+                      ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                      : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <span
+                  key={link.to}
+                  className="block rounded-lg px-3 py-2 text-sm font-medium text-[#4a4a4e] cursor-not-allowed"
+                  title="You don't have access to this section"
+                >
+                  {link.label}
+                </span>
+              );
+            })}
+            <Link
+              to="/user/settings"
+              onClick={() => setIsOpen(false)}
+              className="mt-2 w-full inline-flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md border border-[#2a2a2e] text-[#f5f5f5] hover:bg-[#1a1a1e] transition-colors"
+            >
+              User Settings
+            </Link>
             <button
               onClick={handleLogout}
               className="mt-2 w-full inline-flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md bg-[#ca8a04] text-[#0d0d0f] shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#141417] focus:ring-[#ca8a04] transition-colors"

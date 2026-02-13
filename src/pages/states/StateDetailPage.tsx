@@ -213,10 +213,16 @@ export function StateDetailPage() {
 
       {/* LGAs Section */}
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d]">
+        <div className="px-6 py-4 border-b border-[#2a2a2e] bg-[#1a1a1d] flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
             Local Government Areas ({state.lgas?.length || 0})
           </h2>
+          <Link
+            to="/lgas"
+            className="text-sm text-[#ca8a04] hover:text-[#d4940a] font-semibold"
+          >
+            Manage Local Government Areas
+          </Link>
         </div>
 
         {!state.lgas || state.lgas.length === 0 ? (

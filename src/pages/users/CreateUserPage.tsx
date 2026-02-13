@@ -10,6 +10,7 @@ interface FormData {
   password: string;
   phone: string;
   role: string;
+  parentOfficerId: string;
   requirePasswordChange: boolean;
 }
 
@@ -38,6 +39,29 @@ const roles = [
   { value: 'UNIT_COMMANDER', label: 'Unit Commander' },
   { value: 'FIELD_OFFICER', label: 'Field Officer' },
 ];
+
+// Role hierarchy - lower index = higher level
+const roleHierarchy: Record<string, number> = {
+  'SUPER_ADMIN': 0,
+  'CAMPAIGN_DIRECTOR': 1,
+  'DATA_CONTROLLER': 1,
+  'PLATFORM_ADMIN': 1,
+  'STATE_COORDINATOR': 2,
+  'LGA_COORDINATOR': 3,
+  'WARD_COMMANDER': 4,
+  'WARD_OFFICER': 4,
+  'UNIT_COMMANDER': 5,
+  'FIELD_OFFICER': 6,
+};
+
+// Get role level (higher number = lower in hierarchy)
+const getRoleLevel = (role: string): number => roleHierarchy[role] ?? 999;
+
+// Filter users to show only those at higher levels
+const filterParentOfficers = (users: Array<{ id: string; fullName: string; role: string }>, selectedRole: string): Array<{ id: string; fullName: string; role: string }> => {
+  const selectedRoleLevel = getRoleLevel(selectedRole);
+  return users.filter(user => getRoleLevel(user.role) < selectedRoleLevel);
+};
 
 // Validation functions
 const validateFullName = (name: string): string => {
@@ -106,8 +130,12 @@ export default function CreateUserPage() {
     password: '',
     phone: '',
     role: 'FIELD_OFFICER',
+    parentOfficerId: '',
     requirePasswordChange: false,
   });
+
+  const [allOfficers, setAllOfficers] = useState<Array<{ id: string; fullName: string; role: string }>>([]);
+  const [loadingOfficers, setLoadingOfficers] = useState(true);
 
   const [errors, setErrors] = useState<FormErrors>({
     fullName: '',
@@ -122,6 +150,24 @@ export default function CreateUserPage() {
     password: false,
     phone: false,
   });
+
+  // Load parent officers on mount
+  useEffect(() => {
+    const loadOfficers = async () => {
+      try {
+        setLoadingOfficers(true);
+        const officers = await usersService.getMinimal();
+        setAllOfficers(officers);
+      } catch (error) {
+        console.error('Failed to load officers:', error);
+        toast.error('Failed to load available officers');
+      } finally {
+        setLoadingOfficers(false);
+      }
+    };
+
+    loadOfficers();
+  }, []);
 
   // Validate fields when they change
   useEffect(() => {
@@ -152,10 +198,17 @@ export default function CreateUserPage() {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      };
+      // Reset parent officer when role changes
+      if (name === 'role') {
+        updated.parentOfficerId = '';
+      }
+      return updated;
+    });
   };
 
   const handleBlur = (field: keyof TouchedFields) => {
@@ -200,8 +253,14 @@ export default function CreateUserPage() {
     setLoading(true);
     try {
       await usersService.create({
-        ...formData,
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        role: formData.role,
         tenantId: user?.tenantId || '',
+        requirePasswordChange: formData.requirePasswordChange,
+        ...(formData.parentOfficerId && { parentOfficerId: formData.parentOfficerId }),
       });
       toast.success('User created successfully');
       navigate('/users');
@@ -355,6 +414,38 @@ export default function CreateUserPage() {
               ))}
             </select>
           </div>
+
+          {/* Parent Officer */}
+          {formData.role !== 'SUPER_ADMIN' && (
+            <div>
+              <label htmlFor="parentOfficerId" className="block text-sm font-medium text-gray-300 mb-2">
+                Parent Officer (Optional)
+              </label>
+              {loadingOfficers ? (
+                <div className="w-full px-4 py-3 rounded-lg bg-[#1a1a1d] border border-[#2a2a2e] text-gray-400">
+                  Loading officers...
+                </div>
+              ) : (
+                <select
+                  id="parentOfficerId"
+                  name="parentOfficerId"
+                  value={formData.parentOfficerId}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg bg-[#1a1a1d] border border-[#2a2a2e] text-white focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent"
+                >
+                  <option key="empty" value="">Select a parent officer...</option>
+                  {filterParentOfficers(allOfficers, formData.role).map((officer) => (
+                    <option key={officer.id} value={officer.id}>
+                      {officer.fullName} ({roles.find(r => r.value === officer.role)?.label || officer.role})
+                    </option>
+                  ))}
+                </select>
+              )}
+              {filterParentOfficers(allOfficers, formData.role).length === 0 && !loadingOfficers && (
+                <p className="mt-1 text-sm text-gray-500">No eligible parent officers available for this role</p>
+              )}
+            </div>
+          )}
 
           {/* Require Password Change */}
           <div className="flex items-center gap-3">

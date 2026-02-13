@@ -21,8 +21,9 @@ export function WardsPage() {
   const fetchWards = async () => {
     setLoading(true);
     try {
-      // Use name filter for search
-      const response: PaginatedResponse<Ward> = await wardsService.getAll(page, 20, undefined, search || undefined);
+      // Use name filter for search - only search if 3+ characters
+      const searchTerm = search.length >= 3 ? search : undefined;
+      const response: PaginatedResponse<Ward> = await wardsService.getAll(page, 20, undefined, searchTerm);
       setWards(response.data);
       setTotalPages(response.meta?.totalPages || 1);
       setError('');

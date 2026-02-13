@@ -23,9 +23,10 @@ export function StatesPage() {
   const fetchStates = async () => {
     setLoading(true);
     try {
-      // Use name filter for search
-      const response: PaginatedResponse<State> = await statesService.getAll(page, 50, search || undefined);
-      setStates(response.data);
+      // Use name filter for search - only search if 3+ characters
+      const searchTerm = search.length >= 3 ? search : undefined;
+      const response: PaginatedResponse<State> = await statesService.getAll(page, 50, searchTerm);
+      setStates(response.data.data);
       setTotalPages(response.meta?.totalPages || 1);
       setError('');
     } catch {

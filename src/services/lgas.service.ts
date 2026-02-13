@@ -46,7 +46,9 @@ export interface Ward {
 
 export interface PaginatedResponse<T> {
   success: boolean;
-  data: T[];
+  data: {
+    data: T[];
+  };
   meta: {
     page: number;
     limit: number;
@@ -75,7 +77,7 @@ export const lgasService = {
   },
   async getById(id: string): Promise<LGA> {
     const response = await api.get(`/lgas/${id}`);
-    return response.data;
+    return response.data.data;
   },
   async addLgas(geoLgaIds: string[]): Promise<{ added: LGA[]; skipped: string[] }> {
     const response = await api.post('/lgas', { geoLgaIds });
@@ -103,5 +105,9 @@ export const lgasService = {
   async getStatistics(id: string) {
     const response = await api.get(`/lgas/${id}/statistics`);
     return response.data;
+  },
+  async createLgaByName(name: string, geoStateId: string): Promise<LGA> {
+    const response = await api.post('/lgas/create-by-name', { name, geoStateId });
+    return response.data.data || response.data;
   },
 };

@@ -23,14 +23,15 @@ export function LGAsPage() {
   const fetchLGAs = async () => {
     setLoading(true);
     try {
-      // Use name filter for search
+      // Use name filter for search - only search if 3+ characters
+      const searchTerm = search.length >= 3 ? search : undefined;
       const response: PaginatedResponse<LGA> = await lgasService.getAll(
         undefined,
         page,
         DEFAULT_PAGE_LIMIT,
-        search || undefined
+        searchTerm
       );
-      setLGAs(response.data);
+      setLGAs(response.data.data);
       setTotalPages(response.meta?.totalPages || 1);
       setError('');
     } catch (err) {

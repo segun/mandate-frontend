@@ -42,6 +42,26 @@ export interface Ward {
     fullName: string;
     email: string;
   } | null;
+  pollingUnits?: Array<{
+    id: string;
+    address?: string | null;
+    description?: string | null;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    tenantId: string;
+    wardId: string;
+    geoPollingUnitId: string;
+    supervisorId?: string | null;
+    geoPollingUnit?: {
+      id: string;
+      name: string;
+      code: string;
+      wardId: string;
+      lgaId: string;
+      stateId: string;
+    };
+  }>;
   isActive: boolean;
   tenantId: string;
   createdAt: string;
@@ -120,5 +140,10 @@ export const wardsService = {
   async getStatistics(id: string) {
     const response = await api.get(`/wards/${id}/statistics`);
     return response.data.data;
+  },
+
+  async createWardByName(name: string, geoStateId: string, geoLgaId: string): Promise<Ward> {
+    const response = await api.post('/wards/create-by-name', { name, geoStateId, geoLgaId });
+    return response.data.data || response.data;
   },
 };

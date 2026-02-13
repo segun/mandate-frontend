@@ -18,18 +18,34 @@ export interface Ward {
 
 export interface PollingUnit {
   id: string;
-  name: string;
-  code: string;
+  name?: string;
+  code?: string;
   address?: string;
   description?: string;
   wardId: string;
   ward?: Ward;
+  geoPollingUnitId?: string;
+  geoPollingUnit?: {
+    id: string;
+    name: string;
+    code: string;
+    wardId: string;
+    lgaId: string;
+    stateId: string;
+  };
   supervisorId?: string | null;
   supervisor?: {
     id: string;
     fullName: string;
     email: string;
   } | null;
+  voters?: Array<{
+    id: string;
+    fullName: string;
+    phone: string;
+    pvcStatus: string;
+    supportLevel: string;
+  }>;
   isActive: boolean;
   tenantId: string;
   createdAt: string;
@@ -49,12 +65,25 @@ export interface PaginatedResponse<T> {
 
 // Helper to get ward name from nested ward.geoWard
 export function getPollingUnitWardName(unit: PollingUnit): string {
-  return unit.ward?.geoWard?.name || '';
+  if (unit.ward?.geoWard?.name) {
+    return unit.ward.geoWard.name;
+  }
+  return 'N/A';
 }
 
 // Helper to get LGA name from nested ward.lga.geoLga
 export function getPollingUnitLgaName(unit: PollingUnit): string {
   return unit.ward?.lga?.geoLga?.name || '';
+}
+
+// Helper to get polling unit name from geoPollingUnit or fallback to name
+export function getPollingUnitName(unit: PollingUnit): string {
+  return unit.geoPollingUnit?.name || unit.name || 'N/A';
+}
+
+// Helper to get polling unit code from geoPollingUnit or fallback to code
+export function getPollingUnitCode(unit: PollingUnit): string {
+  return unit.geoPollingUnit?.code || unit.code || 'N/A';
 }
 
 export const pollingUnitsService = {
@@ -73,8 +102,8 @@ export const pollingUnitsService = {
     const response = await api.get(`/polling-units/${id}`);
     return response.data.data;
   },
-  async create(data: { name: string; code: string; wardId: string; address?: string; description?: string }): Promise<PollingUnit> {
-    const response = await api.post('/polling-units', data);
+  async addPollingUnits(geoPollingUnitIds: string[]): Promise<{ added: PollingUnit[]; skipped: string[] }> {
+    const response = await api.post('/polling-units', { geoPollingUnitIds });
     return response.data.data;
   },
   async update(id: string, data: Partial<{ name: string; code: string; address: string; description: string; isActive: boolean }>): Promise<PollingUnit> {
@@ -95,5 +124,9 @@ export const pollingUnitsService = {
   async getStatistics(id: string) {
     const response = await api.get(`/polling-units/${id}/statistics`);
     return response.data.data;
+  },
+  async createPollingUnitByName(data: { name: string; code: string; geoStateId: string; geoLgaId: string; geoWardId: string; address?: string; description?: string; supervisorId?: string }): Promise<PollingUnit> {
+    const response = await api.post('/polling-units/create-by-name', data);
+    return response.data.data || response.data;
   },
 };

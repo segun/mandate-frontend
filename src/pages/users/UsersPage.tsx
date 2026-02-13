@@ -1,15 +1,24 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { User, PaginatedResponse } from '../../services/users.service';
-import { usersService, getUserAssignedLocation } from '../../services/users.service';
+import { usersService } from '../../services/users.service';
+import { useAuthStore } from '../../stores/auth.store';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { toast } from '../../stores/toast.store';
 
 export function UsersPage() {
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; user: User | null }>({ isOpen: false, user: null });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -40,8 +49,50 @@ export function UsersPage() {
     fetchUsers();
   };
 
+  const openDeleteModal = (selectedUser: User) => {
+    setDeleteModal({ isOpen: true, user: selectedUser });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, user: null });
+  };
+
+  const handleDelete = async () => {
+    const selectedUser = deleteModal.user;
+    if (!selectedUser) return;
+
+    setDeleting(selectedUser.id);
+    closeDeleteModal();
+    try {
+      await usersService.delete(selectedUser.id);
+      setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+      toast.success('User deleted successfully');
+    } catch {
+      setError(`Failed to delete ${selectedUser.fullName}`);
+      toast.error(`Failed to delete ${selectedUser.fullName}`);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Delete Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={deleteModal.isOpen}
+        title="Delete User"
+        message={
+          <>
+            Are you sure you want to delete <span className="text-[#ca8a04] font-medium">"{deleteModal.user?.fullName || ''}"</span>?
+            This action cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={closeDeleteModal}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
@@ -105,28 +156,41 @@ export function UsersPage() {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Email</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Phone</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Role</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Assignment</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Status</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-white">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2a2a2e]">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-[#1a1a1d]/50 transition-colors">
+                    <tr
+                      key={user.id}
+                      onClick={() => navigate(`/users/${user.id}`)}
+                      className="hover:bg-[#1a1a1d]/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-white">{user.fullName}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{user.email}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{user.phone || '-'}</td>
                       <td className="px-4 py-3 text-sm text-[#888]">{user.role.replace(/_/g, ' ')}</td>
-                      <td className="px-4 py-3 text-sm text-[#888]">{getUserAssignedLocation(user)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${user.isActive ? 'bg-[#ca8a04]/20 text-[#ca8a04]' : 'bg-[#2a2a2e] text-[#888]'}`}>
                           {user.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link to={`/users/${user.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
-                          View
-                        </Link>
+                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                          <Link to={`/users/${user.id}`} className="text-[#ca8a04] hover:text-[#d4940a] text-sm font-semibold">
+                            View
+                          </Link>
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => openDeleteModal(user)}
+                              disabled={deleting === user.id}
+                              className="text-red-400 hover:text-red-300 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {deleting === user.id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -136,12 +200,27 @@ export function UsersPage() {
             {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-[#2a2a2e]">
               {users.map((user) => (
-                <div key={user.id} className="p-4">
+                <div
+                  key={user.id}
+                  onClick={() => navigate(`/users/${user.id}`)}
+                  className="p-4 cursor-pointer hover:bg-[#1a1a1d]/50 transition-colors"
+                >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-white">{user.fullName}</h3>
-                    <Link to={`/users/${user.id}`} className="text-[#ca8a04] text-sm font-semibold">
-                      View →
-                    </Link>
+                    <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                      <Link to={`/users/${user.id}`} className="text-[#ca8a04] text-sm font-semibold">
+                        View →
+                      </Link>
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => openDeleteModal(user)}
+                          disabled={deleting === user.id}
+                          className="text-red-400 text-sm font-semibold disabled:opacity-50"
+                        >
+                          {deleting === user.id ? '...' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-[#888] mb-2">{user.email}</p>
                   <div className="flex gap-2 flex-wrap">
