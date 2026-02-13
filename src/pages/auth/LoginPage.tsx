@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Lock } from 'lucide-react';
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../stores/auth.store';
 
@@ -91,7 +92,14 @@ export function LoginPage() {
             disabled={loading}
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#ca8a04] py-2.5 text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#141417] focus:ring-[#ca8a04] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
           >
-            {loading ? 'Signing in…' : 'Secure Login'}
+            {loading ? (
+              'Signing in…'
+            ) : (
+              <>
+                <Lock className="h-4 w-4" />
+                Secure Login
+              </>
+            )}
           </button>
         </form>
         
