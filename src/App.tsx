@@ -6,6 +6,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastContainer } from './components/Toast';
 import { useAuthStore } from './stores/auth.store';
 import { useChatStore } from './stores/chat.store';
+import { useComingSoonStore } from './stores/coming-soon.store';
+import { ComingSoonPage } from './pages/ComingSoonPage';
 import { TenantSubscriptionAccessStatus } from './services/auth.service';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SubscriptionPage } from './pages/auth/SubscriptionPage';
@@ -58,7 +60,25 @@ function AppLayout() {
   const location = useLocation();
   const { user, accessToken, subscriptionAccessStatus } = useAuthStore();
   const { connectSocket, disconnectSocket, setCurrentUserId } = useChatStore();
+  const { isComingSoon, isLoading, fetchStatus } = useComingSoonStore();
   const isAppRoute = appRoutes.some(route => location.pathname.startsWith(route));
+
+  // Fetch coming soon status on mount
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
+
+  useEffect(() => {
+    setCurrentUserId(user?.id ?? null);
+  }, [user?.id, setCurrentUserId]);
+
+  useEffect(() => {
+    if (accessToken) {
+      connectSocket(accessToken, user?.id);
+    } else {
+      disconnectSocket();
+    }
+  }, [accessToken, user?.id, connectSocket, disconnectSocket]);
 
   // Check if subscription is valid
   const hasValidSubscription = 
@@ -73,17 +93,10 @@ function AppLayout() {
     location.pathname !== '/login' && 
     location.pathname !== '/subscription';
 
-  useEffect(() => {
-    setCurrentUserId(user?.id ?? null);
-  }, [user?.id, setCurrentUserId]);
-
-  useEffect(() => {
-    if (accessToken) {
-      connectSocket(accessToken, user?.id);
-    } else {
-      disconnectSocket();
-    }
-  }, [accessToken, user?.id, connectSocket, disconnectSocket]);
+  // Show coming soon page if enabled
+  if (!isLoading && isComingSoon) {
+    return <ComingSoonPage />;
+  }
 
   // Website routes - no dashboard navbar/layout
   if (!isAppRoute) {
