@@ -144,7 +144,7 @@ export default function ViewUserPage() {
                 <p className="text-lg text-white font-semibold mt-2">{formatRole(user.role)}</p>
               </div>
               <div className="sm:col-span-2">
-                <p className="text-sm text-gray-400">Tenant ID</p>
+                <p className="text-sm text-gray-400">Admin ID</p>
                 <p className="text-sm text-white font-mono mt-2 break-all">{user.tenantId}</p>
               </div>
             </div>

@@ -190,7 +190,7 @@ export function CreateLGAPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">Add LGAs</h1>
-          <p className="text-sm text-[#888] mt-1">Add LGAs to your tenant</p>
+          <p className="text-sm text-[#888] mt-1">Add LGAs to your platform</p>
         </div>
         <button
           type="button"

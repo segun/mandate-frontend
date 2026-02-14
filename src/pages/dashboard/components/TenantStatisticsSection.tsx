@@ -84,7 +84,7 @@ export function TenantStatisticsSection({ tenantStats }: TenantStatisticsSection
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold text-white">Tenant Overview</h2>
+        <h2 className="text-xl font-semibold text-white">Overview</h2>
         <p className="text-sm text-[#888] mt-1">Coverage, users, and field officer performance</p>
       </div>
 

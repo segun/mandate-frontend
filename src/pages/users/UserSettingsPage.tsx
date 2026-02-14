@@ -258,7 +258,7 @@ export default function UserSettingsPage() {
                 <p className="mt-2 text-lg text-white">{user?.role ?? 'N/A'}</p>
               </div>
               <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
-                <p className="text-xs uppercase tracking-wide text-[#888]">Tenant ID</p>
+                <p className="text-xs uppercase tracking-wide text-[#888]">Admin ID</p>
                 <p className="mt-2 text-sm text-white break-all">{user?.tenantId ?? 'N/A'}</p>
               </div>
             </div>
