@@ -48,6 +48,42 @@ export interface AreaStatistics {
   votingCommitmentBreakdown: VotingCommitmentBreakdown;
 }
 
+export interface ParentOfficerInfo {
+  id: string;
+  fullName: string;
+  role: string;
+  email: string;
+  phone: string | null;
+}
+
+export interface FieldOfficerMetrics {
+  totalVoters: number;
+  contactedVoters: number;
+  supporterVoters: number;
+  undecidedVoters: number;
+  oppositionVoters: number;
+}
+
+export interface FieldOfficerPerformance {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  isActive: boolean;
+  parentOfficer: ParentOfficerInfo | null;
+  metrics: FieldOfficerMetrics;
+}
+
+export interface TenantStatistics {
+  users: number;
+  states: number;
+  lgas: number;
+  wards: number;
+  pollingUnits: number;
+  voters: number;
+  fieldOfficerPerformance: FieldOfficerPerformance[];
+}
+
 export type GeoLevel = 'states' | 'lgas' | 'wards' | 'polling-units';
 
 export interface StatisticsParams {
@@ -153,6 +189,11 @@ export const statisticsService = {
 
   async getPollingUnitsStatistics(wardId: string, params?: StatisticsParams): Promise<AreaStatistics[]> {
     const response = await api.get('/polling-units/statistics', { params: { wardId, ...params } });
+    return response.data.data;
+  },
+
+  async getTenantStatistics(tenantId: string): Promise<TenantStatistics> {
+    const response = await api.get(`/tenants/${tenantId}/statistics`);
     return response.data.data;
   },
 };

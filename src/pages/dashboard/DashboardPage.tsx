@@ -12,6 +12,7 @@ import { SummaryCards } from './components/SummaryCards';
 import { PerformanceChart } from './components/PerformanceChart';
 import { BreakdownCharts } from './components/BreakdownCharts';
 import { StatisticsTable } from './components/StatisticsTable';
+import { TenantStatisticsSection } from './components/TenantStatisticsSection';
 
 interface BreadcrumbItem {
   label: string;
@@ -27,6 +28,18 @@ export function DashboardPage() {
   ]);
 
   const currentLevel = breadcrumb[breadcrumb.length - 1];
+
+  const {
+    data: tenantStats,
+    isLoading: isTenantStatsLoading,
+    error: tenantStatsError,
+    refetch: refetchTenantStats,
+  } = useQuery({
+    queryKey: ['tenant-statistics', user?.tenantId],
+    queryFn: () => statisticsService.getTenantStatistics(user!.tenantId!),
+    enabled: Boolean(user?.tenantId),
+    staleTime: 60_000,
+  });
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['statistics', currentLevel.level, currentLevel.parentId],
@@ -126,6 +139,22 @@ export function DashboardPage() {
       </nav>
 
       {/* Content */}
+      {isTenantStatsLoading ? (
+        <TenantStatisticsSkeleton />
+      ) : tenantStatsError ? (
+        <ErrorState
+          message={
+            tenantStatsError instanceof Error
+              ? tenantStatsError.message
+              : 'Failed to load tenant statistics'
+          }
+          onRetry={() => refetchTenantStats()}
+          title="Unable to load tenant overview"
+        />
+      ) : tenantStats ? (
+        <TenantStatisticsSection tenantStats={tenantStats} />
+      ) : null}
+
       {isLoading ? (
         <LoadingSkeleton />
       ) : error ? (
@@ -140,6 +169,7 @@ export function DashboardPage() {
               : 'Failed to load statistics'
           }
           onRetry={() => refetch()}
+          title="Unable to load statistics"
         />
       ) : !data || data.length === 0 ? (
         <EmptyState level={currentLevel.level} />
@@ -219,10 +249,31 @@ function LoadingSkeleton() {
   );
 }
 
-function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+function TenantStatisticsSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="bg-[#141417] rounded-xl border border-[#2a2a2e] h-28" />
+        ))}
+      </div>
+      <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] h-72" />
+    </div>
+  );
+}
+
+function ErrorState({
+  message,
+  onRetry,
+  title = 'Unable to load statistics',
+}: {
+  message: string;
+  onRetry: () => void;
+  title?: string;
+}) {
   return (
     <div className="bg-[#141417] rounded-xl border border-red-500/30 p-8 text-center">
-      <p className="text-red-400 text-lg mb-2">Unable to load statistics</p>
+      <p className="text-red-400 text-lg mb-2">{title}</p>
       <p className="text-[#888] text-sm mb-4">{message}</p>
       <button
         onClick={onRetry}
