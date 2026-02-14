@@ -36,7 +36,6 @@ import { ChatPage } from './pages/chat/ChatPage';
 import { PlatformTenantsPage } from './pages/platform/PlatformTenantsPage.tsx';
 import { PlatformTenantDetailPage } from './pages/platform/PlatformTenantDetailPage.tsx';
 import { PlatformDashboardPage } from './pages/platform/PlatformDashboardPage.tsx';
-import { PlatformGeoDataPage } from './pages/platform/PlatformGeoDataPage.tsx';
 import { PlatformGeoDataCreatePage } from './pages/platform/PlatformGeoDataCreatePage.tsx';
 import { PlatformGeoDataImportPage } from './pages/platform/PlatformGeoDataImportPage.tsx';
 import './App.css';
@@ -54,6 +53,7 @@ import {
   RegisterPage,
   RegisterCompletePage
 } from './pages/website';
+import { PlatformGeoDataPage } from "./pages/platform/PlatformGeoDataPage.tsx";
 
 const queryClient = new QueryClient();
 
