@@ -33,10 +33,12 @@ import { UsersPage } from './pages/users/UsersPage';
 import ViewUserPage from './pages/users/ViewUserPage';
 import UserSettingsPage from './pages/users/UserSettingsPage';
 import { ChatPage } from './pages/chat/ChatPage';
-import { PlatformTenantsPage } from './pages/platform/PlatformTenantsPage';
-import { PlatformTenantDetailPage } from './pages/platform/PlatformTenantDetailPage';
-import { PlatformDashboardPage } from './pages/platform/PlatformDashboardPage';
-import { PlatformGeoDataPage } from './pages/platform/PlatformGeoDataPage';
+import { PlatformTenantsPage } from './pages/platform/PlatformTenantsPage.tsx';
+import { PlatformTenantDetailPage } from './pages/platform/PlatformTenantDetailPage.tsx';
+import { PlatformDashboardPage } from './pages/platform/PlatformDashboardPage.tsx';
+import { PlatformGeoDataPage } from './pages/platform/PlatformGeoDataPage.tsx';
+import { PlatformGeoDataCreatePage } from './pages/platform/PlatformGeoDataCreatePage.tsx';
+import { PlatformGeoDataImportPage } from './pages/platform/PlatformGeoDataImportPage.tsx';
 import './App.css';
 import CreateUserPage from "./pages/users/CreateUserPage";
 
@@ -194,6 +196,8 @@ function AppLayout() {
                 <Route path="/platform-owner/tenants" element={<PlatformTenantsPage />} />
                 <Route path="/platform-owner/tenants/:tenantId" element={<PlatformTenantDetailPage />} />
                 <Route path="/platform-owner/geodata" element={<PlatformGeoDataPage />} />
+                <Route path="/platform-owner/geodata/new" element={<PlatformGeoDataCreatePage />} />
+                <Route path="/platform-owner/geodata/csv-import" element={<PlatformGeoDataImportPage />} />
                 <Route path="/states" element={<StatesPage />} />
                 <Route path="/states/new" element={isPlatformOwner ? <Navigate to="/states" replace /> : <CreateStatePage />} />
                 <Route path="/states/:id" element={<StateDetailPage />} />

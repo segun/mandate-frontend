@@ -5,9 +5,9 @@ import { toast } from '../stores/toast.store';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 // Standard page size for API lists; keep at or below backend max (100)
-export const DEFAULT_PAGE_LIMIT = 50;
+export const DEFAULT_PAGE_LIMIT = 100;
 // Smaller page size for modal tables to avoid overwhelming the UI
-export const DEFAULT_MODAL_PAGE_LIMIT = 10;
+export const DEFAULT_MODAL_PAGE_LIMIT = 20;
 
 export const api = axios.create({
   baseURL: API_URL,

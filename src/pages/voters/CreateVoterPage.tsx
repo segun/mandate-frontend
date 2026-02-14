@@ -416,7 +416,7 @@ export default function CreateVoterPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#ca8a04]/60 bg-[#1a1a1d] text-[#ca8a04] font-semibold hover:bg-[#2a2a2e] hover:border-[#ca8a04] transition-colors"
         >
           ← Back
         </button>
