@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../stores/auth.store';
+import { UserRole } from '../../lib/permissions';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,7 +26,11 @@ export function LoginPage() {
         response.meta?.subscriptionAccessStatus,
         response.meta?.tenant
       );
-      navigate('/dashboard');
+      if (response.data.user.role === UserRole.PLATFORM_OWNER) {
+        navigate('/platform-owner/tenants');
+      } else {
+        navigate('/dashboard');
+      }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');

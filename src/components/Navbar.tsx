@@ -15,19 +15,30 @@ export function Navbar() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const isPlatformOwner = user?.role === 'PLATFORM_OWNER';
 
   const navLinks: NavLink[] = useMemo(
-    () => [
-      { label: 'Dashboard', to: '/dashboard', resource: Resource.DASHBOARD },
-      { label: 'States', to: '/states', resource: Resource.STATES },
-      { label: 'LGAs', to: '/lgas', resource: Resource.LGAS },
-      { label: 'Wards', to: '/wards', resource: Resource.WARDS },
-      { label: 'Polling Units', to: '/polling-units', resource: Resource.POLLING_UNITS },
-      { label: 'Voters', to: '/voters', resource: Resource.VOTERS },
-      { label: 'Users', to: '/users', resource: Resource.USERS },
-      { label: 'Chat', to: '/chat', resource: Resource.CHAT },
-    ],
-    [],
+    () => {
+      if (isPlatformOwner) {
+        return [
+          { label: 'Dashboard', to: '/dashboard', resource: Resource.DASHBOARD },
+          { label: 'Tenants', to: '/platform-owner/tenants', resource: Resource.PLATFORM_TENANTS },
+          { label: 'Geo Data', to: '/platform-owner/geodata', resource: Resource.PLATFORM_GEODATA_UPLOAD },
+        ];
+      }
+
+      return [
+        { label: 'Dashboard', to: '/dashboard', resource: Resource.DASHBOARD },
+        { label: 'States', to: '/states', resource: Resource.STATES },
+        { label: 'LGAs', to: '/lgas', resource: Resource.LGAS },
+        { label: 'Wards', to: '/wards', resource: Resource.WARDS },
+        { label: 'Polling Units', to: '/polling-units', resource: Resource.POLLING_UNITS },
+        { label: 'Voters', to: '/voters', resource: Resource.VOTERS },
+        { label: 'Users', to: '/users', resource: Resource.USERS },
+        { label: 'Chat', to: '/chat', resource: Resource.CHAT },
+      ];
+    },
+    [isPlatformOwner],
   );
 
   const handleLogout = () => {

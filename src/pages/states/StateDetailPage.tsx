@@ -7,10 +7,14 @@ import type { User } from '../../services/users.service';
 import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DEFAULT_MODAL_PAGE_LIMIT } from '../../lib/api';
+import { useAuthStore } from '../../stores/auth.store';
+import { UserRole } from '../../lib/permissions';
 
 export function StateDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -198,17 +202,18 @@ export function StateDetailPage() {
           </div>
         </div>
 
-        {/* Assign Coordinator Button */}
-        <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
-          <button
-            type="button"
-            onClick={handleOpenUserModal}
-            disabled={assigningCoordinator}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {assigningCoordinator ? 'Assigning...' : (state.coordinator ? 'Change Coordinator' : 'Assign Coordinator')}
-          </button>
-        </div>
+        {!isPlatformOwner && (
+          <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
+            <button
+              type="button"
+              onClick={handleOpenUserModal}
+              disabled={assigningCoordinator}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {assigningCoordinator ? 'Assigning...' : (state.coordinator ? 'Change Coordinator' : 'Assign Coordinator')}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* LGAs Section */}
@@ -228,14 +233,16 @@ export function StateDetailPage() {
         {!state.lgas || state.lgas.length === 0 ? (
           <div className="p-6 text-center text-[#888]">
             No LGAs have been added for this state yet.
-            <div className="mt-4">
-              <Link
-                to="/lgas/new"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
-              >
-                + Add LGAs
-              </Link>
-            </div>
+            {!isPlatformOwner && (
+              <div className="mt-4">
+                <Link
+                  to="/lgas/new"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
+                >
+                  + Add LGAs
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -282,31 +289,35 @@ export function StateDetailPage() {
       </div>
 
       {/* User Selection Modal */}
-      <UserSelectionModal
-        isOpen={showUserModal}
-        title={state.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
-        users={users}
-        loading={usersLoading}
-        error={usersError}
-        searchTerm={userSearchTerm}
-        onSearchChange={handleSearchUsers}
-        onSelect={handleSelectCoordinator}
-        onCancel={() => setShowUserModal(false)}
-      />
+      {!isPlatformOwner && (
+        <UserSelectionModal
+          isOpen={showUserModal}
+          title={state.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+          users={users}
+          loading={usersLoading}
+          error={usersError}
+          searchTerm={userSearchTerm}
+          onSearchChange={handleSearchUsers}
+          onSelect={handleSelectCoordinator}
+          onCancel={() => setShowUserModal(false)}
+        />
+      )}
 
       {/* Confirm Assign/Change Coordinator */}
-      <ConfirmDialog
-        isOpen={showConfirmDialog}
-        variant="info"
-        title={state?.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
-        message={state?.coordinator
-          ? 'Are you sure you want to change the coordinator for this state?'
-          : 'Are you sure you want to assign a coordinator to this state?'}
-        confirmLabel="Yes, continue"
-        cancelLabel="No, cancel"
-        onConfirm={handleConfirmAssign}
-        onCancel={() => { setShowConfirmDialog(false); setSelectedUser(null); }}
-      />
+      {!isPlatformOwner && (
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          variant="info"
+          title={state?.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+          message={state?.coordinator
+            ? 'Are you sure you want to change the coordinator for this state?'
+            : 'Are you sure you want to assign a coordinator to this state?'}
+          confirmLabel="Yes, continue"
+          cancelLabel="No, cancel"
+          onConfirm={handleConfirmAssign}
+          onCancel={() => { setShowConfirmDialog(false); setSelectedUser(null); }}
+        />
+      )}
     </div>
   );
 }

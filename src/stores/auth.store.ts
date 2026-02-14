@@ -8,7 +8,7 @@ export interface User {
   fullName: string;
   email: string;
   role: UserRole;
-  tenantId: string;
+  tenantId: string | null;
 }
 
 interface AuthState {

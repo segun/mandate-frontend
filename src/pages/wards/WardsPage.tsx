@@ -4,11 +4,13 @@ import type { Ward, PaginatedResponse } from '../../services/wards.service';
 import { wardsService, getWardName, getWardLgaName } from '../../services/wards.service';
 import { useAuthStore } from '../../stores/auth.store';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { UserRole } from '../../lib/permissions';
 
 export function WardsPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
   const [wards, setWards] = useState<Ward[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -94,12 +96,14 @@ export function WardsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">Wards</h1>
           <p className="text-sm text-[#888]">Browse, search, and manage wards</p>
         </div>
-        <Link
-          to="/wards/new"
-          className="mt-4 sm:mt-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#ca8a04] text-[#0d0d0f] font-semibold rounded-lg shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
-        >
-          + Add Ward
-        </Link>
+        {!isPlatformOwner && (
+          <Link
+            to="/wards/new"
+            className="mt-4 sm:mt-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#ca8a04] text-[#0d0d0f] font-semibold rounded-lg shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
+          >
+            + Add Ward
+          </Link>
+        )}
       </div>
 
       {!loading && error && wards.length === 0 && (

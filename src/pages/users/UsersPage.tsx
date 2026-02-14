@@ -5,11 +5,13 @@ import { usersService } from '../../services/users.service';
 import { useAuthStore } from '../../stores/auth.store';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { toast } from '../../stores/toast.store';
+import { UserRole } from '../../lib/permissions';
 
 export function UsersPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,12 +101,14 @@ export function UsersPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">Users</h1>
           <p className="text-sm text-[#888]">Search and manage users</p>
         </div>
-        <Link
-          to="/users/new"
-          className="mt-4 sm:mt-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#ca8a04] text-[#0d0d0f] font-semibold rounded-lg shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
-        >
-          + Add User
-        </Link>
+        {!isPlatformOwner && (
+          <Link
+            to="/users/new"
+            className="mt-4 sm:mt-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#ca8a04] text-[#0d0d0f] font-semibold rounded-lg shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
+          >
+            + Add User
+          </Link>
+        )}
       </div>
 
       {!loading && error && users.length === 0 && (

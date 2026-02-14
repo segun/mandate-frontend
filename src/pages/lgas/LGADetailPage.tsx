@@ -7,10 +7,14 @@ import type { User } from '../../services/users.service';
 import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DEFAULT_MODAL_PAGE_LIMIT } from '../../lib/api';
+import { useAuthStore } from '../../stores/auth.store';
+import { UserRole } from '../../lib/permissions';
 
 export function LGADetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
 
   const [lga, setLga] = useState<LGA | null>(null);
   const [loading, setLoading] = useState(true);
@@ -191,16 +195,18 @@ export function LGADetailPage() {
           </div>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
-          <button
-            type="button"
-            onClick={openUserModal}
-            disabled={assigningCoordinator}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {assigningCoordinator ? 'Assigning...' : (lga.coordinator ? 'Change Coordinator' : 'Assign Coordinator')}
-          </button>
-        </div>
+        {!isPlatformOwner && (
+          <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
+            <button
+              type="button"
+              onClick={openUserModal}
+              disabled={assigningCoordinator}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {assigningCoordinator ? 'Assigning...' : (lga.coordinator ? 'Change Coordinator' : 'Assign Coordinator')}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
@@ -219,14 +225,16 @@ export function LGADetailPage() {
         {!lga.wards || lga.wards.length === 0 ? (
           <div className="p-6 text-center text-[#888]">
             No wards have been added for this LGA yet.
-            <div className="mt-4">
-              <Link
-                to="/wards/new"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
-              >
-                + Add Wards
-              </Link>
-            </div>
+            {!isPlatformOwner && (
+              <div className="mt-4">
+                <Link
+                  to="/wards/new"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"
+                >
+                  + Add Wards
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -271,30 +279,34 @@ export function LGADetailPage() {
         )}
       </div>
 
-      <UserSelectionModal
-        isOpen={showUserModal}
-        title={lga.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
-        users={users}
-        loading={usersLoading}
-        error={usersError}
-        searchTerm={userSearchTerm}
-        onSearchChange={handleSearchUsers}
-        onSelect={handleSelectCoordinator}
-        onCancel={() => setShowUserModal(false)}
-      />
+      {!isPlatformOwner && (
+        <UserSelectionModal
+          isOpen={showUserModal}
+          title={lga.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+          users={users}
+          loading={usersLoading}
+          error={usersError}
+          searchTerm={userSearchTerm}
+          onSearchChange={handleSearchUsers}
+          onSelect={handleSelectCoordinator}
+          onCancel={() => setShowUserModal(false)}
+        />
+      )}
 
-      <ConfirmDialog
-        isOpen={showConfirmDialog}
-        variant="info"
-        title={lga?.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
-        message={lga?.coordinator
-          ? 'Are you sure you want to change the coordinator for this LGA?'
-          : 'Are you sure you want to assign a coordinator to this LGA?'}
-        confirmLabel="Yes, continue"
-        cancelLabel="No, cancel"
-        onConfirm={handleConfirmAssign}
-        onCancel={() => { setShowConfirmDialog(false); setSelectedUser(null); }}
-      />
+      {!isPlatformOwner && (
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          variant="info"
+          title={lga?.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
+          message={lga?.coordinator
+            ? 'Are you sure you want to change the coordinator for this LGA?'
+            : 'Are you sure you want to assign a coordinator to this LGA?'}
+          confirmLabel="Yes, continue"
+          cancelLabel="No, cancel"
+          onConfirm={handleConfirmAssign}
+          onCancel={() => { setShowConfirmDialog(false); setSelectedUser(null); }}
+        />
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { useChatStore } from './stores/chat.store';
 import { useComingSoonStore } from './stores/coming-soon.store';
 import { ComingSoonPage } from './pages/ComingSoonPage';
 import { TenantSubscriptionAccessStatus } from './services/auth.service';
+import { UserRole } from './lib/permissions';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SubscriptionPage } from './pages/auth/SubscriptionPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
@@ -32,6 +33,10 @@ import { UsersPage } from './pages/users/UsersPage';
 import ViewUserPage from './pages/users/ViewUserPage';
 import UserSettingsPage from './pages/users/UserSettingsPage';
 import { ChatPage } from './pages/chat/ChatPage';
+import { PlatformTenantsPage } from './pages/platform/PlatformTenantsPage';
+import { PlatformTenantDetailPage } from './pages/platform/PlatformTenantDetailPage';
+import { PlatformDashboardPage } from './pages/platform/PlatformDashboardPage';
+import { PlatformGeoDataPage } from './pages/platform/PlatformGeoDataPage';
 import './App.css';
 import CreateUserPage from "./pages/users/CreateUserPage";
 
@@ -53,7 +58,7 @@ const queryClient = new QueryClient();
 // App routes that need the dashboard layout
 const appRoutes = [
   '/dashboard', '/states', '/lgas', '/wards', '/voters', 
-  '/polling-units', '/users', '/user', '/chat', '/login', '/subscription'
+  '/polling-units', '/users', '/user', '/chat', '/login', '/subscription', '/platform-owner'
 ];
 
 function AppLayout() {
@@ -100,10 +105,6 @@ function AppLayout() {
       }, inactivityMs);
     };
 
-    const handleBeforeUnload = () => {
-      useAuthStore.getState().logout();
-    };
-
     const activityEvents: Array<keyof WindowEventMap> = [
       'mousemove',
       'mousedown',
@@ -114,7 +115,6 @@ function AppLayout() {
     ];
 
     activityEvents.forEach((event) => window.addEventListener(event, resetTimer, { passive: true }));
-    window.addEventListener('beforeunload', handleBeforeUnload);
     resetTimer();
 
     return () => {
@@ -122,7 +122,6 @@ function AppLayout() {
         clearTimeout(timerId);
       }
       activityEvents.forEach((event) => window.removeEventListener(event, resetTimer));
-      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [accessToken]);
 
@@ -130,11 +129,13 @@ function AppLayout() {
   const hasValidSubscription = 
     subscriptionAccessStatus === TenantSubscriptionAccessStatus.SUBSCRIPTION_ACTIVE ||
     subscriptionAccessStatus === TenantSubscriptionAccessStatus.SUBSCRIPTION_GRACE;
+  const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
   
   // Redirect to subscription page if logged in but no valid subscription
   const needsSubscription = 
     user && 
     accessToken && 
+    !isPlatformOwner &&
     !hasValidSubscription && 
     location.pathname !== '/login' && 
     location.pathname !== '/subscription';
@@ -171,8 +172,8 @@ function AppLayout() {
     <div className="min-h-screen bg-[#0d0d0f] text-[#f2f2f2]">
       <ToastContainer />
       {/* Only show navbar if user has valid subscription or is on subscription page */}
-      {(hasValidSubscription || location.pathname === '/subscription') && <Navbar />}
-      <main className={hasValidSubscription || location.pathname === '/subscription' ? "main-content px-4 sm:px-6 lg:px-8 pb-12 pt-6" : ""}>
+      {(hasValidSubscription || isPlatformOwner || location.pathname === '/subscription') && <Navbar />}
+      <main className={hasValidSubscription || isPlatformOwner || location.pathname === '/subscription' ? "main-content px-4 sm:px-6 lg:px-8 pb-12 pt-6" : ""}>
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -186,26 +187,32 @@ function AppLayout() {
               <Route path="*" element={<Navigate to="/subscription" replace />} />
             ) : (
               <>
-                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route
+                  path="/dashboard"
+                  element={isPlatformOwner ? <PlatformDashboardPage /> : <DashboardPage />}
+                />
+                <Route path="/platform-owner/tenants" element={<PlatformTenantsPage />} />
+                <Route path="/platform-owner/tenants/:tenantId" element={<PlatformTenantDetailPage />} />
+                <Route path="/platform-owner/geodata" element={<PlatformGeoDataPage />} />
                 <Route path="/states" element={<StatesPage />} />
-                <Route path="/states/new" element={<CreateStatePage />} />
+                <Route path="/states/new" element={isPlatformOwner ? <Navigate to="/states" replace /> : <CreateStatePage />} />
                 <Route path="/states/:id" element={<StateDetailPage />} />
                 <Route path="/lgas" element={<LGAsPage />} />
-                <Route path="/lgas/new" element={<CreateLGAPage />} />
+                <Route path="/lgas/new" element={isPlatformOwner ? <Navigate to="/lgas" replace /> : <CreateLGAPage />} />
                 <Route path="/lgas/:id" element={<LGADetailPage />} />
                 <Route path="/wards" element={<WardsPage />} />
-                <Route path="/wards/new" element={<CreateWardPage />} />
+                <Route path="/wards/new" element={isPlatformOwner ? <Navigate to="/wards" replace /> : <CreateWardPage />} />
                 <Route path="/wards/:id" element={<WardDetailPage />} />
                 <Route path="/voters" element={<VotersPage />} />
-                <Route path="/voters/new" element={<CreateVoterPage />} />
+                <Route path="/voters/new" element={isPlatformOwner ? <Navigate to="/voters" replace /> : <CreateVoterPage />} />
                 <Route path="/voters/:id" element={<ViewVoterPage />} />
-                <Route path="/voters/:id/edit" element={<EditVoterPage />} />
+                <Route path="/voters/:id/edit" element={isPlatformOwner ? <Navigate to="/voters" replace /> : <EditVoterPage />} />
                 <Route path="/polling-units" element={<PollingUnitsPage />} />
-                <Route path="/polling-units/new" element={<CreatePollingUnitPage />} />
+                <Route path="/polling-units/new" element={isPlatformOwner ? <Navigate to="/polling-units" replace /> : <CreatePollingUnitPage />} />
                 <Route path="/polling-units/:id" element={<PollingUnitDetailPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/users/:id" element={<ViewUserPage />} />
-                <Route path="/users/new" element={<CreateUserPage />} />
+                <Route path="/users/new" element={isPlatformOwner ? <Navigate to="/users" replace /> : <CreateUserPage />} />
                 <Route path="/user/settings" element={<UserSettingsPage />} />
                 <Route path="/chat" element={<ChatPage />} />
               </>

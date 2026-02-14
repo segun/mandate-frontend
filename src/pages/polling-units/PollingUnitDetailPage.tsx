@@ -7,10 +7,14 @@ import type { User } from '../../services/users.service';
 import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DEFAULT_MODAL_PAGE_LIMIT } from '../../lib/api';
+import { useAuthStore } from '../../stores/auth.store';
+import { UserRole } from '../../lib/permissions';
 
 export function PollingUnitDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
 
   const [pollingUnit, setPollingUnit] = useState<PollingUnit | null>(null);
   const [loading, setLoading] = useState(true);
@@ -193,16 +197,18 @@ export function PollingUnitDetailPage() {
           </div>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
-          <button
-            type="button"
-            onClick={openUserModal}
-            disabled={assigningSupervisor}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {assigningSupervisor ? 'Assigning...' : (pollingUnit.supervisor ? 'Change Supervisor' : 'Assign Supervisor')}
-          </button>
-        </div>
+        {!isPlatformOwner && (
+          <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
+            <button
+              type="button"
+              onClick={openUserModal}
+              disabled={assigningSupervisor}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {assigningSupervisor ? 'Assigning...' : (pollingUnit.supervisor ? 'Change Supervisor' : 'Assign Supervisor')}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
@@ -259,30 +265,34 @@ export function PollingUnitDetailPage() {
         )}
       </div>
 
-      <UserSelectionModal
-        isOpen={showUserModal}
-        title={pollingUnit.supervisor ? 'Change Supervisor' : 'Assign Supervisor'}
-        users={users}
-        loading={usersLoading}
-        error={usersError}
-        searchTerm={userSearchTerm}
-        onSearchChange={handleSearchUsers}
-        onSelect={handleSelectSupervisor}
-        onCancel={() => setShowUserModal(false)}
-      />
+      {!isPlatformOwner && (
+        <UserSelectionModal
+          isOpen={showUserModal}
+          title={pollingUnit.supervisor ? 'Change Supervisor' : 'Assign Supervisor'}
+          users={users}
+          loading={usersLoading}
+          error={usersError}
+          searchTerm={userSearchTerm}
+          onSearchChange={handleSearchUsers}
+          onSelect={handleSelectSupervisor}
+          onCancel={() => setShowUserModal(false)}
+        />
+      )}
 
-      <ConfirmDialog
-        isOpen={showConfirmDialog}
-        variant="info"
-        title={pollingUnit?.supervisor ? 'Change Supervisor' : 'Assign Supervisor'}
-        message={pollingUnit?.supervisor
-          ? 'Are you sure you want to change the supervisor for this polling unit?'
-          : 'Are you sure you want to assign a supervisor to this polling unit?'}
-        confirmLabel="Yes, continue"
-        cancelLabel="No, cancel"
-        onConfirm={handleConfirmAssign}
-        onCancel={() => { setShowConfirmDialog(false); setSelectedUser(null); }}
-      />
+      {!isPlatformOwner && (
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          variant="info"
+          title={pollingUnit?.supervisor ? 'Change Supervisor' : 'Assign Supervisor'}
+          message={pollingUnit?.supervisor
+            ? 'Are you sure you want to change the supervisor for this polling unit?'
+            : 'Are you sure you want to assign a supervisor to this polling unit?'}
+          confirmLabel="Yes, continue"
+          cancelLabel="No, cancel"
+          onConfirm={handleConfirmAssign}
+          onCancel={() => { setShowConfirmDialog(false); setSelectedUser(null); }}
+        />
+      )}
     </div>
   );
 }

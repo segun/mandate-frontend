@@ -54,7 +54,9 @@ export default function UserSettingsPage() {
   const [buyingLicence, setBuyingLicence] = useState(false);
 
   useEffect(() => {
-    if (!isSuperAdmin || !user?.tenantId) {
+    const tenantId = user?.tenantId;
+
+    if (!isSuperAdmin || !tenantId) {
       return;
     }
 
@@ -62,7 +64,7 @@ export default function UserSettingsPage() {
     const loadTenant = async () => {
       setLoadingTenant(true);
       try {
-        const response = await tenantsService.getTenant(user.tenantId);
+        const response = await tenantsService.getTenant(tenantId);
         if (!mounted) return;
         if (response.subscriptionAccessStatus) {
           updateSubscriptionStatus(response.subscriptionAccessStatus as TenantSubscriptionAccessStatus, {

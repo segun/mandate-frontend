@@ -47,7 +47,7 @@ export interface AuthResponse {
       fullName: string;
       email: string;
       role: UserRole;
-      tenantId: string;
+      tenantId: string | null;
       phone?: string;
       isActive: boolean;
       requirePasswordChange: boolean;
