@@ -398,7 +398,7 @@ export function PlatformDashboardPage() {
                       border: '1px solid #2a2a2e',
                       borderRadius: '0.5rem',
                     }}
-                    formatter={(value: number) => [value.toLocaleString(), 'Voters']}
+                    formatter={(value: number | string | undefined) => [Number(value ?? 0).toLocaleString(), 'Voters']}
                   />
                   <Bar dataKey="voters" fill="#ca8a04" radius={[0, 4, 4, 0]} />
                 </BarChart>
