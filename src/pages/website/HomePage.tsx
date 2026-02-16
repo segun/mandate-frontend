@@ -146,7 +146,7 @@ export function HomePage() {
       </section>
 
       {/* Trust Bar */}
-      <section className="py-12 border-y" style={{ backgroundColor: '#1a1a1f', borderColor: '#2a2a2e' }}>
+      {/* <section className="py-12 border-y" style={{ backgroundColor: '#1a1a1f', borderColor: '#2a2a2e' }}>
         <div className="section-container">
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
             <p className="text-sm tracking-wide" style={{ color: '#888' }}>
@@ -165,7 +165,7 @@ export function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Core Pillars Section */}
       {/* 3. Core Pillars text should be gold */}

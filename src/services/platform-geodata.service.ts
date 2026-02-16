@@ -49,6 +49,7 @@ export interface GeodataImportJob {
   createdPollingUnits: number;
   updatedPollingUnits: number;
   duplicateRows: number;
+  duplicateRowsUrl?: string | null;
   errors: string[] | null;
   failureReason: string | null;
   startedAt: string | null;
@@ -56,6 +57,8 @@ export interface GeodataImportJob {
   createdAt: string;
   updatedAt: string;
 }
+
+export type GeodataImportDuplicateRow = Record<string, unknown> | string | number;
 
 export interface GeodataListParams {
   page?: number;
@@ -124,5 +127,27 @@ export const platformGeodataService = {
       data: response.data.data,
       meta: response.data.meta || { page: 1, limit: DEFAULT_PAGE_LIMIT, total: 0, totalPages: 1 },
     };
+  },
+
+  async getImportDuplicates(duplicateRowsUrl: string): Promise<GeodataImportDuplicateRow[]> {
+    let normalizedUrl = duplicateRowsUrl;
+
+    if (normalizedUrl.startsWith('http://') || normalizedUrl.startsWith('https://')) {
+      const parsed = new URL(normalizedUrl);
+      normalizedUrl = `${parsed.pathname}${parsed.search}`;
+    }
+
+    if (normalizedUrl.startsWith('/api/')) {
+      normalizedUrl = normalizedUrl.slice(4);
+    }
+
+    const response = await api.get<ApiResponse<GeodataImportDuplicateRow[]> | GeodataImportDuplicateRow[]>(normalizedUrl);
+    const payload = response.data;
+
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    return Array.isArray(payload.data) ? payload.data : [];
   },
 };
