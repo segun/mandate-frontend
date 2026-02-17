@@ -4,6 +4,7 @@ import { UserRole } from '../lib/permissions';
 export interface LoginRequest {
   email: string;
   password: string;
+  token: string;
 }
 
 export interface RegisterRequest {
