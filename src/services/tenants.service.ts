@@ -15,7 +15,7 @@ export type RegisterTenantRequest = {
   phone?: string;
   password: string;
   subscriptionMode: 'AUTO' | 'MANUAL';
-  token: string;
+  token: string | undefined;
 };
 
 export type RegisterTenantResponse = {

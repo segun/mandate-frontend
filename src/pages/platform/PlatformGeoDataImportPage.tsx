@@ -128,7 +128,11 @@ export function PlatformGeoDataImportPage() {
       }
 
       const isProgressPayload = payload.type === 'progress' && !!payload.progress;
-      const normalizedStatus = normalizeImportStatus(payload.status ?? (isProgressPayload ? 'processing' : payload.type));
+      const statusFromEventType: ImportJobStatus | undefined =
+        payload.type && payload.type !== 'progress' ? payload.type : undefined;
+      const normalizedStatus = normalizeImportStatus(
+        payload.status ?? (isProgressPayload ? 'processing' : statusFromEventType),
+      );
 
       const patch: Partial<GeodataImportJob> = {
         ...(normalizedStatus ? { status: normalizedStatus } : {}),
