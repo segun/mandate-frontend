@@ -51,7 +51,8 @@ import {
   PartnershipsPage, 
   ContactPage, 
   RegisterPage,
-  RegisterCompletePage
+  RegisterCompletePage,
+  EmailConfirmationResultPage
 } from './pages/website';
 import { PlatformGeoDataPage } from "./pages/platform/PlatformGeoDataPage.tsx";
 
@@ -161,6 +162,7 @@ function AppLayout() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/complete" element={<RegisterCompletePage />} />
+        <Route path="/email-confirmation-result" element={<EmailConfirmationResultPage />} />
         <Route path="/request-access" element={<Navigate to="/register" replace />} />
         
         {/* Catch-all for unknown routes - go to home */}

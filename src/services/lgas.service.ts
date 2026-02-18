@@ -77,34 +77,34 @@ export const lgasService = {
   },
   async getById(id: string): Promise<LGA> {
     const response = await api.get(`/lgas/${id}`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
   async addLgas(geoLgaIds: string[]): Promise<{ added: LGA[]; skipped: string[] }> {
     const response = await api.post('/lgas', { geoLgaIds });
-    return response.data;
+    return response.data.data || response.data;
   },
   async update(id: string, data: { isActive?: boolean }): Promise<LGA> {
     const response = await api.patch(`/lgas/${id}`, data);
-    return response.data;
+    return response.data.data || response.data;
   },
   async delete(id: string): Promise<void> {
     await api.delete(`/lgas/${id}`);
   },
   async deleteBulk(lgaIds: string[]): Promise<{ removed: string[]; notFound: string[] }> {
     const response = await api.delete('/lgas/bulk', { data: { lgaIds } });
-    return response.data;
+    return response.data.data || response.data;
   },
   async assignCoordinator(id: string, coordinatorId: string): Promise<LGA> {
     const response = await api.post(`/lgas/${id}/coordinator/${coordinatorId}`);
-    return response.data;
+    return response.data.data || response.data;
   },
   async removeCoordinator(id: string): Promise<LGA> {
     const response = await api.delete(`/lgas/${id}/coordinator`);
-    return response.data;
+    return response.data.data || response.data;
   },
   async getStatistics(id: string) {
     const response = await api.get(`/lgas/${id}/statistics`);
-    return response.data;
+    return response.data.data || response.data;
   },
   async createLgaByName(name: string, geoStateId: string): Promise<LGA> {
     const response = await api.post('/lgas/create-by-name', { name, geoStateId });

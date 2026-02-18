@@ -100,30 +100,30 @@ export const pollingUnitsService = {
   },
   async getById(id: string): Promise<PollingUnit> {
     const response = await api.get(`/polling-units/${id}`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
   async addPollingUnits(geoPollingUnitIds: string[]): Promise<{ added: PollingUnit[]; skipped: string[] }> {
     const response = await api.post('/polling-units', { geoPollingUnitIds });
-    return response.data.data;
+    return response.data.data || response.data;
   },
   async update(id: string, data: Partial<{ name: string; code: string; address: string; description: string; isActive: boolean }>): Promise<PollingUnit> {
     const response = await api.patch(`/polling-units/${id}`, data);
-    return response.data.data;
+    return response.data.data || response.data;
   },
   async delete(id: string): Promise<void> {
     await api.delete(`/polling-units/${id}`);
   },
   async assignSupervisor(id: string, supervisorId: string): Promise<PollingUnit> {
     const response = await api.post(`/polling-units/${id}/supervisor/${supervisorId}`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
   async removeSupervisor(id: string): Promise<PollingUnit> {
     const response = await api.delete(`/polling-units/${id}/supervisor`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
   async getStatistics(id: string) {
     const response = await api.get(`/polling-units/${id}/statistics`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
   async createPollingUnitByName(data: { name: string; code: string; geoStateId: string; geoLgaId: string; geoWardId: string; address?: string; description?: string; supervisorId?: string }): Promise<PollingUnit> {
     const response = await api.post('/polling-units/create-by-name', data);

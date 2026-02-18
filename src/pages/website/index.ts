@@ -7,3 +7,4 @@ export { PartnershipsPage } from './PartnershipsPage';
 export { ContactPage } from './ContactPage';
 export { RegisterPage } from './RegisterPage';
 export { RegisterCompletePage } from './RegisterCompletePage';
+export { EmailConfirmationResultPage } from './EmailConfirmationResultPage';

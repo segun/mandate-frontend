@@ -105,17 +105,17 @@ export const wardsService = {
 
   async getById(id: string): Promise<Ward> {
     const response = await api.get(`/wards/${id}`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
 
   async addWards(geoWardIds: string[]): Promise<{ added: Ward[]; skipped: string[] }> {
     const response = await api.post('/wards', { geoWardIds });
-    return response.data.data;
+    return response.data.data || response.data;
   },
 
   async update(id: string, data: { isActive?: boolean }): Promise<Ward> {
     const response = await api.patch(`/wards/${id}`, data);
-    return response.data.data;
+    return response.data.data || response.data;
   },
 
   async delete(id: string): Promise<void> {
@@ -124,22 +124,22 @@ export const wardsService = {
 
   async deleteBulk(wardIds: string[]): Promise<{ removed: string[]; notFound: string[] }> {
     const response = await api.delete('/wards/bulk', { data: { wardIds } });
-    return response.data.data;
+    return response.data.data || response.data;
   },
 
   async assignCoordinator(id: string, coordinatorId: string): Promise<Ward> {
     const response = await api.post(`/wards/${id}/coordinator/${coordinatorId}`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
 
   async removeCoordinator(id: string): Promise<Ward> {
     const response = await api.delete(`/wards/${id}/coordinator`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
 
   async getStatistics(id: string) {
     const response = await api.get(`/wards/${id}/statistics`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
 
   async createWardByName(name: string, geoStateId: string, geoLgaId: string): Promise<Ward> {

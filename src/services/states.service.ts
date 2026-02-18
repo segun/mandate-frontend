@@ -77,14 +77,14 @@ export const statesService = {
     },
     async update(id: string, data: { isActive?: boolean }): Promise<State> {
         const response = await api.patch(`/states/${id}`, data);
-        return response.data.data;
+        return response.data.data || response.data;
     },
     async delete(id: string): Promise<void> {
         await api.delete(`/states/${id}`);
     },
     async deleteBulk(stateIds: string[]): Promise<{ removed: string[]; notFound: string[] }> {
         const response = await api.delete("/states/bulk", { data: { stateIds } });
-        return response.data.data;
+        return response.data.data || response.data;
     },
     async assignCoordinator(id: string, coordinatorId: string): Promise<State> {
         const response = await api.post(`/states/${id}/coordinator/${coordinatorId}`);
@@ -97,7 +97,7 @@ export const statesService = {
     },
     async getStatistics(id: string) {
         const response = await api.get(`/states/${id}/statistics`);
-        return response.data.data;
+        return response.data.data || response.data;
     },
     async createStateByName(name: string): Promise<State> {
         const response = await api.post("/states/create-by-name", { name });

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, Loader2, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Check, Loader2, MailCheck, ShieldCheck } from "lucide-react";
+import axios from "axios";
 import { WebsiteLayout } from "./components";
 import { paymentsService } from "../../services/payments.service.ts";
 import { tenantsService } from "../../services/tenants.service.ts";
@@ -76,6 +78,7 @@ export function RegisterPage() {
     } | null>(null);
     const [loadingPlans, setLoadingPlans] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [registrationSubmitted, setRegistrationSubmitted] = useState(false);
 
     const [token, setToken] = useState<string | null>(null);
 
@@ -233,9 +236,26 @@ export function RegisterPage() {
                 window.location.href = response.payment.authorizationUrl;
                 return;
             }
-            toast.error("Payment authorization could not be generated. Please contact support.");
-        } catch {
-            toast.error("Registration failed. Please review your details and try again.");
+
+            setRegistrationSubmitted(true);
+            toast.success("Registration submitted. Please confirm your email to continue.");
+        } catch (error: unknown) {
+            const fallbackMessage = "Registration failed. Please review your details and try again.";
+
+            if (axios.isAxiosError(error)) {
+                const responseData = error.response?.data;
+                const apiMessage =
+                    typeof responseData?.message === "string"
+                        ? responseData.message
+                        : typeof responseData?.error === "string"
+                          ? responseData.error
+                          : undefined;
+
+                toast.error(apiMessage || error.message || fallbackMessage);
+                return;
+            }
+
+            toast.error(fallbackMessage);
         } finally {
             setSubmitting(false);
         }
@@ -358,8 +378,60 @@ export function RegisterPage() {
                                 </div>
                             </div>
 
-                            <form onSubmit={handleFormSubmit} className="space-y-6">
-                                {step === 1 && (
+                            {registrationSubmitted ? (
+                                <div
+                                    className="rounded-lg p-8 text-center"
+                                    style={{
+                                        backgroundColor: "#0f0f12",
+                                        border: `1px solid ${GOLD}`,
+                                    }}
+                                >
+                                    <MailCheck
+                                        className="w-10 h-10 mx-auto mb-4"
+                                        style={{ color: GOLD }}
+                                    />
+                                    <h3
+                                        className="text-2xl font-bold mb-3"
+                                        style={{
+                                            color: "#f5f5f5",
+                                            fontFamily: "Space Grotesk, system-ui, sans-serif",
+                                        }}
+                                    >
+                                        Confirm your email address
+                                    </h3>
+                                    <p className="text-base mb-6" style={{ color: "#ccc" }}>
+                                        We’ve sent a confirmation link to <strong>{formData.email}</strong>.
+                                        Open your inbox and click the link to activate your account.
+                                    </p>
+                                    <p className="text-sm mb-8" style={{ color: "#888" }}>
+                                        If you don’t see the email, check your spam or promotions folder.
+                                    </p>
+                                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                        <Link
+                                            to="/"
+                                            className="px-6 py-3 rounded-lg font-semibold"
+                                            style={{
+                                                backgroundColor: GOLD,
+                                                color: "#000000",
+                                            }}
+                                        >
+                                            Back to Home
+                                        </Link>
+                                        <Link
+                                            to="/login"
+                                            className="px-6 py-3 rounded-lg font-semibold"
+                                            style={{
+                                                border: `1px solid ${GOLD}`,
+                                                color: "#f5f5f5",
+                                            }}
+                                        >
+                                            Go to Login
+                                        </Link>
+                                    </div>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleFormSubmit} className="space-y-6">
+                                    {step === 1 && (
                                     <div className="space-y-6">
                                         <div>
                                             <label
@@ -436,7 +508,7 @@ export function RegisterPage() {
                                     </div>
                                 )}
 
-                                {step === 2 && (
+                                    {step === 2 && (
                                     <div className="space-y-6">
                                         <div>
                                             <label
@@ -568,7 +640,7 @@ export function RegisterPage() {
                                     </div>
                                 )}
 
-                                {step === 3 && (
+                                    {step === 3 && (
                                     <div className="space-y-6">
                                         <div>
                                             <div className="flex items-center justify-between mb-4">
@@ -728,49 +800,52 @@ export function RegisterPage() {
                                     </div>
                                 )}
 
-                                <div className="flex items-center justify-between pt-4">
-                                    <button
-                                        type="button"
-                                        onClick={handleBack}
-                                        className="px-6 py-3 rounded-lg text-sm font-semibold"
-                                        style={{
-                                            backgroundColor: "#0f0f12",
-                                            color: "#ccc",
-                                            border: "1px solid #2a2a2e",
-                                            visibility: step === 1 ? "hidden" : "visible",
-                                        }}
-                                    >
-                                        Back
-                                    </button>
-
-                                    {step < 3 ? (
+                                    <div className="flex items-center justify-between pt-4">
                                         <button
                                             type="button"
-                                            onClick={handleNext}
-                                            className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
-                                            style={{ backgroundColor: GOLD, color: "#000000" }}
-                                        >
-                                            Continue
-                                            <ArrowRight className="w-4 h-4" />
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={handleSubmit}
-                                            disabled={submitting}
-                                            className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
+                                            onClick={handleBack}
+                                            className="px-6 py-3 rounded-lg text-sm font-semibold"
                                             style={{
-                                                backgroundColor: GOLD,
-                                                color: "#000000",
-                                                opacity: submitting ? 0.7 : 1,
+                                                backgroundColor: "#0f0f12",
+                                                color: "#ccc",
+                                                border: "1px solid #2a2a2e",
+                                                visibility: step === 1 ? "hidden" : "visible",
                                             }}
                                         >
-                                            {submitting ? "Redirecting..." : "Proceed to Payment"}
-                                            <ArrowRight className="w-4 h-4" />
+                                            Back
                                         </button>
-                                    )}
-                                </div>
-                            </form>
+
+                                        {step < 3 ? (
+                                            <button
+                                                type="button"
+                                                onClick={handleNext}
+                                                className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
+                                                style={{ backgroundColor: GOLD, color: "#000000" }}
+                                            >
+                                                Continue
+                                                <ArrowRight className="w-4 h-4" />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={handleSubmit}
+                                                disabled={submitting}
+                                                className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
+                                                style={{
+                                                    backgroundColor: GOLD,
+                                                    color: "#000000",
+                                                    opacity: submitting ? 0.7 : 1,
+                                                }}
+                                            >
+                                                {submitting
+                                                    ? "Submitting..."
+                                                    : "Complete Registration"}
+                                                <ArrowRight className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </form>
+                            )}
                         </motion.div>
                     </div>
                 </div>
@@ -791,30 +866,51 @@ export function RegisterPage() {
                             What Happens Next
                         </h2>
                         <p className="max-w-2xl mx-auto" style={{ color: "#888" }}>
-                            Complete payment to activate your tenant. We will then guide your
-                            onboarding process.
+                            {registrationSubmitted
+                                ? "Use the confirmation link in your inbox to activate your account and continue."
+                                : "Complete payment to activate your tenant. We will then guide your onboarding process."}
                         </p>
                     </motion.div>
 
                     <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-                        {[
-                            {
-                                step: "1",
-                                title: "Pay Securely",
-                                description: "Finish your subscription checkout on Paystack.",
-                            },
-                            {
-                                step: "2",
-                                title: "Verification",
-                                description: "We verify payment and activate your tenant.",
-                            },
-                            {
-                                step: "3",
-                                title: "Onboarding",
-                                description:
-                                    "Your team receives login access and implementation support.",
-                            },
-                        ].map((item, index) => (
+                        {(registrationSubmitted
+                            ? [
+                                  {
+                                      step: "1",
+                                      title: "Check Your Inbox",
+                                      description: "Open the confirmation email we just sent.",
+                                  },
+                                  {
+                                      step: "2",
+                                      title: "Confirm Email",
+                                      description: "Click the email confirmation link.",
+                                  },
+                                  {
+                                      step: "3",
+                                      title: "Sign In",
+                                      description:
+                                          "You will be redirected to login after successful confirmation.",
+                                  },
+                              ]
+                            : [
+                                  {
+                                      step: "1",
+                                      title: "Pay Securely",
+                                      description: "Finish your subscription checkout on Paystack.",
+                                  },
+                                  {
+                                      step: "2",
+                                      title: "Verification",
+                                      description: "We verify payment and activate your tenant.",
+                                  },
+                                  {
+                                      step: "3",
+                                      title: "Onboarding",
+                                      description:
+                                          "Your team receives login access and implementation support.",
+                                  },
+                              ]
+                        ).map((item, index) => (
                             <motion.div
                                 key={item.step}
                                 className="text-center p-6 rounded-lg"

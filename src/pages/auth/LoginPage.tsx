@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { authService } from "../../services/auth.service";
 import { useAuthStore } from "../../stores/auth.store";
@@ -13,10 +13,15 @@ export function LoginPage() {
     const [loading, setLoading] = useState(false);
 
     const [token, setToken] = useState<string | null>(null);
+    const [searchParams] = useSearchParams();
 
     const siteKey = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY || "";
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
+    const successMessage =
+        searchParams.get("status") === "success"
+            ? searchParams.get("message") || "Email confirmed successfully. Please sign in."
+            : "";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,6 +75,13 @@ export function LoginPage() {
                     <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400 mb-4">
                         <span aria-hidden>⚠️</span>
                         <span>{error}</span>
+                    </div>
+                )}
+
+                {successMessage && (
+                    <div className="flex items-start gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-400 mb-4">
+                        <span aria-hidden>✅</span>
+                        <span>{successMessage}</span>
                     </div>
                 )}
 
