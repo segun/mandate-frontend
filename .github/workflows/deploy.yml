@@ -38,16 +38,16 @@ jobs:
       matrix:
         include:
           - branch: dev
-            host: dev.controlhq.ng
+            site_host: dev.controlhq.ng
           - branch: master
-            host: controlhq.ng
+            site_host: controlhq.ng
 
     steps:
       - name: Deploy via SSH
         if: github.ref_name == matrix.branch
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ matrix.host }}
+          host: ${{ github.ref_name == 'dev' && secrets.DO_SSH_HOST_DEV || secrets.DO_SSH_HOST_PROD }}
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
@@ -66,5 +66,5 @@ jobs:
           echo "⏳ Waiting for deployment to complete..."
           sleep 10
           echo "🏥 Running health check..."
-          curl -f https://${{ matrix.host }} || exit 1
+          curl -f https://${{ matrix.site_host }} || exit 1
           echo "✅ Frontend is healthy!"
