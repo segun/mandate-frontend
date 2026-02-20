@@ -95,7 +95,7 @@ export const pollingUnitsService = {
     return response.data;
   },
   async search(query: string, page = 1, limit = DEFAULT_PAGE_LIMIT): Promise<PaginatedResponse<PollingUnit>> {
-    const response = await api.get('/polling-units/search', { params: { q: query, page, limit } });
+    const response = await api.get('/polling-units/search/by-name', { params: { q: query, page, limit } });
     return response.data;
   },
   async getById(id: string): Promise<PollingUnit> {

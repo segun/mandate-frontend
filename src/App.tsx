@@ -38,6 +38,10 @@ import { PlatformTenantDetailPage } from './pages/platform/PlatformTenantDetailP
 import { PlatformDashboardPage } from './pages/platform/PlatformDashboardPage.tsx';
 import { PlatformGeoDataCreatePage } from './pages/platform/PlatformGeoDataCreatePage.tsx';
 import { PlatformGeoDataImportPage } from './pages/platform/PlatformGeoDataImportPage.tsx';
+import { ElectionEventsPage } from './pages/election-day/ElectionEventsPage';
+import { ElectionUploadsPage } from './pages/election-day/ElectionUploadsPage';
+import { ElectionUploadDetailPage } from './pages/election-day/ElectionUploadDetailPage';
+import { ElectionDashboardPage } from './pages/election-day/ElectionDashboardPage';
 import './App.css';
 import CreateUserPage from "./pages/users/CreateUserPage";
 
@@ -61,7 +65,8 @@ const queryClient = new QueryClient();
 // App routes that need the dashboard layout
 const appRoutes = [
   '/dashboard', '/states', '/lgas', '/wards', '/voters', 
-  '/polling-units', '/users', '/user', '/chat', '/login', '/subscription', '/platform-owner'
+  '/polling-units', '/users', '/user', '/chat', '/login', '/subscription', '/platform-owner',
+  '/election-day'
 ];
 
 function AppLayout() {
@@ -221,6 +226,10 @@ function AppLayout() {
                 <Route path="/users/new" element={isPlatformOwner ? <Navigate to="/users" replace /> : <CreateUserPage />} />
                 <Route path="/user/settings" element={<UserSettingsPage />} />
                 <Route path="/chat" element={<ChatPage />} />
+                <Route path="/election-day" element={<ElectionEventsPage />} />
+                <Route path="/election-day/:eventId/uploads" element={<ElectionUploadsPage />} />
+                <Route path="/election-day/:eventId/uploads/:uploadId" element={<ElectionUploadDetailPage />} />
+                <Route path="/election-day/:eventId/dashboard" element={<ElectionDashboardPage />} />
               </>
             )}
           </Route>

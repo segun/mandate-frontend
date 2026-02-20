@@ -36,6 +36,7 @@ export function Navbar() {
         { label: 'Voters', to: '/voters', resource: Resource.VOTERS },
         { label: 'Users', to: '/users', resource: Resource.USERS },
         { label: 'Chat', to: '/chat', resource: Resource.CHAT },
+        { label: 'Election Day', to: '/election-day', resource: Resource.ELECTION_RESULTS },
       ];
     },
     [isPlatformOwner],

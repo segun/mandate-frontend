@@ -33,6 +33,7 @@ export const Resource = {
   VOTERS: 'voters',
   USERS: 'users',
   CHAT: 'chat',
+  ELECTION_RESULTS: 'election_results',
 } as const;
 
 export type Resource = typeof Resource[keyof typeof Resource];
@@ -131,6 +132,17 @@ export const RESOURCE_ACCESS: Record<Resource, UserRole[]> = {
   ],
   [Resource.CHAT]: [
     UserRole.PLATFORM_ADMIN,
+    UserRole.SUPER_ADMIN,
+    UserRole.CAMPAIGN_DIRECTOR,
+    UserRole.DATA_CONTROLLER,
+    UserRole.STATE_COORDINATOR,
+    UserRole.LGA_COORDINATOR,
+    UserRole.WARD_COMMANDER,
+    UserRole.WARD_OFFICER,
+    UserRole.UNIT_COMMANDER,
+    UserRole.FIELD_OFFICER,
+  ],
+  [Resource.ELECTION_RESULTS]: [
     UserRole.SUPER_ADMIN,
     UserRole.CAMPAIGN_DIRECTOR,
     UserRole.DATA_CONTROLLER,
