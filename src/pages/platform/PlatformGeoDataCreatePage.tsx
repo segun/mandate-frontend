@@ -210,14 +210,14 @@ export function PlatformGeoDataCreatePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">{pageTitle}</h1>
           <p className="text-sm text-[#888] mt-1">Create geodata and adjust parent selections before saving.</p>
         </div>
         <Link
           to="/platform-owner/geodata"
-          className="px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white text-sm font-semibold hover:bg-[#2a2a2e]"
+          className="w-full sm:w-auto px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white text-sm font-semibold hover:bg-[#2a2a2e] text-center"
         >
           Back to Geo Data
         </Link>

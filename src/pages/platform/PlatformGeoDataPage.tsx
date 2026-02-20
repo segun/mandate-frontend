@@ -210,18 +210,18 @@ export function PlatformGeoDataPage() {
           <p className="text-sm text-[#888] mt-1">Manage geodata levels and process async CSV imports.</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={openCreatePage}
-            className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a]"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a]"
           >
             {addNewLabel}
           </button>
           <button
             type="button"
             onClick={() => navigate('/platform-owner/geodata/csv-import')}
-            className="px-4 py-2.5 rounded-lg border border-[#ca8a04]/60 bg-[#1a1a1d] text-[#ca8a04] font-semibold hover:bg-[#2a2a2e] hover:border-[#ca8a04]"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-[#ca8a04]/60 bg-[#1a1a1d] text-[#ca8a04] font-semibold hover:bg-[#2a2a2e] hover:border-[#ca8a04]"
           >
             Add from CSV
           </button>
@@ -339,7 +339,7 @@ export function PlatformGeoDataPage() {
           )}
 
           {!loadingItems && items.length > 0 && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}

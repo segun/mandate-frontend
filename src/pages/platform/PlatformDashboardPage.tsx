@@ -442,7 +442,7 @@ export function PlatformDashboardPage() {
         </div>
 
         {!isTenantsLoading && tenants.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#2a2a2e] bg-[#1a1a1d]">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-[#2a2a2e] bg-[#1a1a1d]">
             <button
               onClick={() => setTenantPage((prev) => Math.max(1, prev - 1))}
               disabled={tenantPage === 1}
@@ -468,7 +468,7 @@ export function PlatformDashboardPage() {
           <p className="text-sm text-[#888]">Click through state → lga → ward → polling unit levels</p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-5 sm:p-6 border-b border-[#2a2a2e]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 sm:p-6 border-b border-[#2a2a2e]">
           {[
             { label: 'States', value: geoOverview?.states },
             { label: 'LGAs', value: geoOverview?.lgas },
@@ -568,7 +568,7 @@ export function PlatformDashboardPage() {
         </div>
 
         {!isGeoDrilldownLoading && geoRows.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#2a2a2e] bg-[#1a1a1d]">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-[#2a2a2e] bg-[#1a1a1d]">
             <button
               onClick={() => setGeoPage((prev) => Math.max(1, prev - 1))}
               disabled={geoPage === 1}

@@ -158,7 +158,7 @@ export function ElectionEventsPage() {
 
       {/* Events List */}
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-        <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-white">Election Events</h2>
           <button
             onClick={fetchEvents}
@@ -208,19 +208,21 @@ export function ElectionEventsPage() {
                           {event.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm space-x-2">
-                        <Link
-                          to={`/election-day/${event.id}/uploads`}
-                          className="px-3 py-1.5 rounded-md border border-[#2a2a2e] bg-[#1a1a1d] text-white text-xs font-semibold hover:bg-[#2a2a2e]"
-                        >
-                          Uploads
-                        </Link>
-                        <button
-                          onClick={() => navigate(`/election-day/${event.id}/dashboard`)}
-                          className="px-3 py-1.5 rounded-md border border-[#ca8a04]/30 bg-[#ca8a04]/10 text-[#ca8a04] text-xs font-semibold hover:bg-[#ca8a04]/20"
-                        >
-                          Dashboard
-                        </button>
+                      <td className="px-4 py-3 text-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            to={`/election-day/${event.id}/uploads`}
+                            className="px-3 py-1.5 rounded-md border border-[#2a2a2e] bg-[#1a1a1d] text-white text-xs font-semibold hover:bg-[#2a2a2e]"
+                          >
+                            Uploads
+                          </Link>
+                          <button
+                            onClick={() => navigate(`/election-day/${event.id}/dashboard`)}
+                            className="px-3 py-1.5 rounded-md border border-[#ca8a04]/30 bg-[#ca8a04]/10 text-[#ca8a04] text-xs font-semibold hover:bg-[#ca8a04]/20"
+                          >
+                            Dashboard
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -230,7 +232,7 @@ export function ElectionEventsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-t border-[#2a2a2e]">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t border-[#2a2a2e]">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}

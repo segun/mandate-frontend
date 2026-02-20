@@ -765,7 +765,7 @@ export function ElectionUploadDetailPage() {
                   {renderFilePreview('h-[640px]')}
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-start sm:items-center justify-between gap-3">
                       <p className="text-sm text-[#bbb]">
                         The extracted values are pre-filled below. Edit any incorrect values before confirming.
                       </p>
@@ -865,7 +865,7 @@ export function ElectionUploadDetailPage() {
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                         <label className="text-sm font-medium text-[#eee]">Party Votes</label>
                         <button
                           type="button"
@@ -877,7 +877,7 @@ export function ElectionUploadDetailPage() {
                       </div>
                       <div className="space-y-2 max-h-80 overflow-y-auto">
                         {correctForm.partyVotes.map((pv, index) => (
-                          <div key={index} className="flex gap-2 items-center">
+                          <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
                             <input
                               type="text"
                               value={pv.partyName}
@@ -893,13 +893,13 @@ export function ElectionUploadDetailPage() {
                                 updatePartyVote(index, 'votesScored', parseInt(e.target.value) || 0)
                               }
                               placeholder="Votes"
-                              className="w-28 px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50"
+                              className="w-full sm:w-28 px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50"
                             />
                             {correctForm.partyVotes.length > 1 && (
                               <button
                                 type="button"
                                 onClick={() => removePartyVote(index)}
-                                className="px-2 py-2 text-red-400 hover:text-red-300"
+                                className="self-start sm:self-auto px-2 py-2 text-red-400 hover:text-red-300"
                                 title="Remove party"
                               >
                                 ✕
@@ -972,11 +972,11 @@ export function ElectionUploadDetailPage() {
       )}
 
       {isCorrectEditorOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-100 bg-black/70 backdrop-blur-sm">
           <div className="h-full w-full overflow-y-auto">
             <div className="min-h-full flex items-center justify-center p-4 sm:p-6 lg:p-8">
               <div className="w-full max-w-6xl max-h-[92vh] bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden flex flex-col">
-                <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+                <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="text-lg sm:text-xl font-semibold text-white">Edit Correction</h2>
                     <p className="text-xs text-[#888] mt-0.5">{upload.sourceFileName}</p>
@@ -1079,7 +1079,7 @@ export function ElectionUploadDetailPage() {
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                           <label className="text-sm font-medium text-[#eee]">Party Votes</label>
                           <button
                             type="button"
@@ -1091,7 +1091,7 @@ export function ElectionUploadDetailPage() {
                         </div>
                         <div className="space-y-2 max-h-80 overflow-y-auto">
                           {correctForm.partyVotes.map((pv, index) => (
-                            <div key={index} className="flex gap-2 items-center">
+                            <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
                               <input
                                 type="text"
                                 value={pv.partyName}
@@ -1107,13 +1107,13 @@ export function ElectionUploadDetailPage() {
                                   updatePartyVote(index, 'votesScored', parseInt(e.target.value) || 0)
                                 }
                                 placeholder="Votes"
-                                className="w-28 px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50"
+                                className="w-full sm:w-28 px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50"
                               />
                               {correctForm.partyVotes.length > 1 && (
                                 <button
                                   type="button"
                                   onClick={() => removePartyVote(index)}
-                                  className="px-2 py-2 text-red-400 hover:text-red-300"
+                                  className="self-start sm:self-auto px-2 py-2 text-red-400 hover:text-red-300"
                                   title="Remove party"
                                 >
                                   ✕

@@ -34,6 +34,7 @@ export const Resource = {
   USERS: 'users',
   CHAT: 'chat',
   ELECTION_RESULTS: 'election_results',
+  INCIDENT_REPORTS: 'incident_reports',
 } as const;
 
 export type Resource = typeof Resource[keyof typeof Resource];
@@ -153,6 +154,32 @@ export const RESOURCE_ACCESS: Record<Resource, UserRole[]> = {
     UserRole.UNIT_COMMANDER,
     UserRole.FIELD_OFFICER,
   ],
+  [Resource.INCIDENT_REPORTS]: [
+    UserRole.PLATFORM_ADMIN,
+    UserRole.SUPER_ADMIN,
+    UserRole.CAMPAIGN_DIRECTOR,
+    UserRole.DATA_CONTROLLER,
+    UserRole.STATE_COORDINATOR,
+    UserRole.LGA_COORDINATOR,
+    UserRole.WARD_COMMANDER,
+    UserRole.WARD_OFFICER,
+    UserRole.UNIT_COMMANDER,
+    UserRole.FIELD_OFFICER,
+  ],
+};
+
+const ROLE_HIERARCHY: Record<UserRole, number> = {
+  [UserRole.PLATFORM_OWNER]: 0,
+  [UserRole.PLATFORM_ADMIN]: 1,
+  [UserRole.SUPER_ADMIN]: 2,
+  [UserRole.CAMPAIGN_DIRECTOR]: 3,
+  [UserRole.DATA_CONTROLLER]: 3,
+  [UserRole.STATE_COORDINATOR]: 4,
+  [UserRole.LGA_COORDINATOR]: 5,
+  [UserRole.WARD_COMMANDER]: 6,
+  [UserRole.WARD_OFFICER]: 6,
+  [UserRole.UNIT_COMMANDER]: 7,
+  [UserRole.FIELD_OFFICER]: 8,
 };
 
 /**
@@ -172,4 +199,13 @@ export function getAccessibleResources(userRole: string | undefined): Resource[]
   return Object.values(Resource).filter((resource) =>
     hasAccessToResource(userRole, resource)
   );
+}
+
+export function isRoleAboveStateCoordinator(userRole: string | undefined): boolean {
+  if (!userRole) return false;
+  const role = userRole as UserRole;
+  const userLevel = ROLE_HIERARCHY[role];
+  const stateCoordinatorLevel = ROLE_HIERARCHY[UserRole.STATE_COORDINATOR];
+  if (userLevel === undefined) return false;
+  return userLevel < stateCoordinatorLevel;
 }

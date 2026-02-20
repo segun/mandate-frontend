@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   electionResultsService,
   type ElectionEvent,
@@ -12,6 +12,7 @@ import {
   getElectionResultsSocket,
   disconnectElectionResultsSocket,
 } from '../../lib/electionResultsSocket';
+import { IncidentReportsPanel } from '../incidents/IncidentReportsPage';
 import { toast } from '../../stores/toast.store';
 
 const STATUS_STYLES: Record<ElectionUploadStatus, string> = {
@@ -29,6 +30,7 @@ const MAX_FILE_SIZE = 12 * 1024 * 1024; // 12MB
 
 export function ElectionUploadsPage() {
   const { eventId } = useParams<{ eventId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Event info
   const [event, setEvent] = useState<ElectionEvent | null>(null);
@@ -45,6 +47,10 @@ export function ElectionUploadsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
+  const [activeTab, setActiveTab] = useState<'form-e8' | 'incidents'>(() => {
+    const tab = searchParams.get('tab');
+    return tab === 'incidents' ? 'incidents' : 'form-e8';
+  });
 
   // Track which uploads we've shown terminal toasts for
   const terminalToastShownRef = useRef<Set<string>>(new Set());
@@ -89,6 +95,26 @@ export function ElectionUploadsPage() {
   useEffect(() => {
     fetchUploads();
   }, [fetchUploads]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'incidents' && activeTab !== 'incidents') {
+      setActiveTab('incidents');
+      return;
+    }
+    if ((tab === 'form-e8' || !tab) && activeTab !== 'form-e8') {
+      setActiveTab('form-e8');
+    }
+  }, [searchParams, activeTab]);
+
+  const handleTabChange = (tab: 'form-e8' | 'incidents') => {
+    setActiveTab(tab);
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set('tab', tab);
+      return nextParams;
+    });
+  };
 
   // WebSocket for real-time status updates
   useEffect(() => {
@@ -242,198 +268,225 @@ export function ElectionUploadsPage() {
         </div>
       </div>
 
-      {eventStats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] p-3">
-            <p className="text-xs text-[#888] uppercase tracking-wide">Total</p>
-            <p className="text-lg font-semibold text-white mt-1">{eventStats.totalUploads}</p>
+      <div className="bg-[#141417] rounded-2xl border border-[#2a2a2e] p-2 inline-flex gap-2">
+        <button
+          onClick={() => handleTabChange('form-e8')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            activeTab === 'form-e8'
+              ? 'bg-[#ca8a04] text-[#0d0d0f]'
+              : 'text-[#bbb] bg-[#1a1a1d] hover:bg-[#2a2a2e]'
+          }`}
+        >
+          Form E8 Upload
+        </button>
+        <button
+          onClick={() => handleTabChange('incidents')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            activeTab === 'incidents'
+              ? 'bg-[#ca8a04] text-[#0d0d0f]'
+              : 'text-[#bbb] bg-[#1a1a1d] hover:bg-[#2a2a2e]'
+          }`}
+        >
+          Incident Reports
+        </button>
+      </div>
+
+      {activeTab === 'form-e8' ? (
+        <>
+          {eventStats && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] p-3">
+                <p className="text-xs text-[#888] uppercase tracking-wide">Total</p>
+                <p className="text-lg font-semibold text-white mt-1">{eventStats.totalUploads}</p>
+              </div>
+              <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] p-3">
+                <p className="text-xs text-[#888] uppercase tracking-wide">Processing</p>
+                <p className="text-lg font-semibold text-yellow-300 mt-1">{eventStats.processing}</p>
+              </div>
+              <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] p-3">
+                <p className="text-xs text-[#888] uppercase tracking-wide">Needs Review</p>
+                <p className="text-lg font-semibold text-orange-300 mt-1">{eventStats.reviewRequired}</p>
+              </div>
+              <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] p-3">
+                <p className="text-xs text-[#888] uppercase tracking-wide">Confirmed</p>
+                <p className="text-lg font-semibold text-[#ca8a04] mt-1">{eventStats.confirmed}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
+            <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3">
+              <h2 className="text-lg font-semibold text-white">Upload Form E8</h2>
+            </div>
+            <div className="p-4 sm:p-6">
+              <form onSubmit={handleUpload} className="flex flex-col md:flex-row items-start md:items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e]"
+                >
+                  Choose file
+                </button>
+                <div className="w-full md:max-w-md px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white truncate">
+                  {file ? file.name : 'No file selected (JPEG, PNG, or PDF — max 12MB)'}
+                </div>
+                <button
+                  type="submit"
+                  disabled={uploading || !file}
+                  className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {uploading ? 'Uploading...' : 'Upload Form'}
+                </button>
+              </form>
+            </div>
           </div>
-          <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] p-3">
-            <p className="text-xs text-[#888] uppercase tracking-wide">Processing</p>
-            <p className="text-lg font-semibold text-yellow-300 mt-1">{eventStats.processing}</p>
+
+          <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
+            <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3">
+              <h2 className="text-lg font-semibold text-white">Uploads</h2>
+            </div>
+
+            <div className="p-4 sm:p-6 space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setPage(1);
+                    setStatusFilter(e.target.value);
+                  }}
+                  className="px-3 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white"
+                >
+                  <option value="">All statuses</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="PROCESSING">Processing</option>
+                  <option value="EXTRACTED">Extracted</option>
+                  <option value="REVIEW_REQUIRED">Review Required</option>
+                  <option value="CONFIRMED">Confirmed</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="FAILED">Failed</option>
+                </select>
+                <button
+                  onClick={() => {
+                    fetchUploads();
+                    fetchEventDetail();
+                  }}
+                  className="px-3 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e]"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="text-[#888]">Loading uploads...</div>
+              ) : uploads.length === 0 ? (
+                <div className="text-[#888]">No uploads found. Upload a Form E8 above to get started.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="border-b border-[#2a2a2e]">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-white">File</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-white">Status</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-white">Confidence</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-white">Updated</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-white">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#2a2a2e]">
+                      {uploads.map((upload) => (
+                        <tr key={upload.id} className="hover:bg-[#1a1a1d]/50">
+                          <td className="px-4 py-3 text-sm text-[#ddd] font-medium">
+                            {upload.sourceFileName}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span
+                              className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                                STATUS_STYLES[upload.status] || 'bg-[#2a2a2e] text-[#bbb]'
+                              }`}
+                            >
+                              {upload.status.replace('_', ' ')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-[#bbb]">
+                            {upload.overallConfidence != null
+                              ? `${(upload.overallConfidence * 100).toFixed(1)}%`
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-[#bbb]">
+                            {new Date(upload.updatedAt).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Link
+                                to={`/election-day/${eventId}/uploads/${upload.id}`}
+                                className="px-3 py-1.5 rounded-md border border-[#2a2a2e] bg-[#1a1a1d] text-white text-xs font-semibold hover:bg-[#2a2a2e]"
+                              >
+                                Details
+                              </Link>
+                              {(upload.status === 'REVIEW_REQUIRED' || upload.status === 'EXTRACTED') && (
+                                <Link
+                                  to={`/election-day/${eventId}/uploads/${upload.id}`}
+                                  className="px-3 py-1.5 rounded-md border border-orange-500/30 bg-orange-500/10 text-orange-400 text-xs font-semibold hover:bg-orange-500/20"
+                                >
+                                  Review
+                                </Link>
+                              )}
+                              {(upload.status === 'FAILED' || upload.status === 'REJECTED' || upload.status === 'REVIEW_REQUIRED' || upload.status === 'EXTRACTED') && (
+                                <button
+                                  onClick={() => handleReprocess(upload.id)}
+                                  className="px-3 py-1.5 rounded-md border border-[#ca8a04]/30 bg-[#ca8a04]/10 text-[#ca8a04] text-xs font-semibold hover:bg-[#ca8a04]/20"
+                                >
+                                  Reprocess
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {!loading && uploads.length > 0 && totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-3 py-1.5 text-sm border border-[#2a2a2e] rounded-md text-white disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-[#888]">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-3 py-1.5 text-sm border border-[#2a2a2e] rounded-md text-white disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] p-3">
-            <p className="text-xs text-[#888] uppercase tracking-wide">Needs Review</p>
-            <p className="text-lg font-semibold text-orange-300 mt-1">{eventStats.reviewRequired}</p>
-          </div>
-          <div className="bg-[#141417] rounded-xl border border-[#2a2a2e] p-3">
-            <p className="text-xs text-[#888] uppercase tracking-wide">Confirmed</p>
-            <p className="text-lg font-semibold text-[#ca8a04] mt-1">{eventStats.confirmed}</p>
-          </div>
-        </div>
+        </>
+      ) : (
+        <IncidentReportsPanel embedded />
       )}
-
-      {/* Upload Form */}
-      <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-        <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3">
-          <h2 className="text-lg font-semibold text-white">Upload Form E8</h2>
-        </div>
-        <div className="p-4 sm:p-6">
-          <form onSubmit={handleUpload} className="flex flex-col md:flex-row items-start md:items-center gap-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = '';
-                  fileInputRef.current.click();
-                }
-              }}
-              className="px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e]"
-            >
-              Choose file
-            </button>
-            <div className="w-full md:max-w-md px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white truncate">
-              {file ? file.name : 'No file selected (JPEG, PNG, or PDF — max 12MB)'}
-            </div>
-            <button
-              type="submit"
-              disabled={uploading || !file}
-              className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {uploading ? 'Uploading...' : 'Upload Form'}
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* Uploads List */}
-      <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-        <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3">
-          <h2 className="text-lg font-semibold text-white">Uploads</h2>
-        </div>
-
-        <div className="p-4 sm:p-6 space-y-4">
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setPage(1);
-                setStatusFilter(e.target.value);
-              }}
-              className="px-3 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white"
-            >
-              <option value="">All statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="PROCESSING">Processing</option>
-              <option value="EXTRACTED">Extracted</option>
-              <option value="REVIEW_REQUIRED">Review Required</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="FAILED">Failed</option>
-            </select>
-            <button
-              onClick={() => {
-                fetchUploads();
-                fetchEventDetail();
-              }}
-              className="px-3 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e]"
-            >
-              Refresh
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="text-[#888]">Loading uploads...</div>
-          ) : uploads.length === 0 ? (
-            <div className="text-[#888]">No uploads found. Upload a Form E8 above to get started.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-[#2a2a2e]">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">File</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Confidence</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Updated</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-white">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#2a2a2e]">
-                  {uploads.map((upload) => (
-                    <tr key={upload.id} className="hover:bg-[#1a1a1d]/50">
-                      <td className="px-4 py-3 text-sm text-[#ddd] font-medium">
-                        {upload.sourceFileName}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span
-                          className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                            STATUS_STYLES[upload.status] || 'bg-[#2a2a2e] text-[#bbb]'
-                          }`}
-                        >
-                          {upload.status.replace('_', ' ')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#bbb]">
-                        {upload.overallConfidence != null
-                          ? `${(upload.overallConfidence * 100).toFixed(1)}%`
-                          : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#bbb]">
-                        {new Date(upload.updatedAt).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm space-x-2">
-                        <Link
-                          to={`/election-day/${eventId}/uploads/${upload.id}`}
-                          className="px-3 py-1.5 rounded-md border border-[#2a2a2e] bg-[#1a1a1d] text-white text-xs font-semibold hover:bg-[#2a2a2e]"
-                        >
-                          Details
-                        </Link>
-                        {(upload.status === 'REVIEW_REQUIRED' || upload.status === 'EXTRACTED') && (
-                          <Link
-                            to={`/election-day/${eventId}/uploads/${upload.id}`}
-                            className="px-3 py-1.5 rounded-md border border-orange-500/30 bg-orange-500/10 text-orange-400 text-xs font-semibold hover:bg-orange-500/20"
-                          >
-                            Review
-                          </Link>
-                        )}
-                        {(upload.status === 'FAILED' || upload.status === 'REJECTED' || upload.status === 'REVIEW_REQUIRED' || upload.status === 'EXTRACTED') && (
-                          <button
-                            onClick={() => handleReprocess(upload.id)}
-                            className="px-3 py-1.5 rounded-md border border-[#ca8a04]/30 bg-[#ca8a04]/10 text-[#ca8a04] text-xs font-semibold hover:bg-[#ca8a04]/20"
-                          >
-                            Reprocess
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {!loading && uploads.length > 0 && totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-3 py-1.5 text-sm border border-[#2a2a2e] rounded-md text-white disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="text-sm text-[#888]">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-3 py-1.5 text-sm border border-[#2a2a2e] rounded-md text-white disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

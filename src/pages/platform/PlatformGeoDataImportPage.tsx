@@ -246,14 +246,14 @@ export function PlatformGeoDataImportPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">Geo CSV Imports</h1>
           <p className="text-sm text-[#888] mt-1">Upload geodata CSV files and monitor async import status.</p>
         </div>
         <Link
           to="/platform-owner/geodata"
-          className="px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white text-sm font-semibold hover:bg-[#2a2a2e]"
+          className="w-full sm:w-auto px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white text-sm font-semibold hover:bg-[#2a2a2e] text-center"
         >
           Back to Geo Data
         </Link>
@@ -281,7 +281,7 @@ export function PlatformGeoDataImportPage() {
                   fileInputRef.current.click();
                 }
               }}
-              className="px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e]"
+              className="w-full md:w-auto px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e]"
             >
               Choose file
             </button>
@@ -291,7 +291,7 @@ export function PlatformGeoDataImportPage() {
             <button
               type="submit"
               disabled={uploading}
-              className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] disabled:opacity-60"
+              className="w-full md:w-auto px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] disabled:opacity-60"
             >
               {uploading ? 'Uploading...' : 'Upload CSV'}
             </button>
@@ -438,7 +438,7 @@ export function PlatformGeoDataImportPage() {
           )}
 
           {!loadingJobs && jobs.length > 0 && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={() => setJobsPage((p) => Math.max(1, p - 1))}
                 disabled={jobsPage === 1}

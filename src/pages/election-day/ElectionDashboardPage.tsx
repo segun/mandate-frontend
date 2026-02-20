@@ -94,7 +94,7 @@ function WardsSection({
   if (!wards.length) {
     return (
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-        <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-white">{title}</h2>
           <ViewSwitch value={view} onChange={onViewChange} />
         </div>
@@ -105,7 +105,7 @@ function WardsSection({
 
   return (
     <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-      <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+      <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-white">{title}</h2>
         <ViewSwitch value={view} onChange={onViewChange} />
       </div>
@@ -140,9 +140,9 @@ function WardsSection({
         <div className="p-4 sm:p-6 space-y-4">
           {wards.map((ward) => (
             <div key={ward.wardId}>
-              <div className="flex items-center justify-between gap-3 mb-1">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 mb-1">
                 <p className="text-sm text-white truncate">{ward.wardName}</p>
-                <p className="text-xs text-[#bbb] whitespace-nowrap">
+                <p className="text-xs text-[#bbb]">
                   {ward.collatedPollingUnits}/{ward.totalPollingUnits} ({ward.completionRatePercent.toFixed(2)}%)
                 </p>
               </div>
@@ -240,7 +240,7 @@ export function ElectionDashboardPage() {
             )}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             to="/election-day"
             className="px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white text-sm font-semibold hover:bg-[#2a2a2e]"
@@ -278,7 +278,7 @@ export function ElectionDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-4 sm:p-5">
           <p className="text-xs text-[#888] uppercase tracking-wide">Total Uploads</p>
           <p className="text-2xl sm:text-3xl font-bold text-white mt-1">{totalUploads}</p>
@@ -320,7 +320,7 @@ export function ElectionDashboardPage() {
               );
             })}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {(Object.keys(statusCounts) as ElectionUploadStatus[]).map((status) => (
               <div key={status} className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLORS[status] }} />
@@ -333,7 +333,7 @@ export function ElectionDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-4">
           <p className="text-xs text-[#888] uppercase tracking-wide">Collated Results</p>
           <p className="text-2xl font-bold text-white mt-1">{formatNumber(eventDetail?.collation?.totalCollatedResults)}</p>
@@ -357,7 +357,7 @@ export function ElectionDashboardPage() {
       </div>
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
-        <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-white">Collation Party Totals (All Parties)</h2>
           <ViewSwitch value={partyTotalsView} onChange={setPartyTotalsView} />
         </div>
@@ -392,7 +392,7 @@ export function ElectionDashboardPage() {
                 const width = maxVotes > 0 ? (party.totalVotes / maxVotes) * 100 : 0;
                 return (
                   <div key={party.partyName}>
-                    <div className="flex items-center justify-between gap-3 mb-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 mb-1">
                       <p className="text-sm text-white">{party.partyName}</p>
                       <p className="text-xs text-[#bbb]">{party.totalVotes.toLocaleString()} votes</p>
                     </div>
@@ -545,7 +545,7 @@ export function ElectionDashboardPage() {
                 <tbody className="divide-y divide-[#2a2a2e]">
                   {recentUploads.map((upload) => (
                     <tr key={upload.id}>
-                      <td className="px-4 py-3 text-sm text-white truncate max-w-[300px]">{upload.sourceFileName}</td>
+                      <td className="px-4 py-3 text-sm text-white truncate max-w-75">{upload.sourceFileName}</td>
                       <td className="px-4 py-3 text-sm">
                         <span
                           className="text-xs font-medium px-2 py-0.5 rounded"

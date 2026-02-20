@@ -255,7 +255,7 @@ export function PlatformTenantsPage() {
         )}
 
         {!loading && tenants.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#2a2a2e] bg-[#1a1a1d]">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-[#2a2a2e] bg-[#1a1a1d]">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
