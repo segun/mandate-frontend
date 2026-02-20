@@ -57,6 +57,22 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
 
   const [reportPendingDelete, setReportPendingDelete] = useState<IncidentReport | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [previewLoadFailedIds, setPreviewLoadFailedIds] = useState<Set<string>>(new Set());
+
+  const getPreviewUrl = (report: IncidentReport): string | null => {
+    return report.mediaUrl || report.downloadUrl || null;
+  };
+
+  const markPreviewFailed = (id: string) => {
+    setPreviewLoadFailedIds((current) => {
+      if (current.has(id)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(id);
+      return next;
+    });
+  };
 
   const fetchReports = useCallback(async () => {
     setIsLoading(true);
@@ -272,6 +288,12 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {reports.map((report) => (
+                (() => {
+                  const previewUrl = getPreviewUrl(report);
+                  const isPreviewFailed = previewLoadFailedIds.has(report.id);
+                  const canRenderPreview = !!previewUrl && !isPreviewFailed;
+
+                  return (
                 <div
                   key={report.id}
                   className="rounded-xl border border-[#2a2a2e] bg-[#0d0d0f] overflow-hidden"
@@ -284,21 +306,33 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
                   </div>
 
                   <div className="p-4 space-y-3">
-                    {report.mediaType === 'IMAGE' ? (
+                    {report.mediaType === 'IMAGE' && canRenderPreview ? (
                       <img
-                        src={report.mediaUrl}
+                        src={previewUrl}
                         alt={report.sourceFileName}
+                        referrerPolicy="no-referrer"
+                        onError={() => markPreviewFailed(report.id)}
                         className="w-full h-52 object-cover rounded-lg border border-[#2a2a2e]"
                       />
-                    ) : report.mediaType === 'VIDEO' ? (
+                    ) : report.mediaType === 'VIDEO' && canRenderPreview ? (
                       <video
-                        src={report.mediaUrl}
+                        src={previewUrl}
                         controls
+                        onError={() => markPreviewFailed(report.id)}
                         className="w-full h-52 rounded-lg border border-[#2a2a2e] bg-black"
                       />
+                    ) : report.mediaType === 'AUDIO' && canRenderPreview ? (
+                      <div className="rounded-lg border border-[#2a2a2e] bg-[#141417] p-4">
+                        <audio
+                          src={previewUrl}
+                          controls
+                          onError={() => markPreviewFailed(report.id)}
+                          className="w-full"
+                        />
+                      </div>
                     ) : (
                       <div className="rounded-lg border border-[#2a2a2e] bg-[#141417] p-4">
-                        <audio src={report.mediaUrl} controls className="w-full" />
+                        <p className="text-xs text-[#888]">Preview unavailable.</p>
                       </div>
                     )}
 
@@ -313,6 +347,17 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
                       {report.description?.trim() ? report.description : 'No description provided.'}
                     </p>
 
+                    {previewUrl && (
+                      <a
+                        href={previewUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex px-3 py-1.5 rounded-md border border-[#ca8a04]/30 bg-[#ca8a04]/10 text-[#ca8a04] text-xs font-semibold hover:bg-[#ca8a04]/20"
+                      >
+                        Open/Download Media
+                      </a>
+                    )}
+
                     {canDeleteReports && (
                       <div className="flex justify-end">
                         <button
@@ -325,6 +370,8 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
                     )}
                   </div>
                 </div>
+                  );
+                })()
               ))}
             </div>
           )}

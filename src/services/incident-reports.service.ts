@@ -19,6 +19,7 @@ export interface IncidentReport {
   createdAt: string;
   updatedAt: string;
   mediaUrl: string;
+  downloadUrl?: string | null;
 }
 
 export interface IncidentReportsMeta {
