@@ -78,7 +78,12 @@ export function RegisterPage() {
     } | null>(null);
     const [loadingPlans, setLoadingPlans] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [checkingPaymentConfig, setCheckingPaymentConfig] = useState(false);
     const [registrationSubmitted, setRegistrationSubmitted] = useState(false);
+    const [paymentRequired, setPaymentRequired] = useState<boolean | null>(null);
+    const [registrationWarning, setRegistrationWarning] = useState<string | null>(null);
+    const [confirmationEmail, setConfirmationEmail] = useState<string>("");
+    const [resendingConfirmation, setResendingConfirmation] = useState(false);
 
     const [token, setToken] = useState<string | null>(null);
 
@@ -144,53 +149,55 @@ export function RegisterPage() {
     const isValidPhone = (phone: string) => /^0\d{10}$/.test(phone);
     const isValidPassword = (password: string) => PASSWORD_PATTERN.test(password);
 
-    const handleNext = () => {
-        if (step === 1) {
-            if (!formData.organizationName || !formData.organizationType) {
-                toast.error("Please provide your organization name and type to continue.");
-                return;
-            }
+    const handleResendConfirmationEmail = async () => {
+        const email = confirmationEmail || formData.email;
+        if (!email || !isValidEmail(email)) {
+            toast.error("A valid email address is required to resend confirmation.");
+            return;
         }
-        if (step === 2) {
-            if (!formData.contactName || !formData.email || !formData.password) {
-                toast.error("Please provide admin contact details to continue.");
+
+        setResendingConfirmation(true);
+        try {
+            const response = await tenantsService.resendRegistrationConfirmationEmail({ email });
+
+            if (response.warning) {
+                setRegistrationWarning(response.warning);
+                toast.warning(response.warning);
                 return;
             }
-            if (!isValidEmail(formData.email)) {
-                toast.error("Please enter a valid email address.");
+
+            setRegistrationWarning(null);
+            toast.success("Confirmation email resend request processed. Check your inbox shortly.");
+        } catch (error: unknown) {
+            const fallbackMessage =
+                "Unable to resend confirmation email right now. Please try again shortly.";
+
+            if (axios.isAxiosError(error)) {
+                const responseData = error.response?.data;
+                const apiMessage =
+                    typeof responseData?.message === "string"
+                        ? responseData.message
+                        : typeof responseData?.error === "string"
+                          ? responseData.error
+                          : undefined;
+
+                toast.error(apiMessage || error.message || fallbackMessage);
                 return;
             }
-            if (formData.phone && !isValidPhone(formData.phone)) {
-                toast.error("Phone number must be 11 digits and start with 0.");
-                return;
-            }
-            if (!isValidPassword(formData.password)) {
-                toast.error(PASSWORD_PATTERN_MESSAGE);
-                return;
-            }
-            if (!formData.confirmPassword) {
-                toast.error("Please confirm your password.");
-                return;
-            }
-            if (formData.password !== formData.confirmPassword) {
-                toast.error("Passwords do not match.");
-                return;
-            }
+
+            toast.error(fallbackMessage);
+        } finally {
+            setResendingConfirmation(false);
         }
-        setStep((prev) => Math.min(prev + 1, 3));
     };
 
-    const handleBack = () => {
-        setStep((prev) => Math.max(prev - 1, 1));
-    };
-
-    const handleSubmit = async () => {
+    const submitRegistration = async (requiresPayment: boolean) => {
         if (!token) {
             toast.error("Please complete the Captcha challenge.");
             return;
         }
 
-        if (!formData.subscriptionMode) {
+        if (requiresPayment && !formData.subscriptionMode) {
             toast.error("Please select a payment mode to continue.");
             return;
         }
@@ -224,6 +231,7 @@ export function RegisterPage() {
         }
 
         setSubmitting(true);
+        setRegistrationWarning(null);
         try {
             const response = await tenantsService.registerTenant({
                 organizationName: formData.organizationName,
@@ -233,17 +241,34 @@ export function RegisterPage() {
                 email: formData.email,
                 phone: formData.phone || undefined,
                 password: formData.password,
-                subscriptionMode: formData.subscriptionMode,
+                subscriptionMode: requiresPayment
+                    ? formData.subscriptionMode || undefined
+                    : undefined,
                 token: token || undefined,
             });
 
-            if (response.payment?.authorizationUrl) {
+            setConfirmationEmail(response.adminUser?.email || formData.email);
+
+            if (response.payment === null) {
+                setRegistrationSubmitted(true);
+
+                if (response.warning) {
+                    setRegistrationWarning(response.warning);
+                    toast.warning(response.warning);
+                } else {
+                    toast.success(
+                        "Registration successful. Check your email for a confirmation link before login.",
+                    );
+                }
+                return;
+            }
+
+            if (response.payment.authorizationUrl) {
                 window.location.href = response.payment.authorizationUrl;
                 return;
             }
 
-            setRegistrationSubmitted(true);
-            toast.success("Registration submitted. Please confirm your email to continue.");
+            toast.error("Unable to start payment. Please try again or contact support.");
         } catch (error: unknown) {
             const fallbackMessage = "Registration failed. Please review your details and try again.";
 
@@ -264,6 +289,92 @@ export function RegisterPage() {
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleNext = async () => {
+        if (step === 1) {
+            if (!formData.organizationName || !formData.organizationType) {
+                toast.error("Please provide your organization name and type to continue.");
+                return;
+            }
+            setStep(2);
+            return;
+        }
+
+        if (step === 2) {
+            if (!formData.contactName || !formData.email || !formData.password) {
+                toast.error("Please provide admin contact details to continue.");
+                return;
+            }
+            if (!isValidEmail(formData.email)) {
+                toast.error("Please enter a valid email address.");
+                return;
+            }
+            if (formData.phone && !isValidPhone(formData.phone)) {
+                toast.error("Phone number must be 11 digits and start with 0.");
+                return;
+            }
+            if (!isValidPassword(formData.password)) {
+                toast.error(PASSWORD_PATTERN_MESSAGE);
+                return;
+            }
+            if (!formData.confirmPassword) {
+                toast.error("Please confirm your password.");
+                return;
+            }
+            if (formData.password !== formData.confirmPassword) {
+                toast.error("Passwords do not match.");
+                return;
+            }
+
+            if (!token) {
+                toast.error("Please complete the Captcha challenge.");
+                return;
+            }
+
+            setCheckingPaymentConfig(true);
+            try {
+                const config = await tenantsService.getRegistrationPaymentConfig();
+                const requiresPayment = config.paymentRequired;
+                setPaymentRequired(requiresPayment);
+
+                if (requiresPayment) {
+                    setStep(3);
+                    return;
+                }
+
+                await submitRegistration(false);
+            } catch (error: unknown) {
+                const fallbackMessage =
+                    "Unable to determine payment requirements. Please try again shortly.";
+
+                if (axios.isAxiosError(error)) {
+                    const responseData = error.response?.data;
+                    const apiMessage =
+                        typeof responseData?.message === "string"
+                            ? responseData.message
+                            : typeof responseData?.error === "string"
+                              ? responseData.error
+                              : undefined;
+
+                    toast.error(apiMessage || error.message || fallbackMessage);
+                    return;
+                }
+
+                toast.error(fallbackMessage);
+            } finally {
+                setCheckingPaymentConfig(false);
+            }
+            return;
+        }
+    };
+
+    const handleBack = () => {
+        setStep((prev) => Math.max(prev - 1, 1));
+    };
+
+    const handleSubmit = async () => {
+        await submitRegistration(paymentRequired ?? true);
     };
 
     const handleFormSubmit = (e: React.FormEvent) => {
@@ -303,8 +414,8 @@ export function RegisterPage() {
                             className="text-lg sm:text-xl leading-relaxed"
                             style={{ color: "#ccc" }}
                         >
-                            Launch your CONTROLHQ tenant in minutes. Complete the registration flow
-                            and proceed to secure payment to activate your subscription.
+                            Launch your CONTROLHQ tenant in minutes. Complete registration and, if
+                            required, continue to secure payment to activate your subscription.
                         </motion.p>
                     </motion.div>
                 </div>
@@ -402,15 +513,51 @@ export function RegisterPage() {
                                             fontFamily: "Space Grotesk, system-ui, sans-serif",
                                         }}
                                     >
-                                        Confirm your email address
+                                        Registration successful
                                     </h3>
                                     <p className="text-base mb-6" style={{ color: "#ccc" }}>
-                                        We’ve sent a confirmation link to <strong>{formData.email}</strong>.
-                                        Open your inbox and click the link to activate your account.
+                                        We’ve sent a confirmation link to{" "}
+                                        <strong>{confirmationEmail || formData.email}</strong>.
+                                        Open your inbox and click the link to activate your account
+                                        before signing in.
                                     </p>
                                     <p className="text-sm mb-8" style={{ color: "#888" }}>
                                         If you don’t see the email, check your spam or promotions folder.
                                     </p>
+                                    {registrationWarning && (
+                                        <div
+                                            className="mb-8 p-4 rounded-lg text-left"
+                                            style={{
+                                                backgroundColor: "rgba(202, 138, 4, 0.12)",
+                                                border: `1px solid ${GOLD}`,
+                                            }}
+                                        >
+                                            <p className="text-sm font-semibold mb-2" style={{ color: GOLD }}>
+                                                Email delivery warning
+                                            </p>
+                                            <p className="text-sm" style={{ color: "#ddd" }}>
+                                                {registrationWarning}
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={handleResendConfirmationEmail}
+                                                disabled={resendingConfirmation}
+                                                className="mt-4 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
+                                                style={{
+                                                    border: `1px solid ${GOLD}`,
+                                                    color: "#f5f5f5",
+                                                    opacity: resendingConfirmation ? 0.7 : 1,
+                                                }}
+                                            >
+                                                {resendingConfirmation
+                                                    ? "Resending..."
+                                                    : "Resend confirmation email"}
+                                                {resendingConfirmation && (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
                                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                         <Link
                                             to="/"
@@ -789,13 +936,18 @@ export function RegisterPage() {
                                                         className="text-xs"
                                                         style={{ color: "#888" }}
                                                     >
-                                                        You will be redirected to complete payment
-                                                        and return to verify your subscription.
+                                                        If payment is required, you will be redirected
+                                                        to complete it via Paystack and then return to
+                                                        finish setup.
                                                     </p>
                                                 </div>
                                             </div>
                                         </div>
 
+                                    </div>
+                                )}
+
+                                    {step >= 2 && (
                                         <div className="p-4 w-full">
                                             <Turnstile
                                                 siteKey={siteKey}
@@ -806,22 +958,23 @@ export function RegisterPage() {
                                                 onError={() => setToken(null)}
                                             />
                                             <p className="mt-2 text-xs" style={{ color: "#888" }}>
-                                                Complete captcha to enable registration.
+                                                Complete captcha to continue registration.
                                             </p>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
                                     <div className="flex items-center justify-between pt-4">
                                         <button
                                             type="button"
                                             onClick={handleBack}
+                                            disabled={submitting || checkingPaymentConfig}
                                             className="px-6 py-3 rounded-lg text-sm font-semibold"
                                             style={{
                                                 backgroundColor: "#0f0f12",
                                                 color: "#ccc",
                                                 border: "1px solid #2a2a2e",
                                                 visibility: step === 1 ? "hidden" : "visible",
+                                                opacity: submitting || checkingPaymentConfig ? 0.7 : 1,
                                             }}
                                         >
                                             Back
@@ -831,22 +984,34 @@ export function RegisterPage() {
                                             <button
                                                 type="button"
                                                 onClick={handleNext}
+                                                disabled={submitting || checkingPaymentConfig}
                                                 className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
-                                                style={{ backgroundColor: GOLD, color: "#000000" }}
+                                                style={{
+                                                    backgroundColor: GOLD,
+                                                    color: "#000000",
+                                                    opacity: submitting || checkingPaymentConfig ? 0.7 : 1,
+                                                }}
                                             >
-                                                Continue
-                                                <ArrowRight className="w-4 h-4" />
+                                                {checkingPaymentConfig ? "Checking..." : "Continue"}
+                                                {checkingPaymentConfig ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <ArrowRight className="w-4 h-4" />
+                                                )}
                                             </button>
                                         ) : (
                                             <button
                                                 type="button"
                                                 onClick={handleSubmit}
-                                                disabled={submitting || !token}
+                                                disabled={submitting || checkingPaymentConfig || !token}
                                                 className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
                                                 style={{
                                                     backgroundColor: GOLD,
                                                     color: "#000000",
-                                                    opacity: submitting || !token ? 0.7 : 1,
+                                                    opacity:
+                                                        submitting || checkingPaymentConfig || !token
+                                                            ? 0.7
+                                                            : 1,
                                                 }}
                                             >
                                                 {submitting
@@ -880,7 +1045,7 @@ export function RegisterPage() {
                         <p className="max-w-2xl mx-auto" style={{ color: "#888" }}>
                             {registrationSubmitted
                                 ? "Use the confirmation link in your inbox to activate your account and continue."
-                                : "Complete payment to activate your tenant. We will then guide your onboarding process."}
+                                : "If payment applies, complete checkout to activate your tenant. We will then guide your onboarding process."}
                         </p>
                     </motion.div>
 
@@ -908,7 +1073,7 @@ export function RegisterPage() {
                                   {
                                       step: "1",
                                       title: "Pay Securely",
-                                      description: "Finish your subscription checkout on Paystack.",
+                                      description: "If prompted, finish your subscription checkout on Paystack.",
                                   },
                                   {
                                       step: "2",

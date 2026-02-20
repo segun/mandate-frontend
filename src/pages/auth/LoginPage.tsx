@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { authService } from "../../services/auth.service";
+import { tenantsService } from "../../services/tenants.service";
 import { useAuthStore } from "../../stores/auth.store";
 import { UserRole } from "../../lib/permissions";
 import { Turnstile } from '@marsidev/react-turnstile';
@@ -11,6 +12,9 @@ export function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showResendConfirmation, setShowResendConfirmation] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendFeedback, setResendFeedback] = useState("");
 
     const [token, setToken] = useState<string | null>(null);
     const [searchParams] = useSearchParams();
@@ -23,6 +27,47 @@ export function LoginPage() {
             ? searchParams.get("message") || "Email confirmed successfully. Please sign in."
             : "";
 
+    const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+    const isEmailConfirmationRequiredError = (status?: number, message?: string) => {
+        if (status !== 401 || !message) {
+            return false;
+        }
+        const normalizedMessage = message.toLowerCase();
+        return (
+            normalizedMessage.includes("confirm your email") ||
+            normalizedMessage.includes("verify your email")
+        );
+    };
+
+    const handleResendConfirmation = async () => {
+        if (!isValidEmail(email)) {
+            setResendFeedback("Enter a valid email address to resend confirmation.");
+            return;
+        }
+
+        setResendFeedback("");
+        setResendLoading(true);
+        try {
+            const response = await tenantsService.resendRegistrationConfirmationEmail({ email });
+            if (response.warning) {
+                setResendFeedback(response.warning);
+                return;
+            }
+            setResendFeedback("Confirmation email resend request processed. Check your inbox.");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+            const apiMessage = err.response?.data?.message;
+            setResendFeedback(
+                typeof apiMessage === "string"
+                    ? apiMessage
+                    : "Unable to resend confirmation email right now. Please try again shortly.",
+            );
+        } finally {
+            setResendLoading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -31,6 +76,8 @@ export function LoginPage() {
             return;
         }
         setError("");
+        setShowResendConfirmation(false);
+        setResendFeedback("");
         setLoading(true);
 
         try {
@@ -48,7 +95,11 @@ export function LoginPage() {
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
-            setError(err.response?.data?.message || "Login failed");
+            const apiMessage = err.response?.data?.message;
+            setError(apiMessage || "Login failed");
+            setShowResendConfirmation(
+                isEmailConfirmationRequiredError(err.response?.status, apiMessage),
+            );
         } finally {
             setLoading(false);
         }
@@ -74,7 +125,28 @@ export function LoginPage() {
                 {error && (
                     <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400 mb-4">
                         <span aria-hidden>⚠️</span>
-                        <span>{error}</span>
+                        <div className="flex-1">
+                            <span>{error}</span>
+                            {showResendConfirmation && (
+                                <div className="mt-3">
+                                    <button
+                                        type="button"
+                                        onClick={handleResendConfirmation}
+                                        disabled={resendLoading}
+                                        className="inline-flex items-center justify-center rounded-lg border border-[#ca8a04] px-3 py-1.5 text-xs font-semibold text-[#f5f5f5] hover:bg-[#ca8a04]/10 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {resendLoading
+                                            ? "Resending..."
+                                            : "Resend confirmation email"}
+                                    </button>
+                                    {resendFeedback && (
+                                        <p className="mt-2 text-xs text-[#f5f5f5]">
+                                            {resendFeedback}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 

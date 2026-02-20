@@ -40,7 +40,7 @@ export function RegisterCompletePage() {
           if (resolvedFlow === 'licence') {
             setMessage('Payment verified successfully. Your licences are now active.');
           } else {
-            setMessage('Payment verified successfully. Your tenant is now active.');
+            setMessage('Payment verified successfully. Check your email and click the confirmation link before logging in.');
           }
           toast.success('Payment verified successfully.');
           return;

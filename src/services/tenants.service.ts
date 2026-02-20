@@ -14,8 +14,12 @@ export type RegisterTenantRequest = {
   email: string;
   phone?: string;
   password: string;
-  subscriptionMode: 'AUTO' | 'MANUAL';
+  subscriptionMode?: 'AUTO' | 'MANUAL';
   token: string | undefined;
+};
+
+export type RegistrationPaymentConfigResponse = {
+  paymentRequired: boolean;
 };
 
 export type RegisterTenantResponse = {
@@ -69,12 +73,27 @@ export type RegisterTenantResponse = {
     createdAt: string;
     updatedAt: string;
   };
-  payment: {
-    authorizationUrl: string;
-    reference: string;
-    accessCode: string;
-    amount: number;
-  };
+  payment:
+    | {
+        authorizationUrl: string;
+        reference: string;
+        accessCode: string;
+        amount: number;
+      }
+    | null;
+  emailVerificationRequired?: boolean;
+  verificationUrl?: string;
+  verificationEmailSent?: boolean;
+  warning?: string;
+};
+
+export type ResendConfirmationEmailRequest = {
+  email: string;
+};
+
+export type ResendConfirmationEmailResponse = {
+  processed: boolean;
+  warning?: string;
 };
 
 export type SubscribeTenantRequest = {
@@ -91,8 +110,20 @@ export type SubscribeTenantResponse = {
 };
 
 export const tenantsService = {
+  async getRegistrationPaymentConfig(): Promise<RegistrationPaymentConfigResponse> {
+    const response = await api.get('/tenants/register/payment-config');
+    return response.data.data;
+  },
+
   async registerTenant(data: RegisterTenantRequest): Promise<RegisterTenantResponse> {
     const response = await api.post('/tenants/register', data);
+    return response.data.data;
+  },
+
+  async resendRegistrationConfirmationEmail(
+    data: ResendConfirmationEmailRequest
+  ): Promise<ResendConfirmationEmailResponse> {
+    const response = await api.post('/tenants/register/resend-confirmation-email', data);
     return response.data.data;
   },
 
