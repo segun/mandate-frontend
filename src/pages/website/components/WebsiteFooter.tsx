@@ -59,11 +59,11 @@ export function WebsiteFooter() {
         </div>
 
         <div className="pt-8" style={{ borderTop: `1px solid ${GOLD}20` }}>
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p style={{ color: '#888' }}>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p style={{ color: '#888' }} className="text-center md:text-left">
               © 2026 CONTROLHQ. All rights reserved.
             </p>
-            <div className="flex gap-6 mt-4 md:mt-0">
+            <div className="flex flex-wrap justify-center md:justify-end gap-4 md:gap-6">
               <a href="#" style={{ color: '#888' }} className="hover:opacity-80 text-sm">
                 Privacy Policy
               </a>

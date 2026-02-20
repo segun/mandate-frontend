@@ -7,7 +7,7 @@ export function ComingSoonPage() {
     }, []);
 
     return (
-        <div className="h-screen overflow-hidden bg-linear-to-br from-[#0d0d0f] via-[#1a1a1d] to-[#0d0d0f] flex items-center justify-center px-4 py-6 sm:py-8">
+        <div className="min-h-dvh overflow-x-hidden bg-linear-to-br from-[#0d0d0f] via-[#1a1a1d] to-[#0d0d0f] flex items-center justify-center px-4 py-6 sm:py-8">
             <div className="max-w-2xl w-full">
                 {/* Main Content */}
                 <div className="text-center space-y-4 sm:space-y-6">

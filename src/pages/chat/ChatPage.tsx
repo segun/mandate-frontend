@@ -41,7 +41,7 @@ export function ChatPage() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] rounded-2xl border border-[#2a2a2e] overflow-hidden bg-[#0d0d0f]">
+    <div className="flex h-[calc(100dvh-7rem)] min-h-130 rounded-2xl border border-[#2a2a2e] overflow-hidden bg-[#0d0d0f]">
       {/* Sidebar – thread list */}
       <div
         className={`${
