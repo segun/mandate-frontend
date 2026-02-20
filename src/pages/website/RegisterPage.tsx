@@ -185,6 +185,11 @@ export function RegisterPage() {
     };
 
     const handleSubmit = async () => {
+        if (!token) {
+            toast.error("Please complete the Captcha challenge.");
+            return;
+        }
+
         if (!formData.subscriptionMode) {
             toast.error("Please select a payment mode to continue.");
             return;
@@ -791,11 +796,18 @@ export function RegisterPage() {
                                             </div>
                                         </div>
 
-                                        <div className="p-4 flex items-start gap-3">
+                                        <div className="p-4 w-full">
                                             <Turnstile
                                                 siteKey={siteKey}
+                                                options={{ size: "flexible" }}
+                                                className="w-full"
                                                 onSuccess={(token) => setToken(token)}
+                                                onExpire={() => setToken(null)}
+                                                onError={() => setToken(null)}
                                             />
+                                            <p className="mt-2 text-xs" style={{ color: "#888" }}>
+                                                Complete captcha to enable registration.
+                                            </p>
                                         </div>
                                     </div>
                                 )}
@@ -829,12 +841,12 @@ export function RegisterPage() {
                                             <button
                                                 type="button"
                                                 onClick={handleSubmit}
-                                                disabled={submitting}
+                                                disabled={submitting || !token}
                                                 className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
                                                 style={{
                                                     backgroundColor: GOLD,
                                                     color: "#000000",
-                                                    opacity: submitting ? 0.7 : 1,
+                                                    opacity: submitting || !token ? 0.7 : 1,
                                                 }}
                                             >
                                                 {submitting

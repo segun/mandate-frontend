@@ -116,11 +116,23 @@ export function LoginPage() {
                         />
                     </div>
 
-                    <Turnstile siteKey={siteKey} onSuccess={(token) => setToken(token)} />
+                    <div className="w-full">
+                        <Turnstile
+                            siteKey={siteKey}
+                            options={{ size: "flexible" }}
+                            className="w-full"
+                            onSuccess={(token) => setToken(token)}
+                            onExpire={() => setToken(null)}
+                            onError={() => setToken(null)}
+                        />
+                        <p className="mt-2 text-xs text-[#888]">
+                            Complete captcha to enable login.
+                        </p>
+                    </div>
 
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || !token}
                         className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#ca8a04] py-2.5 text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#141417] focus:ring-[#ca8a04] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
                     >
                         {loading ? (
