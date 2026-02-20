@@ -88,6 +88,10 @@ export function LoginPage() {
                 response.meta?.subscriptionAccessStatus,
                 response.meta?.tenant,
             );
+            if (response.data.user.requirePasswordChange) {
+                navigate('/force-password-change');
+                return;
+            }
             if (response.data.user.role === UserRole.PLATFORM_OWNER) {
                 navigate("/platform-owner/tenants");
             } else {

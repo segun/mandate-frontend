@@ -4,7 +4,7 @@ import type { Voter, PaginatedResponse } from '../../services/voters.service';
 import { votersService, getVoterWardName, getVoterPollingUnitName } from '../../services/voters.service';
 import { useAuthStore } from '../../stores/auth.store';
 import { toast } from '../../stores/toast.store';
-import { UserRole } from '../../lib/permissions';
+import { UserRole, canManageVotersTenantWide } from '../../lib/permissions';
 
 export function VotersPage() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export function VotersPage() {
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
   const { user } = useAuthStore();
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const canManageTenantWide = canManageVotersTenantWide(user?.role);
   const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
 
   const fetchVoters = useCallback(async () => {
@@ -49,8 +49,8 @@ export function VotersPage() {
   };
 
   const handleDelete = async (voterId: string) => {
-    if (!isSuperAdmin) {
-      toast.error('Only super admins can delete voters');
+    if (!canManageTenantWide) {
+      toast.error('You do not have permission to delete this voter');
       return;
     }
 
@@ -193,7 +193,7 @@ export function VotersPage() {
                           <Link to={`/voters/${voter.id}/edit`} className="text-blue-400 hover:text-blue-300 font-semibold">
                             Edit
                           </Link>
-                          {isSuperAdmin && (
+                          {canManageTenantWide && (
                             <button
                               onClick={() => handleDelete(voter.id)}
                               disabled={deleting === voter.id}
@@ -235,7 +235,7 @@ export function VotersPage() {
                       {voter.supportLevel.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  {isSuperAdmin && (
+                  {canManageTenantWide && (
                     <button
                       onClick={() => handleDelete(voter.id)}
                       disabled={deleting === voter.id}

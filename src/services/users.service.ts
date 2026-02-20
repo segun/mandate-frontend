@@ -102,6 +102,7 @@ export const usersService = {
     phone?: string;
     role: string;
     tenantId?: string;
+    parentOfficerId?: string;
     requirePasswordChange?: boolean;
   }): Promise<User> {
     const response = await api.post('/users', data);
@@ -110,10 +111,8 @@ export const usersService = {
 
   async update(id: string, data: Partial<{
     fullName: string;
-    email: string;
     phone: string;
     role: string;
-    isActive: boolean;
     parentOfficerId: string;
     assignedStateId: string;
     assignedLgaId: string;
@@ -122,6 +121,18 @@ export const usersService = {
   }>): Promise<User> {
     const response = await api.patch(`/users/${id}`, data);
     return response.data.data;
+  },
+
+  async deactivate(id: string): Promise<void> {
+    await api.patch(`/users/${id}/deactivate`);
+  },
+
+  async reactivate(id: string): Promise<void> {
+    await api.patch(`/users/${id}/reactivate`);
+  },
+
+  async resetPassword(id: string, data: { newPassword: string; requirePasswordChange?: boolean }): Promise<void> {
+    await api.post(`/users/${id}/reset-password`, data);
   },
 
   async delete(id: string): Promise<void> {

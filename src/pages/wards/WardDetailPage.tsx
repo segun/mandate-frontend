@@ -16,6 +16,13 @@ export function WardDetailPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
+  const canAssignWardCoordinator = [
+    UserRole.SUPER_ADMIN,
+    UserRole.CAMPAIGN_DIRECTOR,
+    UserRole.STATE_COORDINATOR,
+    UserRole.LGA_COORDINATOR,
+  ];
+  const canAssignWardCoordinatorRole = new Set<string>(canAssignWardCoordinator).has(user?.role ?? '');
 
   const [ward, setWard] = useState<Ward | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,6 +96,7 @@ export function WardDetailPage() {
   };
 
   const openUserModal = async () => {
+    if (!canAssignWardCoordinatorRole) return;
     setShowUserModal(true);
     setUserSearchTerm('');
     await loadUsers();
@@ -126,6 +134,7 @@ export function WardDetailPage() {
   };
 
   const handleConfirmAssign = async () => {
+    if (!canAssignWardCoordinatorRole) return;
     if (!id || !selectedUser) return;
     setAssigningCoordinator(true);
     try {
@@ -222,7 +231,7 @@ export function WardDetailPage() {
           </div>
         </div>
 
-        {!isPlatformOwner && (
+        {!isPlatformOwner && canAssignWardCoordinatorRole && (
           <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
             <button
               type="button"
@@ -295,7 +304,7 @@ export function WardDetailPage() {
         )}
       </div>
 
-      {!isPlatformOwner && (
+      {!isPlatformOwner && canAssignWardCoordinatorRole && (
         <UserSelectionModal
           isOpen={showUserModal}
           title={ward.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
@@ -309,7 +318,7 @@ export function WardDetailPage() {
         />
       )}
 
-      {!isPlatformOwner && (
+      {!isPlatformOwner && canAssignWardCoordinatorRole && (
         <ConfirmDialog
           isOpen={showConfirmDialog}
           variant="info"

@@ -10,7 +10,7 @@ import { usersService } from '../../services/users.service';
 import { DEFAULT_PAGE_LIMIT } from '../../lib/api';
 import { toast } from '../../stores/toast.store';
 import { useAuthStore } from '../../stores/auth.store';
-import { hasAccessToResource, Resource } from '../../lib/permissions';
+import { canManageVotersTenantWide } from '../../lib/permissions';
 
 interface FormData {
   fullName: string;
@@ -111,6 +111,7 @@ const validateRequired = (value: string, fieldName: string): string => {
 export default function CreateVoterPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const canManageTenantWide = canManageVotersTenantWide(user?.role);
   const [loading, setLoading] = useState(false);
   const [states, setStates] = useState<SelectOption[]>([]);
   const [lgas, setLgas] = useState<SelectOption[]>([]);
@@ -164,8 +165,7 @@ export default function CreateVoterPage() {
         const statesData = await statesService.getAll(1, DEFAULT_PAGE_LIMIT);
         setStates(statesData.data.data.map((s: any) => ({ id: s.id, name: s.geoState?.name || s.name || 'Unknown' })));
         
-        // Load canvassers if user has permission, otherwise just add current user
-        if (hasAccessToResource(user?.role, Resource.USERS)) {
+        if (canManageTenantWide) {
           try {
             const canvassersData = await usersService.getAll(1, DEFAULT_PAGE_LIMIT);
             setCanvassers(
@@ -181,9 +181,9 @@ export default function CreateVoterPage() {
             }
           }
         } else {
-          // User doesn't have permission to read all users, just add themselves
           if (user) {
             setCanvassers([{ id: user.id, name: user.fullName }]);
+            setFormData((prev) => ({ ...prev, assignedCanvasserId: user.id }));
           }
         }
       } catch {
@@ -193,7 +193,13 @@ export default function CreateVoterPage() {
       }
     };
     loadInitialData();
-  }, [user]);
+  }, [canManageTenantWide, user]);
+
+  useEffect(() => {
+    if (!canManageTenantWide && user?.id) {
+      setFormData((prev) => ({ ...prev, assignedCanvasserId: user.id }));
+    }
+  }, [canManageTenantWide, user?.id]);
 
   // Load LGAs when state changes
   useEffect(() => {
@@ -376,6 +382,7 @@ export default function CreateVoterPage() {
     try {
       await votersService.create({
         ...formData,
+        assignedCanvasserId: canManageTenantWide ? formData.assignedCanvasserId : (user?.id || ''),
       });
       toast.success('Voter created successfully');
       navigate('/voters');
@@ -625,6 +632,7 @@ export default function CreateVoterPage() {
                 onChange={handleChange}
                 onBlur={() => handleBlur('assignedCanvasserId')}
                 className={getInputClassName('assignedCanvasserId')}
+                disabled={!canManageTenantWide}
               >
                 <option value="">Select canvasser</option>
                 {canvassers.map((canvasser) => (

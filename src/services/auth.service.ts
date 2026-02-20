@@ -14,6 +14,11 @@ export interface RegisterRequest {
   phone?: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export const TenantSubscriptionAccessStatus = {
   NO_SUBSCRIPTION: 'NO_SUBSCRIPTION',
   SUBSCRIPTION_PENDING: 'SUBSCRIPTION_PENDING',
@@ -83,5 +88,9 @@ export const authService = {
   async getProfile(): Promise<AuthResponse['data']['user']> {
     const response = await api.get('/auth/me');
     return response.data.data;
+  },
+
+  async changePassword(userId: string, data: ChangePasswordRequest): Promise<void> {
+    await api.post(`/users/${userId}/change-password`, data);
   },
 };

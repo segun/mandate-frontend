@@ -209,3 +209,42 @@ export function isRoleAboveStateCoordinator(userRole: string | undefined): boole
   if (userLevel === undefined) return false;
   return userLevel < stateCoordinatorLevel;
 }
+
+export function isSuperAdmin(userRole: string | undefined): boolean {
+  return userRole === UserRole.SUPER_ADMIN;
+}
+
+export function canManageVotersTenantWide(userRole: string | undefined): boolean {
+  return userRole === UserRole.SUPER_ADMIN
+    || userRole === UserRole.CAMPAIGN_DIRECTOR
+    || userRole === UserRole.DATA_CONTROLLER;
+}
+
+export function canAddState(userRole: string | undefined): boolean {
+  return userRole === UserRole.SUPER_ADMIN
+    || userRole === UserRole.CAMPAIGN_DIRECTOR
+    || userRole === UserRole.DATA_CONTROLLER;
+}
+
+export function canAddLga(userRole: string | undefined): boolean {
+  return userRole === UserRole.SUPER_ADMIN
+    || userRole === UserRole.CAMPAIGN_DIRECTOR
+    || userRole === UserRole.DATA_CONTROLLER
+    || userRole === UserRole.STATE_COORDINATOR;
+}
+
+export function canAddWard(userRole: string | undefined): boolean {
+  return userRole === UserRole.SUPER_ADMIN
+    || userRole === UserRole.CAMPAIGN_DIRECTOR
+    || userRole === UserRole.DATA_CONTROLLER
+    || userRole === UserRole.STATE_COORDINATOR
+    || userRole === UserRole.LGA_COORDINATOR;
+}
+
+export function canAddPollingUnit(userRole: string | undefined): boolean {
+  return userRole === UserRole.SUPER_ADMIN
+    || userRole === UserRole.CAMPAIGN_DIRECTOR
+    || userRole === UserRole.DATA_CONTROLLER
+    || userRole === UserRole.STATE_COORDINATOR
+    || userRole === UserRole.LGA_COORDINATOR;
+}

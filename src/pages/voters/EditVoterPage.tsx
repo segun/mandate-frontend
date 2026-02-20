@@ -9,7 +9,7 @@ import { usersService } from '../../services/users.service';
 import { DEFAULT_PAGE_LIMIT } from '../../lib/api';
 import { toast } from '../../stores/toast.store';
 import { useAuthStore } from '../../stores/auth.store';
-import { hasAccessToResource, Resource } from '../../lib/permissions';
+import { canManageVotersTenantWide } from '../../lib/permissions';
 
 interface FormData {
   fullName: string;
@@ -106,6 +106,7 @@ export default function EditVoterPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
+  const canManageTenantWide = canManageVotersTenantWide(user?.role);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [wards, setWards] = useState<SelectOption[]>([]);
@@ -190,8 +191,7 @@ export default function EditVoterPage() {
   // Load wards and canvassers
   useEffect(() => {
     const loadData = async () => {
-      // Load canvassers if user has permission, otherwise just add current user
-      if (hasAccessToResource(user?.role, Resource.USERS)) {
+      if (canManageTenantWide) {
         try {
           const canvassersData = await usersService.getAll(1, DEFAULT_PAGE_LIMIT);
           setCanvassers(
@@ -207,14 +207,20 @@ export default function EditVoterPage() {
           }
         }
       } else {
-        // User doesn't have permission to read all users, just add themselves
         if (user) {
           setCanvassers([{ id: user.id, name: user.fullName }]);
+          setFormData((prev) => ({ ...prev, assignedCanvasserId: user.id }));
         }
       }
     };
     loadData();
-  }, [user]);
+  }, [canManageTenantWide, user]);
+
+  useEffect(() => {
+    if (!canManageTenantWide && user?.id) {
+      setFormData((prev) => ({ ...prev, assignedCanvasserId: user.id }));
+    }
+  }, [canManageTenantWide, user?.id]);
 
   // Load wards when LGA is known
   useEffect(() => {
@@ -343,7 +349,7 @@ export default function EditVoterPage() {
         notes: formData.notes,
         wardId: formData.wardId,
         pollingUnitId: formData.pollingUnitId,
-        assignedCanvasserId: formData.assignedCanvasserId,
+        assignedCanvasserId: canManageTenantWide ? formData.assignedCanvasserId : (user?.id || ''),
         isActive: formData.isActive,
       });
       toast.success('Voter updated successfully');
@@ -566,6 +572,7 @@ export default function EditVoterPage() {
                 onChange={handleChange}
                 onBlur={() => handleBlur('assignedCanvasserId')}
                 className={getInputClassName('assignedCanvasserId')}
+                disabled={!canManageTenantWide}
               >
                 <option value="">Select canvasser</option>
                 {canvassers.map((canvasser) => (

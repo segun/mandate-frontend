@@ -15,6 +15,13 @@ export function PollingUnitDetailPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
+  const canAssignSupervisor = new Set<string>([
+    UserRole.SUPER_ADMIN,
+    UserRole.CAMPAIGN_DIRECTOR,
+    UserRole.STATE_COORDINATOR,
+    UserRole.LGA_COORDINATOR,
+    UserRole.WARD_COMMANDER,
+  ]).has(user?.role ?? '');
 
   const [pollingUnit, setPollingUnit] = useState<PollingUnit | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +71,7 @@ export function PollingUnitDetailPage() {
   };
 
   const openUserModal = async () => {
+    if (!canAssignSupervisor) return;
     setShowUserModal(true);
     setUserSearchTerm('');
     await loadUsers();
@@ -101,6 +109,7 @@ export function PollingUnitDetailPage() {
   };
 
   const handleConfirmAssign = async () => {
+    if (!canAssignSupervisor) return;
     if (!id || !selectedUser) return;
     setAssigningSupervisor(true);
     try {
@@ -197,7 +206,7 @@ export function PollingUnitDetailPage() {
           </div>
         </div>
 
-        {!isPlatformOwner && (
+        {!isPlatformOwner && canAssignSupervisor && (
           <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
             <button
               type="button"
@@ -265,7 +274,7 @@ export function PollingUnitDetailPage() {
         )}
       </div>
 
-      {!isPlatformOwner && (
+      {!isPlatformOwner && canAssignSupervisor && (
         <UserSelectionModal
           isOpen={showUserModal}
           title={pollingUnit.supervisor ? 'Change Supervisor' : 'Assign Supervisor'}
@@ -279,7 +288,7 @@ export function PollingUnitDetailPage() {
         />
       )}
 
-      {!isPlatformOwner && (
+      {!isPlatformOwner && canAssignSupervisor && (
         <ConfirmDialog
           isOpen={showConfirmDialog}
           variant="info"

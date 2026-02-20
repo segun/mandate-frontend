@@ -9,6 +9,7 @@ export interface User {
   email: string;
   role: UserRole;
   tenantId: string | null;
+  requirePasswordChange?: boolean;
 }
 
 interface AuthState {
@@ -20,6 +21,7 @@ interface AuthState {
   login: (user: User, token: string, subscriptionAccessStatus?: TenantSubscriptionAccessStatus, tenant?: TenantMeta) => void;
   logout: () => void;
   updateSubscriptionStatus: (subscriptionAccessStatus: TenantSubscriptionAccessStatus, tenant?: TenantMeta) => void;
+  clearRequirePasswordChange: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -52,6 +54,11 @@ export const useAuthStore = create<AuthState>()(
       },
       updateSubscriptionStatus: (subscriptionAccessStatus, tenant) => {
         set({ subscriptionAccessStatus, tenant: tenant || null });
+      },
+      clearRequirePasswordChange: () => {
+        set((state) => ({
+          user: state.user ? { ...state.user, requirePasswordChange: false } : null,
+        }));
       },
     }),
     {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usersService } from '../../services/users.service';
 import { useAuthStore } from '../../stores/auth.store';
 import { toast } from '../../stores/toast.store';
+import { UserRole } from '../../lib/permissions';
 
 interface FormData {
   fullName: string;
@@ -39,6 +40,15 @@ const roles = [
   { value: 'UNIT_COMMANDER', label: 'Unit Commander' },
   { value: 'FIELD_OFFICER', label: 'Field Officer' },
 ];
+
+const CREATOR_ROLE_TO_ALLOWED_TARGET_ROLES: Record<string, string[]> = {
+  [UserRole.SUPER_ADMIN]: roles.map((role) => role.value),
+  [UserRole.CAMPAIGN_DIRECTOR]: roles.map((role) => role.value),
+  [UserRole.DATA_CONTROLLER]: roles.map((role) => role.value),
+  [UserRole.STATE_COORDINATOR]: ['LGA_COORDINATOR', 'WARD_OFFICER', 'WARD_COMMANDER', 'UNIT_COMMANDER', 'FIELD_OFFICER'],
+  [UserRole.LGA_COORDINATOR]: ['WARD_OFFICER', 'WARD_COMMANDER', 'UNIT_COMMANDER', 'FIELD_OFFICER'],
+  [UserRole.WARD_COMMANDER]: ['UNIT_COMMANDER', 'FIELD_OFFICER'],
+};
 
 // Role hierarchy - lower index = higher level
 const roleHierarchy: Record<string, number> = {
@@ -122,6 +132,8 @@ const generatePassword = (): string => {
 export default function CreateUserPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const allowedTargetRoles = CREATOR_ROLE_TO_ALLOWED_TARGET_ROLES[user?.role || ''] || [];
+  const availableRoles = roles.filter((role) => allowedTargetRoles.includes(role.value));
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
@@ -168,6 +180,20 @@ export default function CreateUserPage() {
 
     loadOfficers();
   }, []);
+
+  useEffect(() => {
+    if (availableRoles.length === 0) {
+      return;
+    }
+
+    if (!allowedTargetRoles.includes(formData.role)) {
+      setFormData((prev) => ({
+        ...prev,
+        role: availableRoles[0].value,
+        parentOfficerId: '',
+      }));
+    }
+  }, [allowedTargetRoles, availableRoles, formData.role]);
 
   // Validate fields when they change
   useEffect(() => {
@@ -223,6 +249,11 @@ export default function CreateUserPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!allowedTargetRoles.includes(formData.role)) {
+      toast.error('You do not have permission to create this user role');
+      return;
+    }
     
     // Touch all fields to show errors
     setTouched({
@@ -259,7 +290,7 @@ export default function CreateUserPage() {
         phone: formData.phone,
         role: formData.role,
         tenantId: user?.tenantId || '',
-        requirePasswordChange: formData.requirePasswordChange,
+        requirePasswordChange: formData.requirePasswordChange === true,
         ...(formData.parentOfficerId && { parentOfficerId: formData.parentOfficerId }),
       });
       toast.success('User created successfully');
@@ -300,6 +331,11 @@ export default function CreateUserPage() {
       </div>
 
       <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-6 sm:p-8">
+        {availableRoles.length === 0 && (
+          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            You do not have permission to create users.
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Full Name */}
           <div>
@@ -405,9 +441,10 @@ export default function CreateUserPage() {
               name="role"
               value={formData.role}
               onChange={handleChange}
+              disabled={availableRoles.length === 0}
               className="w-full px-4 py-3 rounded-lg bg-[#1a1a1d] border border-[#2a2a2e] text-white focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:border-transparent"
             >
-              {roles.map((role) => (
+              {availableRoles.map((role) => (
                 <option key={role.value} value={role.value}>
                   {role.label}
                 </option>
@@ -466,7 +503,7 @@ export default function CreateUserPage() {
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || availableRoles.length === 0}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Creating...' : 'Create User'}

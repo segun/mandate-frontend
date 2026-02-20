@@ -9,9 +9,9 @@ import { UserRole } from '../../lib/permissions';
 
 export function UsersPage() {
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
-  const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
+  const currentUser = useAuthStore((state) => state.user);
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const isPlatformOwner = currentUser?.role === UserRole.PLATFORM_OWNER;
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,15 +63,23 @@ export function UsersPage() {
     const selectedUser = deleteModal.user;
     if (!selectedUser) return;
 
+    if (selectedUser.id === currentUser?.id) {
+      toast.error('You cannot delete your own account');
+      closeDeleteModal();
+      return;
+    }
+
     setDeleting(selectedUser.id);
     closeDeleteModal();
     try {
       await usersService.delete(selectedUser.id);
       setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
       toast.success('User deleted successfully');
-    } catch {
-      setError(`Failed to delete ${selectedUser.fullName}`);
-      toast.error(`Failed to delete ${selectedUser.fullName}`);
+    } catch (err: unknown) {
+      const errorResponse = err as { response?: { data?: { message?: string } } };
+      const message = errorResponse.response?.data?.message || `Failed to delete ${selectedUser.fullName}`;
+      setError(message);
+      toast.error(message);
     } finally {
       setDeleting(null);
     }
@@ -188,10 +196,10 @@ export function UsersPage() {
                           {isSuperAdmin && (
                             <button
                               onClick={() => openDeleteModal(user)}
-                              disabled={deleting === user.id}
+                              disabled={deleting === user.id || currentUser?.id === user.id}
                               className="text-red-400 hover:text-red-300 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {deleting === user.id ? 'Deleting...' : 'Delete'}
+                              {deleting === user.id ? 'Deleting...' : currentUser?.id === user.id ? 'Cannot delete self' : 'Delete'}
                             </button>
                           )}
                         </div>
@@ -218,10 +226,10 @@ export function UsersPage() {
                       {isSuperAdmin && (
                         <button
                           onClick={() => openDeleteModal(user)}
-                          disabled={deleting === user.id}
+                          disabled={deleting === user.id || currentUser?.id === user.id}
                           className="text-red-400 text-sm font-semibold disabled:opacity-50"
                         >
-                          {deleting === user.id ? '...' : 'Delete'}
+                          {deleting === user.id ? '...' : currentUser?.id === user.id ? 'Self' : 'Delete'}
                         </button>
                       )}
                     </div>

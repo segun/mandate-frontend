@@ -5,13 +5,14 @@ import type { State, PaginatedResponse } from '../../services/states.service';
 import { statesService, getStateName } from '../../services/states.service';
 import { useAuthStore } from '../../stores/auth.store';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { UserRole } from '../../lib/permissions';
+import { UserRole, canAddState } from '../../lib/permissions';
 
 export function StatesPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
+  const canCreateState = canAddState(user?.role);
   
   const [states, setStates] = useState<State[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -98,7 +99,7 @@ export function StatesPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-[#ca8a04]">States</h1>
           <p className="text-sm text-[#888]">Search and manage states</p>
         </div>
-        {!isPlatformOwner && (
+        {!isPlatformOwner && canCreateState && (
           <Link
             to="/states/new"
             className="mt-4 sm:mt-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#ca8a04] text-[#0d0d0f] font-semibold rounded-lg shadow-sm hover:bg-[#d4940a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ca8a04] transition-colors"

@@ -15,6 +15,7 @@ export function LGADetailPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
+  const canAssignLgaCoordinator = new Set<string>([UserRole.SUPER_ADMIN, UserRole.CAMPAIGN_DIRECTOR, UserRole.STATE_COORDINATOR]).has(user?.role ?? '');
 
   const [lga, setLga] = useState<LGA | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +65,7 @@ export function LGADetailPage() {
   };
 
   const openUserModal = async () => {
+    if (!canAssignLgaCoordinator) return;
     setShowUserModal(true);
     setUserSearchTerm('');
     await loadUsers();
@@ -101,6 +103,7 @@ export function LGADetailPage() {
   };
 
   const handleConfirmAssign = async () => {
+    if (!canAssignLgaCoordinator) return;
     if (!id || !selectedUser) return;
     setAssigningCoordinator(true);
     try {
@@ -195,7 +198,7 @@ export function LGADetailPage() {
           </div>
         </div>
 
-        {!isPlatformOwner && (
+        {!isPlatformOwner && canAssignLgaCoordinator && (
           <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
             <button
               type="button"
@@ -279,7 +282,7 @@ export function LGADetailPage() {
         )}
       </div>
 
-      {!isPlatformOwner && (
+      {!isPlatformOwner && canAssignLgaCoordinator && (
         <UserSelectionModal
           isOpen={showUserModal}
           title={lga.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
@@ -293,7 +296,7 @@ export function LGADetailPage() {
         />
       )}
 
-      {!isPlatformOwner && (
+      {!isPlatformOwner && canAssignLgaCoordinator && (
         <ConfirmDialog
           isOpen={showConfirmDialog}
           variant="info"

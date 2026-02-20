@@ -15,6 +15,7 @@ export function StateDetailPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
+  const canAssignStateCoordinator = new Set<string>([UserRole.SUPER_ADMIN, UserRole.CAMPAIGN_DIRECTOR]).has(user?.role ?? '');
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -71,6 +72,7 @@ export function StateDetailPage() {
   };
 
   const handleOpenUserModal = () => {
+    if (!canAssignStateCoordinator) return;
     openUserModal();
   };
 
@@ -107,6 +109,7 @@ export function StateDetailPage() {
   };
 
   const handleConfirmAssign = async () => {
+    if (!canAssignStateCoordinator) return;
     if (!id || !selectedUser) return;
 
     setAssigningCoordinator(true);
@@ -202,7 +205,7 @@ export function StateDetailPage() {
           </div>
         </div>
 
-        {!isPlatformOwner && (
+        {!isPlatformOwner && canAssignStateCoordinator && (
           <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
             <button
               type="button"
@@ -289,7 +292,7 @@ export function StateDetailPage() {
       </div>
 
       {/* User Selection Modal */}
-      {!isPlatformOwner && (
+      {!isPlatformOwner && canAssignStateCoordinator && (
         <UserSelectionModal
           isOpen={showUserModal}
           title={state.coordinator ? 'Change Coordinator' : 'Assign Coordinator'}
@@ -304,7 +307,7 @@ export function StateDetailPage() {
       )}
 
       {/* Confirm Assign/Change Coordinator */}
-      {!isPlatformOwner && (
+      {!isPlatformOwner && canAssignStateCoordinator && (
         <ConfirmDialog
           isOpen={showConfirmDialog}
           variant="info"

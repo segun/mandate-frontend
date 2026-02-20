@@ -9,8 +9,9 @@ import { useChatStore } from './stores/chat.store';
 import { useComingSoonStore } from './stores/coming-soon.store';
 import { ComingSoonPage } from './pages/ComingSoonPage';
 import { TenantSubscriptionAccessStatus } from './services/auth.service';
-import { UserRole } from './lib/permissions';
+import { UserRole, canAddLga, canAddPollingUnit, canAddState, canAddWard } from './lib/permissions';
 import { LoginPage } from './pages/auth/LoginPage';
+import { ForcePasswordChangePage } from './pages/auth/ForcePasswordChangePage';
 import { SubscriptionPage } from './pages/auth/SubscriptionPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { VotersPage } from './pages/voters/VotersPage';
@@ -31,6 +32,7 @@ import { PollingUnitDetailPage } from './pages/polling-units/PollingUnitDetailPa
 import { CreatePollingUnitPage } from './pages/polling-units/CreatePollingUnitPage';
 import { UsersPage } from './pages/users/UsersPage';
 import ViewUserPage from './pages/users/ViewUserPage';
+import EditUserPage from './pages/users/EditUserPage';
 import UserSettingsPage from './pages/users/UserSettingsPage';
 import { ChatPage } from './pages/chat/ChatPage';
 import { PlatformTenantsPage } from './pages/platform/PlatformTenantsPage.tsx';
@@ -65,7 +67,7 @@ const queryClient = new QueryClient();
 // App routes that need the dashboard layout
 const appRoutes = [
   '/dashboard', '/states', '/lgas', '/wards', '/voters', 
-  '/polling-units', '/users', '/user', '/chat', '/login', '/subscription', '/platform-owner',
+  '/polling-units', '/users', '/user', '/chat', '/login', '/subscription', '/platform-owner', '/force-password-change',
   '/election-day'
 ];
 
@@ -138,6 +140,10 @@ function AppLayout() {
     subscriptionAccessStatus === TenantSubscriptionAccessStatus.SUBSCRIPTION_ACTIVE ||
     subscriptionAccessStatus === TenantSubscriptionAccessStatus.SUBSCRIPTION_GRACE;
   const isPlatformOwner = user?.role === UserRole.PLATFORM_OWNER;
+  const canCreateState = canAddState(user?.role);
+  const canCreateLga = canAddLga(user?.role);
+  const canCreateWard = canAddWard(user?.role);
+  const canCreatePollingUnit = canAddPollingUnit(user?.role);
   
   // Redirect to subscription page if logged in but no valid subscription
   const needsSubscription = 
@@ -186,6 +192,7 @@ function AppLayout() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/force-password-change" element={<ForcePasswordChangePage />} />
           
           {/* Subscription page - accessible when logged in */}
           <Route path="/subscription" element={needsSubscription || location.pathname === '/subscription' ? <SubscriptionPage /> : <Navigate to="/dashboard" replace />} />
@@ -206,23 +213,24 @@ function AppLayout() {
                 <Route path="/platform-owner/geodata/new" element={<PlatformGeoDataCreatePage />} />
                 <Route path="/platform-owner/geodata/csv-import" element={<PlatformGeoDataImportPage />} />
                 <Route path="/states" element={<StatesPage />} />
-                <Route path="/states/new" element={isPlatformOwner ? <Navigate to="/states" replace /> : <CreateStatePage />} />
+                <Route path="/states/new" element={isPlatformOwner || !canCreateState ? <Navigate to="/states" replace /> : <CreateStatePage />} />
                 <Route path="/states/:id" element={<StateDetailPage />} />
                 <Route path="/lgas" element={<LGAsPage />} />
-                <Route path="/lgas/new" element={isPlatformOwner ? <Navigate to="/lgas" replace /> : <CreateLGAPage />} />
+                <Route path="/lgas/new" element={isPlatformOwner || !canCreateLga ? <Navigate to="/lgas" replace /> : <CreateLGAPage />} />
                 <Route path="/lgas/:id" element={<LGADetailPage />} />
                 <Route path="/wards" element={<WardsPage />} />
-                <Route path="/wards/new" element={isPlatformOwner ? <Navigate to="/wards" replace /> : <CreateWardPage />} />
+                <Route path="/wards/new" element={isPlatformOwner || !canCreateWard ? <Navigate to="/wards" replace /> : <CreateWardPage />} />
                 <Route path="/wards/:id" element={<WardDetailPage />} />
                 <Route path="/voters" element={<VotersPage />} />
                 <Route path="/voters/new" element={isPlatformOwner ? <Navigate to="/voters" replace /> : <CreateVoterPage />} />
                 <Route path="/voters/:id" element={<ViewVoterPage />} />
                 <Route path="/voters/:id/edit" element={isPlatformOwner ? <Navigate to="/voters" replace /> : <EditVoterPage />} />
                 <Route path="/polling-units" element={<PollingUnitsPage />} />
-                <Route path="/polling-units/new" element={isPlatformOwner ? <Navigate to="/polling-units" replace /> : <CreatePollingUnitPage />} />
+                <Route path="/polling-units/new" element={isPlatformOwner || !canCreatePollingUnit ? <Navigate to="/polling-units" replace /> : <CreatePollingUnitPage />} />
                 <Route path="/polling-units/:id" element={<PollingUnitDetailPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/users/:id" element={<ViewUserPage />} />
+                <Route path="/users/:id/edit" element={isPlatformOwner ? <Navigate to="/users" replace /> : <EditUserPage />} />
                 <Route path="/users/new" element={isPlatformOwner ? <Navigate to="/users" replace /> : <CreateUserPage />} />
                 <Route path="/user/settings" element={<UserSettingsPage />} />
                 <Route path="/chat" element={<ChatPage />} />

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { votersService, type Voter } from '../../services/voters.service';
 import { toast } from '../../stores/toast.store';
 import { useAuthStore } from '../../stores/auth.store';
+import { hasAccessToResource, Resource } from '../../lib/permissions';
 
 export default function ViewVoterPage() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function ViewVoterPage() {
 
   const [voter, setVoter] = useState<Voter | null>(null);
   const [loading, setLoading] = useState(true);
+  const canManageVoters = hasAccessToResource(user?.role, Resource.VOTERS);
 
   useEffect(() => {
     const loadVoter = async () => {
@@ -103,7 +105,7 @@ export default function ViewVoterPage() {
           <p className="text-sm text-[#888] mt-1">Voter Details</p>
         </div>
         <div className="flex items-center gap-3">
-          {user?.role === 'SUPER_ADMIN' && (
+          {canManageVoters && (
             <button
               type="button"
               onClick={() => navigate(`/voters/${voter.id}/edit`)}

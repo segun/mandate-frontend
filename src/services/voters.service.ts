@@ -151,8 +151,8 @@ export const votersService = {
     await api.delete(`/voters/${id}`);
   },
 
-  async recordContact(id: string, data: { type: string; notes?: string }): Promise<void> {
-    await api.post(`/voters/${id}/contacts`, data);
+  async recordContact(id: string, data: { engagementStatus: string; notes?: string }): Promise<void> {
+    await api.post(`/voters/${id}/contact`, data);
   },
 
   async deactivate(id: string): Promise<void> {

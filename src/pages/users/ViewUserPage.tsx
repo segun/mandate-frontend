@@ -12,11 +12,16 @@ export default function ViewUserPage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<'deactivate' | 'reactivate' | 'reset' | null>(null);
+  const [tempPassword, setTempPassword] = useState('');
+  const [requirePasswordChange, setRequirePasswordChange] = useState(true);
 
   const canViewUser = useMemo(
     () => hasAccessToResource(currentUser?.role, Resource.USERS),
     [currentUser?.role]
   );
+  const canManageOtherUsers = useMemo(() => currentUser?.role === 'SUPER_ADMIN', [currentUser?.role]);
+  const isOwnProfile = useMemo(() => user?.id === currentUser?.id, [user?.id, currentUser?.id]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -45,6 +50,71 @@ export default function ViewUserPage() {
       .split('_')
       .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
       .join(' ');
+
+  const getErrorMessage = (error: unknown, fallback: string): string => {
+    const err = error as { response?: { data?: { message?: string } } };
+    return err.response?.data?.message || fallback;
+  };
+
+  const validateAdminPassword = (password: string): string => {
+    if (password.length < 8) return 'Password must be at least 8 characters';
+    if (!/[A-Z]/.test(password)) return 'Password must include an uppercase letter';
+    if (!/[a-z]/.test(password)) return 'Password must include a lowercase letter';
+    if (!/[0-9]|[^A-Za-z0-9]/.test(password)) return 'Password must include a number or special character';
+    return '';
+  };
+
+  const handleDeactivate = async () => {
+    if (!user || isOwnProfile) return;
+    setActionLoading('deactivate');
+    try {
+      await usersService.deactivate(user.id);
+      setUser((prev) => (prev ? { ...prev, isActive: false } : prev));
+      toast.success('User deactivated successfully');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to deactivate user'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!user || isOwnProfile) return;
+    setActionLoading('reactivate');
+    try {
+      await usersService.reactivate(user.id);
+      setUser((prev) => (prev ? { ...prev, isActive: true } : prev));
+      toast.success('User reactivated successfully');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to reactivate user'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!user || isOwnProfile) return;
+    const passwordError = validateAdminPassword(tempPassword);
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
+
+    setActionLoading('reset');
+    try {
+      await usersService.resetPassword(user.id, {
+        newPassword: tempPassword,
+        requirePasswordChange,
+      });
+      setTempPassword('');
+      setRequirePasswordChange(true);
+      toast.success('Password reset successfully');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to reset password'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -95,13 +165,20 @@ export default function ViewUserPage() {
           <p className="text-sm text-[#888] mt-1">User Details</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {canViewUser && (
+          {canManageOtherUsers && (
             <button
               type="button"
-              onClick={() => toast.info('Edit user is coming soon')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold hover:bg-[#d4940a] transition-colors"
+              onClick={() => {
+                if (isOwnProfile) {
+                  toast.info('You can only edit other users');
+                  return;
+                }
+                navigate(`/users/${user.id}/edit`);
+              }}
+              disabled={isOwnProfile}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold hover:bg-[#d4940a] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              Edit
+              {isOwnProfile ? 'Edit (other users only)' : 'Edit'}
             </button>
           )}
           <button
@@ -246,6 +323,63 @@ export default function ViewUserPage() {
         </div>
 
         <div className="space-y-6">
+          {canManageOtherUsers && !isOwnProfile && (
+            <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-6 sm:p-8">
+              <h2 className="text-xl font-semibold text-white mb-6 pb-4 border-b border-[#2a2a2e]">
+                Admin Actions
+              </h2>
+              <div className="space-y-3">
+                {user.isActive ? (
+                  <button
+                    type="button"
+                    onClick={handleDeactivate}
+                    disabled={actionLoading === 'deactivate'}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {actionLoading === 'deactivate' ? 'Deactivating...' : 'Deactivate User'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleReactivate}
+                    disabled={actionLoading === 'reactivate'}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {actionLoading === 'reactivate' ? 'Reactivating...' : 'Reactivate User'}
+                  </button>
+                )}
+
+                <div className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] p-4 space-y-3">
+                  <p className="text-sm text-white font-semibold">Reset Password</p>
+                  <input
+                    type="text"
+                    value={tempPassword}
+                    onChange={(event) => setTempPassword(event.target.value)}
+                    placeholder="Enter temporary password"
+                    className="w-full px-3 py-2 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white focus:outline-none focus:ring-2 focus:ring-[#ca8a04]"
+                  />
+                  <label className="inline-flex items-center gap-2 text-sm text-[#888]">
+                    <input
+                      type="checkbox"
+                      checked={requirePasswordChange}
+                      onChange={(event) => setRequirePasswordChange(event.target.checked)}
+                      className="w-4 h-4 rounded bg-[#1a1a1d] border-[#2a2a2e] text-[#ca8a04] focus:ring-[#ca8a04] focus:ring-offset-0"
+                    />
+                    Require password change on next login
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={actionLoading === 'reset'}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold hover:bg-[#d4940a] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {actionLoading === 'reset' ? 'Resetting...' : 'Reset Password'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] p-6 sm:p-8">
             <h2 className="text-xl font-semibold text-white mb-6 pb-4 border-b border-[#2a2a2e]">
               Metadata
