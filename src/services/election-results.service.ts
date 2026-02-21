@@ -254,11 +254,29 @@ export interface ApiMeta {
   hasPrevious: boolean;
 }
 
-interface ApiResponse<T> {
+interface ApiResponse<T, M = ApiMeta> {
   success: boolean;
   data: T;
   message?: string;
-  meta?: ApiMeta;
+  meta?: M;
+}
+
+export interface UploadFailure {
+  fileName: string;
+  error: string;
+}
+
+export interface UploadMeta {
+  totalFiles: number;
+  successfulUploads: number;
+  failedUploads: number;
+  failed: UploadFailure[];
+}
+
+export interface UploadBatchResult<T> {
+  data: T;
+  message?: string;
+  meta?: UploadMeta;
 }
 
 // --- Helpers ---
@@ -309,17 +327,24 @@ export const electionResultsService = {
 
   // -------- Uploads --------
 
-  async uploadForm(eventId: string, file: File): Promise<ElectionUpload> {
+  async uploadForm(eventId: string, files: File[]): Promise<UploadBatchResult<ElectionUpload[]>> {
     const formData = new FormData();
     formData.append('eventId', eventId);
-    formData.append('file', file);
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
 
-    const response = await api.post<ApiResponse<ElectionUpload>>(
+    const response = await api.post<ApiResponse<ElectionUpload[], UploadMeta>>(
       '/election-results/uploads',
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
-    return response.data.data;
+
+    return {
+      data: response.data.data,
+      message: response.data.message,
+      meta: response.data.meta,
+    };
   },
 
   async listUploads(

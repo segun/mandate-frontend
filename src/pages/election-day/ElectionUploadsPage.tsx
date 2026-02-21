@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   electionResultsService,
   type ElectionEvent,
@@ -27,9 +27,29 @@ const STATUS_STYLES: Record<ElectionUploadStatus, string> = {
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 const MAX_FILE_SIZE = 12 * 1024 * 1024; // 12MB
+const MAX_FILES_PER_UPLOAD = 20;
+
+function formatUploadFileName(fileName: string): string {
+  const MAX_PREFIX_LENGTH = 14;
+  const MIN_NAME_LENGTH_FOR_ELLIPSIS = 22;
+
+  if (fileName.length <= MIN_NAME_LENGTH_FOR_ELLIPSIS) {
+    return fileName;
+  }
+
+  const extensionIndex = fileName.lastIndexOf('.');
+  if (extensionIndex <= 0 || extensionIndex === fileName.length - 1) {
+    return `${fileName.slice(0, MAX_PREFIX_LENGTH)}...`;
+  }
+
+  const extension = fileName.slice(extensionIndex);
+  const stem = fileName.slice(0, extensionIndex);
+  return `${stem.slice(0, MAX_PREFIX_LENGTH)}...${extension}`;
+}
 
 export function ElectionUploadsPage() {
   const { eventId } = useParams<{ eventId: string }>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Event info
@@ -37,7 +57,7 @@ export function ElectionUploadsPage() {
   const [eventStats, setEventStats] = useState<ElectionEventStats | null>(null);
 
   // Upload form
-  const [file, setFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -173,33 +193,63 @@ export function ElectionUploadsPage() {
   // Handle file upload
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !eventId) return;
+    if (!selectedFiles.length || !eventId) return;
 
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error('Only JPEG, PNG, and PDF files are allowed');
+    if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
+      toast.error(`You can upload a maximum of ${MAX_FILES_PER_UPLOAD} files at once`);
       return;
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error('File size must be under 12MB');
+    const invalidTypeFile = selectedFiles.find((selectedFile) => !ALLOWED_TYPES.includes(selectedFile.type));
+    if (invalidTypeFile) {
+      toast.error(`Invalid file type for ${invalidTypeFile.name}. Only JPEG, PNG, and PDF are allowed`);
+      return;
+    }
+
+    const oversizedFile = selectedFiles.find((selectedFile) => selectedFile.size > MAX_FILE_SIZE);
+    if (oversizedFile) {
+      toast.error(`File ${oversizedFile.name} exceeds 12MB upload limit`);
       return;
     }
 
     setUploading(true);
     try {
-      const upload = await electionResultsService.uploadForm(eventId, file);
-      toast.success('Form uploaded successfully — processing started');
-      setFile(null);
+      const uploadResult = await electionResultsService.uploadForm(eventId, selectedFiles);
+      const successfulUploads = uploadResult.meta?.successfulUploads ?? uploadResult.data.length;
+      const totalFiles = uploadResult.meta?.totalFiles ?? selectedFiles.length;
+      const failedUploads = uploadResult.meta?.failedUploads ?? Math.max(totalFiles - successfulUploads, 0);
+
+      if (successfulUploads > 0 && failedUploads === 0) {
+        toast.success(`${successfulUploads} form${successfulUploads > 1 ? 's' : ''} uploaded successfully — processing started`);
+      } else if (successfulUploads > 0) {
+        toast.warning(`Uploaded ${successfulUploads}/${totalFiles} forms. ${failedUploads} failed.`);
+      } else {
+        toast.error(uploadResult.message || 'No forms were uploaded');
+      }
+
+      if (uploadResult.meta?.failed?.length) {
+        const failureSummary = uploadResult.meta.failed
+          .slice(0, 2)
+          .map((failure) => `${failure.fileName}: ${failure.error}`)
+          .join(' | ');
+        toast.error(
+          uploadResult.meta.failed.length > 2
+            ? `${failureSummary} | +${uploadResult.meta.failed.length - 2} more failure(s)`
+            : failureSummary,
+        );
+      }
+
+      setSelectedFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = '';
-      setUploads((prev) => [upload, ...prev]);
+      setUploads((prev) => [...uploadResult.data, ...prev]);
 
       // Subscribe to new upload via socket
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
         const socket = getElectionResultsSocket(accessToken);
-        socket.emit('upload:subscribe', { uploadId: upload.id });
+        uploadResult.data.forEach((upload) => {
+          socket.emit('upload:subscribe', { uploadId: upload.id });
+        });
       }
     } catch (err: unknown) {
       const message =
@@ -208,28 +258,6 @@ export function ElectionUploadsPage() {
       toast.error(message);
     } finally {
       setUploading(false);
-    }
-  };
-
-  // Handle reprocess
-  const handleReprocess = async (uploadId: string) => {
-    try {
-      const updated = await electionResultsService.reprocess(uploadId);
-      toast.success('Reprocessing started');
-      setUploads((prev) => prev.map((u) => (u.id === uploadId ? updated : u)));
-      terminalToastShownRef.current.delete(uploadId);
-
-      // Re-subscribe
-      const accessToken = localStorage.getItem('accessToken');
-      if (accessToken) {
-        const socket = getElectionResultsSocket(accessToken);
-        socket.emit('upload:subscribe', { uploadId });
-      }
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Failed to reprocess';
-      toast.error(message);
     }
   };
 
@@ -323,8 +351,20 @@ export function ElectionUploadsPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
+                  multiple
                   accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (files.length > MAX_FILES_PER_UPLOAD) {
+                      toast.error(`You can upload a maximum of ${MAX_FILES_PER_UPLOAD} files at once`);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                      setSelectedFiles([]);
+                      return;
+                    }
+                    setSelectedFiles(files);
+                  }}
                   className="hidden"
                 />
                 <button
@@ -337,17 +377,19 @@ export function ElectionUploadsPage() {
                   }}
                   className="px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e]"
                 >
-                  Choose file
+                  Choose file(s)
                 </button>
                 <div className="w-full md:max-w-md px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white truncate">
-                  {file ? file.name : 'No file selected (JPEG, PNG, or PDF — max 12MB)'}
+                  {selectedFiles.length
+                    ? `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} selected`
+                    : 'No files selected (JPEG, PNG, or PDF — max 12MB each, up to 20 files)'}
                 </div>
                 <button
                   type="submit"
-                  disabled={uploading || !file}
+                  disabled={uploading || !selectedFiles.length}
                   className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {uploading ? 'Uploading...' : 'Upload Form'}
+                  {uploading ? 'Uploading...' : 'Upload Form(s)'}
                 </button>
               </form>
             </div>
@@ -407,9 +449,13 @@ export function ElectionUploadsPage() {
                     </thead>
                     <tbody className="divide-y divide-[#2a2a2e]">
                       {uploads.map((upload) => (
-                        <tr key={upload.id} className="hover:bg-[#1a1a1d]/50">
-                          <td className="px-4 py-3 text-sm text-[#ddd] font-medium">
-                            {upload.sourceFileName}
+                        <tr
+                          key={upload.id}
+                          className="hover:bg-[#1a1a1d]/50 cursor-pointer"
+                          onClick={() => navigate(`/election-day/${eventId}/uploads/${upload.id}`)}
+                        >
+                          <td className="px-4 py-3 text-sm text-[#ddd] font-medium" title={upload.sourceFileName}>
+                            {formatUploadFileName(upload.sourceFileName)}
                           </td>
                           <td className="px-4 py-3 text-sm text-[#bbb]">
                             {upload.uploadedBy?.fullName || upload.uploadedByUserId || '—'}
@@ -436,27 +482,14 @@ export function ElectionUploadsPage() {
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <div className="flex flex-wrap items-center gap-2">
-                              <Link
-                                to={`/election-day/${eventId}/uploads/${upload.id}`}
-                                className="px-3 py-1.5 rounded-md border border-[#2a2a2e] bg-[#1a1a1d] text-white text-xs font-semibold hover:bg-[#2a2a2e]"
-                              >
-                                Details
-                              </Link>
                               {(upload.status === 'REVIEW_REQUIRED' || upload.status === 'EXTRACTED') && (
                                 <Link
                                   to={`/election-day/${eventId}/uploads/${upload.id}`}
+                                  onClick={(event) => event.stopPropagation()}
                                   className="px-3 py-1.5 rounded-md border border-orange-500/30 bg-orange-500/10 text-orange-400 text-xs font-semibold hover:bg-orange-500/20"
                                 >
                                   Review
                                 </Link>
-                              )}
-                              {(upload.status === 'FAILED' || upload.status === 'REJECTED' || upload.status === 'REVIEW_REQUIRED' || upload.status === 'EXTRACTED') && (
-                                <button
-                                  onClick={() => handleReprocess(upload.id)}
-                                  className="px-3 py-1.5 rounded-md border border-[#ca8a04]/30 bg-[#ca8a04]/10 text-[#ca8a04] text-xs font-semibold hover:bg-[#ca8a04]/20"
-                                >
-                                  Reprocess
-                                </button>
                               )}
                             </div>
                           </td>

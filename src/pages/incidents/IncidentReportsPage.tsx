@@ -21,6 +21,8 @@ const MEDIA_TYPE_OPTIONS: Array<{ label: string; value: IncidentMediaType | '' }
   { label: 'Audio', value: 'AUDIO' },
 ];
 
+const MAX_FILES_PER_UPLOAD = 20;
+
 function formatFileSize(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) {
     return '—';
@@ -54,7 +56,7 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [description, setDescription] = useState('');
   const [stateId, setStateId] = useState('');
   const [lgaId, setLgaId] = useState('');
@@ -232,8 +234,13 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
   const handleUpload = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!selectedFile) {
-      toast.error('Please choose a media file to upload');
+    if (!selectedFiles.length) {
+      toast.error('Please choose at least one media file to upload');
+      return;
+    }
+
+    if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
+      toast.error(`You can upload a maximum of ${MAX_FILES_PER_UPLOAD} files at once`);
       return;
     }
 
@@ -242,11 +249,12 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
       return;
     }
 
-    const mimeType = selectedFile.type;
-    const isSupportedType =
-      mimeType.startsWith('image/') || mimeType.startsWith('video/') || mimeType.startsWith('audio/');
-    if (!isSupportedType) {
-      toast.error('Invalid file type. Allowed: image/*, video/*, audio/*');
+    const unsupportedFile = selectedFiles.find((selectedFile) => {
+      const mimeType = selectedFile.type;
+      return !(mimeType.startsWith('image/') || mimeType.startsWith('video/') || mimeType.startsWith('audio/'));
+    });
+    if (unsupportedFile) {
+      toast.error(`Invalid file type for ${unsupportedFile.name}. Allowed: image/*, video/*, audio/*`);
       return;
     }
 
@@ -257,16 +265,40 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
 
     setIsUploading(true);
     try {
-      await incidentReportsService.upload({
-        file: selectedFile,
+      const uploadResult = await incidentReportsService.upload({
+        files: selectedFiles,
         stateId,
         lgaId,
         wardId,
         pollingUnitId,
         description: description.trim() || undefined,
       });
-      toast.success('Incident report uploaded successfully');
-      setSelectedFile(null);
+
+      const successfulUploads = uploadResult.meta?.successfulUploads ?? uploadResult.data.length;
+      const totalFiles = uploadResult.meta?.totalFiles ?? selectedFiles.length;
+      const failedUploads = uploadResult.meta?.failedUploads ?? Math.max(totalFiles - successfulUploads, 0);
+
+      if (successfulUploads > 0 && failedUploads === 0) {
+        toast.success(`${successfulUploads} incident report${successfulUploads > 1 ? 's' : ''} uploaded successfully`);
+      } else if (successfulUploads > 0) {
+        toast.warning(`Uploaded ${successfulUploads}/${totalFiles} incident reports. ${failedUploads} failed.`);
+      } else {
+        toast.error(uploadResult.message || 'No incident reports were uploaded');
+      }
+
+      if (uploadResult.meta?.failed?.length) {
+        const failureSummary = uploadResult.meta.failed
+          .slice(0, 2)
+          .map((failure) => `${failure.fileName}: ${failure.error}`)
+          .join(' | ');
+        toast.error(
+          uploadResult.meta.failed.length > 2
+            ? `${failureSummary} | +${uploadResult.meta.failed.length - 2} more failure(s)`
+            : failureSummary,
+        );
+      }
+
+      setSelectedFiles([]);
       setDescription('');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -440,8 +472,20 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 accept="image/*,video/*,audio/*"
-                onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                onChange={(event) => {
+                  const files = Array.from(event.target.files ?? []);
+                  if (files.length > MAX_FILES_PER_UPLOAD) {
+                    toast.error(`You can upload a maximum of ${MAX_FILES_PER_UPLOAD} files at once`);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
+                    setSelectedFiles([]);
+                    return;
+                  }
+                  setSelectedFiles(files);
+                }}
                 className="hidden"
               />
               <button
@@ -454,17 +498,19 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
                 }}
                 className="px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1d] text-white font-semibold hover:bg-[#2a2a2e]"
               >
-                Choose media
+                Choose media file(s)
               </button>
               <div className="w-full md:max-w-md px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white truncate">
-                {selectedFile ? selectedFile.name : 'No file selected (image/video/audio)'}
+                {selectedFiles.length
+                  ? `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} selected`
+                  : 'No files selected (image/video/audio, up to 20 files)'}
               </div>
               <button
                 type="submit"
-                disabled={isUploading || !selectedFile || !stateId || !lgaId || !wardId || !pollingUnitId}
+                disabled={isUploading || !selectedFiles.length || !stateId || !lgaId || !wardId || !pollingUnitId}
                 className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isUploading ? 'Uploading...' : 'Upload Incident'}
+                {isUploading ? 'Uploading...' : 'Upload Incident(s)'}
               </button>
             </div>
           </form>

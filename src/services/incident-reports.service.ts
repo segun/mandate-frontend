@@ -65,18 +65,38 @@ interface ApiResponse<T, M = undefined> {
   meta?: M;
 }
 
+export interface IncidentUploadFailure {
+  fileName: string;
+  error: string;
+}
+
+export interface IncidentUploadMeta {
+  totalFiles: number;
+  successfulUploads: number;
+  failedUploads: number;
+  failed: IncidentUploadFailure[];
+}
+
+export interface IncidentUploadBatchResult {
+  data: IncidentReport[];
+  message?: string;
+  meta?: IncidentUploadMeta;
+}
+
 export const incidentReportsService = {
   async upload(payload: {
-    file: File;
+    files: File[];
     stateId: string;
     lgaId: string;
     wardId: string;
     pollingUnitId: string;
     datetimeReported?: string;
     description?: string;
-  }): Promise<IncidentReport> {
+  }): Promise<IncidentUploadBatchResult> {
     const formData = new FormData();
-    formData.append('file', payload.file);
+    payload.files.forEach((file) => {
+      formData.append('files', file);
+    });
     formData.append('stateId', payload.stateId);
     formData.append('lgaId', payload.lgaId);
     formData.append('wardId', payload.wardId);
@@ -88,10 +108,15 @@ export const incidentReportsService = {
       formData.append('description', payload.description);
     }
 
-    const response = await api.post<ApiResponse<IncidentReport>>('/incident-reports', formData, {
+    const response = await api.post<ApiResponse<IncidentReport[], IncidentUploadMeta>>('/incident-reports', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data.data;
+
+    return {
+      data: response.data.data,
+      message: response.data.message,
+      meta: response.data.meta,
+    };
   },
 
   async list(params: {
