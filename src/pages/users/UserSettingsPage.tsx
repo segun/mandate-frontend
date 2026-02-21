@@ -373,7 +373,7 @@ export default function UserSettingsPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-white">Subscription Status</h2>
-                  <p className="text-sm text-[#888]">Current billing information for your tenant.</p>
+                  <p className="text-sm text-[#888]">Current billing information for this organization.</p>
                 </div>
                 <div className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(202, 138, 4, 0.2)', color: GOLD }}>
                   {loadingTenant ? 'Loading' : tenant?.subscriptionStatus ?? 'Unknown'}

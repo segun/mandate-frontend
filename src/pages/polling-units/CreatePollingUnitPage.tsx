@@ -262,7 +262,7 @@ export function CreatePollingUnitPage() {
         setSelectedNewPollingUnitIds([]);
         setTimeout(() => navigate('/polling-units'), 1200);
       } else if (skippedCount > 0) {
-        const message = `All ${skippedCount} selected polling unit(s) already exist in your tenant.`;
+        const message = `All ${skippedCount} selected polling unit(s) already exist in this organization.`;
         setError(message);
         toast.warning(message);
       } else {

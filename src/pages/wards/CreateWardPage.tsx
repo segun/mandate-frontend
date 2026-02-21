@@ -191,7 +191,7 @@ export function CreateWardPage() {
         setSelectedNewWardIds([]);
         setTimeout(() => navigate('/wards'), 1200);
       } else if (skippedCount > 0) {
-        const message = `All ${skippedCount} selected ward(s) already exist in your tenant.`;
+        const message = `All ${skippedCount} selected ward(s) already exist in this organization.`;
         setError(message);
         toast.warning(message);
       } else {

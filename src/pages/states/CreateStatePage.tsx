@@ -106,8 +106,8 @@ export function CreateStatePage() {
         setSelectedNewStateIds([]);
         setTimeout(() => navigate('/states'), 1000);
       } else if (skippedCount > 0) {
-        toast.warning(`All ${skippedCount} selected state(s) already exist in your tenant.`);
-        setError(`All ${skippedCount} selected state(s) already exist in your tenant.`);
+        toast.warning(`All ${skippedCount} selected state(s) already exist in this organization.`);
+        setError(`All ${skippedCount} selected state(s) already exist in this organization.`);
       } else {
         toast.success('States added successfully! Redirecting...');
         setSelectedNewStateIds([]);

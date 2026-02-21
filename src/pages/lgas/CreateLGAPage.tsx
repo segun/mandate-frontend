@@ -137,8 +137,8 @@ export function CreateLGAPage() {
         setSelectedNewLgaIds([]);
         setTimeout(() => navigate('/lgas'), 1200);
       } else if (skippedCount > 0) {
-        setError(`All ${skippedCount} selected LGA(s) already exist in your tenant.`);
-        toast.warning(`All ${skippedCount} selected LGA(s) already exist in your tenant.`);
+        setError(`All ${skippedCount} selected LGA(s) already exist in this organization.`);
+        toast.warning(`All ${skippedCount} selected LGA(s) already exist in this organization.`);
       } else {
         setSuccess('LGAs added successfully');
         toast.success('LGAs added successfully');

@@ -1045,7 +1045,7 @@ export function RegisterPage() {
                         <p className="max-w-2xl mx-auto" style={{ color: "#888" }}>
                             {registrationSubmitted
                                 ? "Use the confirmation link in your inbox to activate your account and continue."
-                                : "If payment applies, complete checkout to activate your tenant. We will then guide your onboarding process."}
+                                : "If payment applies, complete checkout to activate this organization. We will then guide your onboarding process."}
                         </p>
                     </motion.div>
 
@@ -1078,7 +1078,7 @@ export function RegisterPage() {
                                   {
                                       step: "2",
                                       title: "Verification",
-                                      description: "We verify payment and activate your tenant.",
+                                      description: "We verify payment and activate this organization.",
                                   },
                                   {
                                       step: "3",
