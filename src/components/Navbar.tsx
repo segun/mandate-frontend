@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useAuthStore } from '../stores/auth.store';
 import { Resource, hasAccessToResource } from '../lib/permissions';
 
@@ -15,7 +15,25 @@ export function Navbar() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isGeoMenuOpen, setIsGeoMenuOpen] = useState(false);
+  const [isMobileGeoMenuOpen, setIsMobileGeoMenuOpen] = useState(false);
   const isPlatformOwner = user?.role === 'PLATFORM_OWNER';
+
+  const geoLinks: NavLink[] = useMemo(
+    () => {
+      if (isPlatformOwner) {
+        return [];
+      }
+
+      return [
+        { label: 'States', to: '/states', resource: Resource.STATES },
+        { label: 'LGAs', to: '/lgas', resource: Resource.LGAS },
+        { label: 'Wards', to: '/wards', resource: Resource.WARDS },
+        { label: 'Polling Units', to: '/polling-units', resource: Resource.POLLING_UNITS },
+      ];
+    },
+    [isPlatformOwner],
+  );
 
   const navLinks: NavLink[] = useMemo(
     () => {
@@ -29,10 +47,6 @@ export function Navbar() {
 
       return [
         { label: 'Dashboard', to: '/dashboard', resource: Resource.DASHBOARD },
-        { label: 'States', to: '/states', resource: Resource.STATES },
-        { label: 'LGAs', to: '/lgas', resource: Resource.LGAS },
-        { label: 'Wards', to: '/wards', resource: Resource.WARDS },
-        { label: 'Polling Units', to: '/polling-units', resource: Resource.POLLING_UNITS },
         { label: 'Voters', to: '/voters', resource: Resource.VOTERS },
         { label: 'Users', to: '/users', resource: Resource.USERS },
         { label: 'Chat', to: '/chat', resource: Resource.CHAT },
@@ -50,6 +64,7 @@ export function Navbar() {
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   const canAccessLink = (resource: Resource) => hasAccessToResource(user?.role, resource);
+  const isGeoActive = geoLinks.some((link) => isActive(link.to));
 
   const initial = user?.fullName?.[0]?.toUpperCase() ?? 'M';
 
@@ -74,26 +89,87 @@ export function Navbar() {
           <div className="hidden md:flex items-center space-x-2">
             {navLinks.map((link) => {
               const hasAccess = canAccessLink(link.resource);
-              return hasAccess ? (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    isActive(link.to)
-                      ? 'text-[#ca8a04] bg-[#ca8a04]/10'
-                      : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <span
-                  key={link.to}
-                  className="px-3 py-2 text-sm font-medium rounded-lg text-[#4a4a4e] cursor-not-allowed"
-                  title="You don't have access to this section"
-                >
-                  {link.label}
-                </span>
+              return (
+                <Fragment key={link.to}>
+                  {hasAccess ? (
+                    <Link
+                      to={link.to}
+                      className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        isActive(link.to)
+                          ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                          : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <span
+                      className="px-3 py-2 text-sm font-medium rounded-lg text-[#4a4a4e] cursor-not-allowed"
+                      title="You don't have access to this section"
+                    >
+                      {link.label}
+                    </span>
+                  )}
+                  {link.to === '/dashboard' && geoLinks.length > 0 && (
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsGeoMenuOpen((open) => !open)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors inline-flex items-center gap-2 cursor-pointer ${
+                          isGeoActive
+                            ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                            : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
+                        }`}
+                        aria-label="Toggle administrative units menu"
+                        aria-expanded={isGeoMenuOpen}
+                        aria-haspopup="menu"
+                      >
+                        Administrative Units
+                        <svg
+                          className={`h-4 w-4 transition-transform ${isGeoMenuOpen ? 'rotate-180' : ''}`}
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.25a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+
+                      {isGeoMenuOpen && (
+                        <div className="absolute left-0 mt-2 w-56 rounded-xl border border-[#2a2a2e] bg-[#141417] shadow-xl p-2 z-50">
+                          {geoLinks.map((link) => {
+                            const hasAccess = canAccessLink(link.resource);
+                            return hasAccess ? (
+                              <Link
+                                key={link.to}
+                                to={link.to}
+                                onClick={() => setIsGeoMenuOpen(false)}
+                                className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                                  isActive(link.to)
+                                    ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                                    : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
+                                }`}
+                              >
+                                {link.label}
+                              </Link>
+                            ) : (
+                              <span
+                                key={link.to}
+                                className="block rounded-lg px-3 py-2 text-sm font-medium text-[#4a4a4e] cursor-not-allowed"
+                                title="You don't have access to this section"
+                              >
+                                {link.label}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Fragment>
               );
             })}
           </div>
@@ -178,27 +254,91 @@ export function Navbar() {
           <div className="px-4 py-3 space-y-1">
             {navLinks.map((link) => {
               const hasAccess = canAccessLink(link.resource);
-              return hasAccess ? (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setIsOpen(false)}
-                  className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive(link.to)
-                      ? 'text-[#ca8a04] bg-[#ca8a04]/10'
-                      : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <span
-                  key={link.to}
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-[#4a4a4e] cursor-not-allowed"
-                  title="You don't have access to this section"
-                >
-                  {link.label}
-                </span>
+              return (
+                <Fragment key={link.to}>
+                  {hasAccess ? (
+                    <Link
+                      to={link.to}
+                      onClick={() => setIsOpen(false)}
+                      className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive(link.to)
+                          ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                          : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <span
+                      className="block rounded-lg px-3 py-2 text-sm font-medium text-[#4a4a4e] cursor-not-allowed"
+                      title="You don't have access to this section"
+                    >
+                      {link.label}
+                    </span>
+                  )}
+                  {link.to === '/dashboard' && geoLinks.length > 0 && (
+                    <div className="pt-1">
+                      <button
+                        onClick={() => setIsMobileGeoMenuOpen((open) => !open)}
+                        className={`w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors inline-flex items-center justify-between ${
+                          isGeoActive
+                            ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                            : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
+                        }`}
+                        aria-label="Toggle administrative units menu"
+                        aria-expanded={isMobileGeoMenuOpen}
+                        aria-controls="mobile-locations-menu"
+                      >
+                        <span>Administrative Units</span>
+                        <svg
+                          className={`h-4 w-4 transition-transform ${isMobileGeoMenuOpen ? 'rotate-180' : ''}`}
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.25a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+
+                      {isMobileGeoMenuOpen && (
+                        <div id="mobile-locations-menu" className="mt-1 space-y-1 pl-2">
+                          {geoLinks.map((link) => {
+                            const hasAccess = canAccessLink(link.resource);
+                            return hasAccess ? (
+                              <Link
+                                key={link.to}
+                                to={link.to}
+                                onClick={() => {
+                                  setIsOpen(false);
+                                  setIsMobileGeoMenuOpen(false);
+                                }}
+                                className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                                  isActive(link.to)
+                                    ? 'text-[#ca8a04] bg-[#ca8a04]/10'
+                                    : 'text-[#888] hover:text-[#ca8a04] hover:bg-[#1a1a1e]'
+                                }`}
+                              >
+                                {link.label}
+                              </Link>
+                            ) : (
+                              <span
+                                key={link.to}
+                                className="block rounded-lg px-3 py-2 text-sm font-medium text-[#4a4a4e] cursor-not-allowed"
+                                title="You don't have access to this section"
+                              >
+                                {link.label}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Fragment>
               );
             })}
             <Link

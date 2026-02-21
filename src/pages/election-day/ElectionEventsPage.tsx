@@ -6,9 +6,13 @@ import {
   type CreateEventPayload,
 } from '../../services/election-results.service';
 import { toast } from '../../stores/toast.store';
+import { useAuthStore } from '../../stores/auth.store';
+import { UserRole } from '../../lib/permissions';
 
 export function ElectionEventsPage() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const canCreateEvent = new Set<string>([UserRole.SUPER_ADMIN, UserRole.CAMPAIGN_DIRECTOR]).has(user?.role ?? '');
 
   // List state
   const [events, setEvents] = useState<ElectionEvent[]>([]);
@@ -46,6 +50,10 @@ export function ElectionEventsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canCreateEvent) {
+      toast.error('You are not allowed to create events');
+      return;
+    }
     if (!form.name || !form.electionDate) {
       toast.error('Please fill in all required fields');
       return;
@@ -78,16 +86,18 @@ export function ElectionEventsPage() {
             Create and manage election events, upload result forms, and track processing.
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a]"
-        >
-          {showForm ? 'Cancel' : '+ New Event'}
-        </button>
+        {canCreateEvent && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a]"
+          >
+            {showForm ? 'Cancel' : '+ New Event'}
+          </button>
+        )}
       </div>
 
       {/* Create Event Form */}
-      {showForm && (
+      {showForm && canCreateEvent && (
         <div className="bg-[#141417] rounded-2xl shadow-lg border border-[#2a2a2e] overflow-hidden">
           <div className="border-b border-[#2a2a2e] bg-[#1a1a1d] px-4 sm:px-6 py-3">
             <h2 className="text-lg font-semibold text-white">Create Election Event</h2>
@@ -172,7 +182,9 @@ export function ElectionEventsPage() {
           <div className="p-10 text-center text-[#888]">Loading events...</div>
         ) : events.length === 0 ? (
           <div className="p-10 text-center text-[#888]">
-            No election events yet. Click "+ New Event" to create one.
+            {canCreateEvent
+              ? 'No election events yet. Click "+ New Event" to create one.'
+              : 'No election events yet.'}
           </div>
         ) : (
           <>

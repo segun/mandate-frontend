@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { DEFAULT_PAGE_LIMIT } from '../../lib/api';
 import { isRoleAboveStateCoordinator } from '../../lib/permissions';
+import { lgasService } from '../../services/lgas.service';
 import {
   incidentReportsService,
   type IncidentMediaType,
   type IncidentReport,
 } from '../../services/incident-reports.service';
+import { pollingUnitsService } from '../../services/polling-units.service';
+import { statesService } from '../../services/states.service';
+import { wardsService } from '../../services/wards.service';
 import { useAuthStore } from '../../stores/auth.store';
 import { toast } from '../../stores/toast.store';
 
@@ -37,6 +42,11 @@ interface IncidentReportsPanelProps {
   embedded?: boolean;
 }
 
+interface SelectOption {
+  id: string;
+  name: string;
+}
+
 export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelProps) {
   const { user } = useAuthStore();
   const canViewAllReports = isRoleAboveStateCoordinator(user?.role);
@@ -46,6 +56,16 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
+  const [stateId, setStateId] = useState('');
+  const [lgaId, setLgaId] = useState('');
+  const [wardId, setWardId] = useState('');
+  const [pollingUnitId, setPollingUnitId] = useState('');
+
+  const [states, setStates] = useState<SelectOption[]>([]);
+  const [lgas, setLgas] = useState<SelectOption[]>([]);
+  const [wards, setWards] = useState<SelectOption[]>([]);
+  const [pollingUnits, setPollingUnits] = useState<SelectOption[]>([]);
+
   const [isUploading, setIsUploading] = useState(false);
 
   const [reports, setReports] = useState<IncidentReport[]>([]);
@@ -104,11 +124,121 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
     fetchReports();
   }, [fetchReports]);
 
+  useEffect(() => {
+    const loadStates = async () => {
+      try {
+        const response = await statesService.getAll(1, DEFAULT_PAGE_LIMIT);
+        setStates(
+          response.data.data.map((state) => ({
+            id: state.id,
+            name: state.geoState?.name || 'Unknown',
+          })),
+        );
+      } catch {
+        toast.error('Failed to load states');
+      }
+    };
+
+    loadStates();
+  }, []);
+
+  useEffect(() => {
+    if (!stateId) {
+      setLgas([]);
+      setLgaId('');
+      setWards([]);
+      setWardId('');
+      setPollingUnits([]);
+      setPollingUnitId('');
+      return;
+    }
+
+    const loadLgas = async () => {
+      try {
+        const response = await lgasService.getAll(stateId, 1, DEFAULT_PAGE_LIMIT);
+        setLgas(
+          response.data.data.map((lga) => ({
+            id: lga.id,
+            name: lga.geoLga?.name || 'Unknown',
+          })),
+        );
+        setLgaId('');
+        setWards([]);
+        setWardId('');
+        setPollingUnits([]);
+        setPollingUnitId('');
+      } catch {
+        toast.error('Failed to load LGAs');
+      }
+    };
+
+    loadLgas();
+  }, [stateId]);
+
+  useEffect(() => {
+    if (!lgaId) {
+      setWards([]);
+      setWardId('');
+      setPollingUnits([]);
+      setPollingUnitId('');
+      return;
+    }
+
+    const loadWards = async () => {
+      try {
+        const response = await wardsService.getAll(1, DEFAULT_PAGE_LIMIT, lgaId);
+        setWards(
+          response.data.map((ward) => ({
+            id: ward.id,
+            name: ward.geoWard?.name || 'Unknown',
+          })),
+        );
+        setWardId('');
+        setPollingUnits([]);
+        setPollingUnitId('');
+      } catch {
+        toast.error('Failed to load wards');
+      }
+    };
+
+    loadWards();
+  }, [lgaId]);
+
+  useEffect(() => {
+    if (!wardId) {
+      setPollingUnits([]);
+      setPollingUnitId('');
+      return;
+    }
+
+    const loadPollingUnits = async () => {
+      try {
+        const response = await pollingUnitsService.getAll(1, DEFAULT_PAGE_LIMIT, wardId);
+        setPollingUnits(
+          response.data.map((pollingUnit) => ({
+            id: pollingUnit.id,
+            name: pollingUnit.geoPollingUnit?.name || pollingUnit.name || 'Unknown',
+          })),
+        );
+        setPollingUnitId('');
+      } catch {
+        toast.error('Failed to load polling units');
+      }
+    };
+
+    loadPollingUnits();
+  }, [wardId]);
+
   const handleUpload = async (event: FormEvent) => {
     event.preventDefault();
 
     if (!selectedFile) {
       toast.error('Please choose a media file to upload');
+      return;
+    }
+
+    if (!stateId || !lgaId || !wardId || !pollingUnitId) {
+      toast.error('Please select State, LGA, Ward and Polling Unit');
       return;
     }
 
@@ -127,7 +257,14 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
 
     setIsUploading(true);
     try {
-      await incidentReportsService.upload(selectedFile, description.trim() || undefined);
+      await incidentReportsService.upload({
+        file: selectedFile,
+        stateId,
+        lgaId,
+        wardId,
+        pollingUnitId,
+        description: description.trim() || undefined,
+      });
       toast.success('Incident report uploaded successfully');
       setSelectedFile(null);
       setDescription('');
@@ -209,6 +346,96 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
         </div>
         <div className="p-4 sm:p-6">
           <form onSubmit={handleUpload} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[#eee] mb-1">
+                  State <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={stateId}
+                  onChange={(event) => setStateId(event.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50"
+                >
+                  <option value="">Select state</option>
+                  {states.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#eee] mb-1">
+                  LGA <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={lgaId}
+                  onChange={(event) => setLgaId(event.target.value)}
+                  disabled={!stateId}
+                  className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50 disabled:opacity-60"
+                >
+                  <option value="">Select LGA</option>
+                  {lgas.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#eee] mb-1">
+                  Ward <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={wardId}
+                  onChange={(event) => setWardId(event.target.value)}
+                  disabled={!lgaId}
+                  className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50 disabled:opacity-60"
+                >
+                  <option value="">Select ward</option>
+                  {wards.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#eee] mb-1">
+                  Polling Unit <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={pollingUnitId}
+                  onChange={(event) => setPollingUnitId(event.target.value)}
+                  disabled={!wardId}
+                  className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50 disabled:opacity-60"
+                >
+                  <option value="">Select polling unit</option>
+                  {pollingUnits.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#eee] mb-1">Description (optional)</label>
+              <textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                maxLength={5000}
+                rows={3}
+                placeholder="Describe what happened..."
+                className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white placeholder-[#555] focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50"
+              />
+              <p className="text-xs text-[#666] mt-1">{description.length}/5000</p>
+            </div>
+
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
               <input
                 ref={fileInputRef}
@@ -234,24 +461,11 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
               </div>
               <button
                 type="submit"
-                disabled={isUploading || !selectedFile}
+                disabled={isUploading || !selectedFile || !stateId || !lgaId || !wardId || !pollingUnitId}
                 className="px-4 py-2.5 rounded-lg bg-[#ca8a04] text-[#0d0d0f] font-semibold shadow-sm hover:bg-[#d4940a] disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isUploading ? 'Uploading...' : 'Upload Incident'}
               </button>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[#eee] mb-1">Description (optional)</label>
-              <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                maxLength={5000}
-                rows={3}
-                placeholder="Describe what happened..."
-                className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2e] bg-[#0d0d0f] text-white placeholder-[#555] focus:outline-none focus:ring-2 focus:ring-[#ca8a04]/50"
-              />
-              <p className="text-xs text-[#666] mt-1">{description.length}/5000</p>
             </div>
           </form>
         </div>
@@ -296,16 +510,16 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
                   return (
                 <div
                   key={report.id}
-                  className="rounded-xl border border-[#2a2a2e] bg-[#0d0d0f] overflow-hidden"
+                  className="rounded-xl border border-[#2a2a2e] bg-[#0d0d0f] overflow-hidden h-full flex flex-col"
                 >
                   <div className="bg-[#1a1a1d] border-b border-[#2a2a2e] px-4 py-2 flex items-center justify-between gap-2">
                     <span className="inline-flex px-2 py-1 rounded text-xs font-medium bg-[#ca8a04]/15 text-[#ca8a04]">
                       {report.mediaType}
                     </span>
-                    <span className="text-xs text-[#888]">{new Date(report.createdAt).toLocaleString()}</span>
+                    <span className="text-xs text-[#888]">{new Date(report.datetimeReported).toLocaleString()}</span>
                   </div>
 
-                  <div className="p-4 space-y-3">
+                  <div className="p-4 flex-1 flex flex-col gap-3 min-h-0">
                     {report.mediaType === 'IMAGE' && canRenderPreview ? (
                       <img
                         src={previewUrl}
@@ -343,29 +557,65 @@ export function IncidentReportsPanel({ embedded = false }: IncidentReportsPanelP
                       </p>
                     </div>
 
-                    <p className="text-sm text-[#bbb] whitespace-pre-wrap">
-                      {report.description?.trim() ? report.description : 'No description provided.'}
-                    </p>
+                    <details className="group rounded-lg border border-[#2a2a2e] bg-[#141417]">
+                      <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-[#ca8a04] flex items-center justify-between">
+                        Incident Details
+                        <span className="text-[#888] group-open:hidden">Expand</span>
+                        <span className="hidden text-[#888] group-open:inline">Collapse</span>
+                      </summary>
+                      <div className="px-3 pb-3 pt-1 space-y-2 text-xs">
+                        <p className="text-[#aaa]">
+                          <span className="text-[#888]">Reported by:</span>{' '}
+                          {report.reportedBy?.fullName || 'N/A'}
+                          {report.reportedBy?.role ? ` (${report.reportedBy.role})` : ''}
+                        </p>
+                        <p className="text-[#aaa]">
+                          <span className="text-[#888]">State:</span> {report.state?.name || 'N/A'}
+                        </p>
+                        <p className="text-[#aaa]">
+                          <span className="text-[#888]">LGA:</span> {report.lga?.name || 'N/A'}
+                        </p>
+                        <p className="text-[#aaa]">
+                          <span className="text-[#888]">Ward:</span> {report.ward?.name || 'N/A'}
+                        </p>
+                        <p className="text-[#aaa]">
+                          <span className="text-[#888]">Polling Unit:</span>{' '}
+                          {report.pollingUnit?.name || 'N/A'}
+                        </p>
+                        <p className="text-[#aaa]">
+                          <span className="text-[#888]">Datetime Reported:</span>{' '}
+                          {new Date(report.datetimeReported).toLocaleString()}
+                        </p>
+                        <p className="text-[#aaa] whitespace-pre-wrap">
+                          <span className="text-[#888]">Description:</span>{' '}
+                          {report.description?.trim() ? report.description : 'No description provided.'}
+                        </p>
+                      </div>
+                    </details>
 
-                    {previewUrl && (
-                      <a
-                        href={previewUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex px-3 py-1.5 rounded-md border border-[#ca8a04]/30 bg-[#ca8a04]/10 text-[#ca8a04] text-xs font-semibold hover:bg-[#ca8a04]/20"
-                      >
-                        Open/Download Media
-                      </a>
-                    )}
+                    {(previewUrl || canDeleteReports) && (
+                      <div className="mt-auto pt-1 flex flex-wrap items-center gap-2">
+                        {previewUrl && (
+                          <a
+                            href={previewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex px-3 py-1.5 rounded-md border border-[#ca8a04]/30 bg-[#ca8a04]/10 text-[#ca8a04] text-xs font-semibold hover:bg-[#ca8a04]/20"
+                          >
+                            Open/Download Media
+                          </a>
+                        )}
 
-                    {canDeleteReports && (
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => setReportPendingDelete(report)}
-                          className="px-3 py-1.5 rounded-md border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20"
-                        >
-                          Delete
-                        </button>
+                        {canDeleteReports && (
+                          <div className="ml-auto flex justify-end">
+                            <button
+                              onClick={() => setReportPendingDelete(report)}
+                              className="px-3 py-1.5 rounded-md border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

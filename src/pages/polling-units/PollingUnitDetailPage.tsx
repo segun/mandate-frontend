@@ -8,7 +8,7 @@ import { UserSelectionModal } from '../../components/UserSelectionModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DEFAULT_MODAL_PAGE_LIMIT } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth.store';
-import { UserRole } from '../../lib/permissions';
+import { filterUsersForAssignmentLevel, UserRole } from '../../lib/permissions';
 
 export function PollingUnitDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +59,7 @@ export function PollingUnitDetailPage() {
     setUsersLoading(true);
     try {
       const response = await usersService.getAll(1, DEFAULT_MODAL_PAGE_LIMIT);
-      setUsers(response.data);
+      setUsers(filterUsersForAssignmentLevel(response.data, 'polling-unit'));
       setUsersError('');
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load users';
@@ -92,7 +92,7 @@ export function PollingUnitDetailPage() {
     setUsersLoading(true);
     try {
       const response = await usersService.search(trimmed, 1, DEFAULT_MODAL_PAGE_LIMIT);
-      setUsers(response.data);
+      setUsers(filterUsersForAssignmentLevel(response.data, 'polling-unit'));
       setUsersError('');
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to search users';

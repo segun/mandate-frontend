@@ -220,10 +220,6 @@ export default function ViewUserPage() {
                 <p className="text-sm text-gray-400">Role</p>
                 <p className="text-lg text-white font-semibold mt-2">{formatRole(user.role)}</p>
               </div>
-              <div className="sm:col-span-2">
-                <p className="text-sm text-gray-400">Admin ID</p>
-                <p className="text-sm text-white font-mono mt-2 break-all">{user.tenantId}</p>
-              </div>
             </div>
           </div>
 
@@ -385,10 +381,6 @@ export default function ViewUserPage() {
               Metadata
             </h2>
             <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-400">User ID</p>
-                <p className="text-xs text-white font-mono mt-2 break-all">{user.id}</p>
-              </div>
               <div>
                 <p className="text-sm text-gray-400">Created</p>
                 <p className="text-white mt-2">{new Date(user.createdAt).toLocaleString()}</p>

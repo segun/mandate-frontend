@@ -69,6 +69,11 @@ export interface ElectionUpload {
     };
   };
   uploadedByUserId?: string;
+  uploadedBy?: {
+    id: string;
+    fullName: string;
+    role: string;
+  };
   sourceFileName: string;
   mimeType?: string;
   fileSizeBytes?: number;

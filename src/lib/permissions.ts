@@ -182,6 +182,36 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
   [UserRole.FIELD_OFFICER]: 8,
 };
 
+export type AssignmentLevel = 'state' | 'lga' | 'ward' | 'polling-unit';
+
+function isRoleAtOrAbove(userRole: string | undefined, minimumRole: UserRole): boolean {
+  if (!userRole) return false;
+  const role = userRole as UserRole;
+  const userLevel = ROLE_HIERARCHY[role];
+  const minimumLevel = ROLE_HIERARCHY[minimumRole];
+  if (userLevel === undefined || minimumLevel === undefined) return false;
+  return userLevel <= minimumLevel;
+}
+
+export function isEligibleForAssignmentLevel(userRole: string | undefined, level: AssignmentLevel): boolean {
+  switch (level) {
+    case 'state':
+      return isRoleAtOrAbove(userRole, UserRole.STATE_COORDINATOR);
+    case 'lga':
+      return isRoleAtOrAbove(userRole, UserRole.LGA_COORDINATOR);
+    case 'ward':
+      return isRoleAtOrAbove(userRole, UserRole.WARD_COMMANDER);
+    case 'polling-unit':
+      return userRole !== UserRole.FIELD_OFFICER;
+    default:
+      return false;
+  }
+}
+
+export function filterUsersForAssignmentLevel<T extends { role: string }>(users: T[], level: AssignmentLevel): T[] {
+  return users.filter((user) => isEligibleForAssignmentLevel(user.role, level));
+}
+
 /**
  * Check if a role has access to a resource
  */

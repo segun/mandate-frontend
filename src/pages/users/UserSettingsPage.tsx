@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { TenantSubscriptionAccessStatus } from '../../services/auth.service';
 import { tenantsService } from '../../services/tenants.service.ts';
 import { paymentsService } from '../../services/payments.service.ts';
+import { usersService, type User as DetailedUser } from '../../services/users.service';
 import { UserRole } from '../../lib/permissions';
 
 const GOLD = '#ca8a04';
@@ -39,6 +40,28 @@ const formatDate = (value: string | null) => {
   });
 };
 
+const formatDateTime = (value?: string | null) => {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('en-NG', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const formatEnumLabel = (value?: string | null) => {
+  if (!value) return 'N/A';
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export default function UserSettingsPage() {
   const [searchParams] = useSearchParams();
   const { user, updateSubscriptionStatus } = useAuthStore();
@@ -52,6 +75,36 @@ export default function UserSettingsPage() {
   const [licencePlan, setLicencePlan] = useState<{ name: string; amount: number; interval: string; currency: string } | null>(null);
   const [licenceQuantity, setLicenceQuantity] = useState(1);
   const [buyingLicence, setBuyingLicence] = useState(false);
+  const [profile, setProfile] = useState<DetailedUser | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let mounted = true;
+    const loadProfile = async () => {
+      setLoadingProfile(true);
+      try {
+        const response = await usersService.getById(user.id);
+        if (!mounted) return;
+        setProfile(response);
+      } catch {
+        if (mounted) {
+          setProfile(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoadingProfile(false);
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const tenantId = user?.tenantId;
@@ -244,24 +297,65 @@ export default function UserSettingsPage() {
 
         {activeTab === 'profile' && (
           <div className="mt-6 grid gap-6">
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
-                <p className="text-xs uppercase tracking-wide text-[#888]">Full Name</p>
-                <p className="mt-2 text-lg text-white">{user?.fullName ?? 'N/A'}</p>
+                <p className="text-sm uppercase tracking-wide text-[#888]">Full Name</p>
+                <p className="mt-2 text-xl font-semibold text-white wrap-break-word">{profile?.fullName ?? user?.fullName ?? 'N/A'}</p>
               </div>
               <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
-                <p className="text-xs uppercase tracking-wide text-[#888]">Email</p>
-                <p className="mt-2 text-lg text-white">{user?.email ?? 'N/A'}</p>
+                <p className="text-sm uppercase tracking-wide text-[#888]">Email</p>
+                <p className="mt-2 text-xl font-semibold text-white break-all">{profile?.email ?? user?.email ?? 'N/A'}</p>
               </div>
               <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
-                <p className="text-xs uppercase tracking-wide text-[#888]">Role</p>
-                <p className="mt-2 text-lg text-white">{user?.role ?? 'N/A'}</p>
+                <p className="text-sm uppercase tracking-wide text-[#888]">Phone Number</p>
+                <p className="mt-2 text-xl font-semibold text-white">{profile?.phone ?? 'N/A'}</p>
               </div>
               <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
-                <p className="text-xs uppercase tracking-wide text-[#888]">Admin ID</p>
-                <p className="mt-2 text-sm text-white break-all">{user?.tenantId ?? 'N/A'}</p>
+                <p className="text-sm uppercase tracking-wide text-[#888]">Role</p>
+                <p className="mt-2 text-xl font-semibold text-white">{formatEnumLabel(profile?.role ?? user?.role)}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Account Status</p>
+                <p className="mt-2 text-xl font-semibold text-white">{profile ? (profile.isActive ? 'Active' : 'Inactive') : 'N/A'}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Tenant</p>
+                <p className="mt-2 text-xl font-semibold text-white wrap-break-word">{tenant?.name ?? 'N/A'}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Reporting To</p>
+                <p className="mt-2 text-xl font-semibold text-white wrap-break-word">{profile?.parentOfficer?.fullName ?? 'N/A'}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Assigned State</p>
+                <p className="mt-2 text-xl font-semibold text-white wrap-break-word">{profile?.assignedState?.geoState?.name ?? 'N/A'}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Assigned LGA</p>
+                <p className="mt-2 text-xl font-semibold text-white wrap-break-word">{profile?.assignedLga?.geoLga?.name ?? 'N/A'}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Assigned Ward</p>
+                <p className="mt-2 text-xl font-semibold text-white wrap-break-word">{profile?.assignedWard?.geoWard?.name ?? 'N/A'}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Assigned Polling Unit</p>
+                <p className="mt-2 text-xl font-semibold text-white wrap-break-word">{profile?.assignedPollingUnit?.geoPollingUnit?.name ?? 'N/A'}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Assigned Voters</p>
+                <p className="mt-2 text-xl font-semibold text-white">{profile?.assignedVoters?.length ?? 0}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Joined On</p>
+                <p className="mt-2 text-xl font-semibold text-white">{formatDateTime(profile?.createdAt)}</p>
+              </div>
+              <div className="rounded-xl border border-[#2a2a2e] bg-[#0f0f12] p-4">
+                <p className="text-sm uppercase tracking-wide text-[#888]">Last Updated</p>
+                <p className="mt-2 text-xl font-semibold text-white">{formatDateTime(profile?.updatedAt)}</p>
               </div>
             </div>
+            {loadingProfile && <p className="text-sm text-[#888]">Loading more profile details...</p>}
           </div>
         )}
 

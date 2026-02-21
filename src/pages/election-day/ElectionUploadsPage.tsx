@@ -398,6 +398,7 @@ export function ElectionUploadsPage() {
                     <thead className="border-b border-[#2a2a2e]">
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-semibold text-white">File</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-white">Uploaded By</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold text-white">Status</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold text-white">Confidence</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold text-white">Updated</th>
@@ -409,6 +410,12 @@ export function ElectionUploadsPage() {
                         <tr key={upload.id} className="hover:bg-[#1a1a1d]/50">
                           <td className="px-4 py-3 text-sm text-[#ddd] font-medium">
                             {upload.sourceFileName}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-[#bbb]">
+                            {upload.uploadedBy?.fullName || upload.uploadedByUserId || '—'}
+                            {upload.uploadedBy?.role && (
+                              <div className="text-xs text-[#888] mt-0.5">{upload.uploadedBy.role}</div>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <span

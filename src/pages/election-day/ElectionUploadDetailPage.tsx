@@ -535,6 +535,13 @@ export function ElectionUploadDetailPage() {
               {upload.processedAt ? new Date(upload.processedAt).toLocaleString() : '—'}
             </span>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#888] uppercase tracking-wide">Uploaded By</span>
+            <span className="text-sm text-white">
+              {upload.uploadedBy?.fullName || upload.uploadedByUserId || '—'}
+              {upload.uploadedBy?.role ? ` (${upload.uploadedBy.role})` : ''}
+            </span>
+          </div>
         </div>
 
         {isProcessing && (

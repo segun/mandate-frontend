@@ -2,10 +2,37 @@ import { api } from '../lib/api';
 
 export type IncidentMediaType = 'IMAGE' | 'VIDEO' | 'AUDIO';
 
+interface IncidentLocation {
+  id: string;
+  name: string;
+}
+
+interface IncidentPollingUnit {
+  id: string;
+  name: string;
+  code?: string;
+}
+
+interface IncidentReporter {
+  id: string;
+  fullName: string;
+  role: string;
+}
+
 export interface IncidentReport {
   id: string;
   tenantId: string;
   reportedByUserId: string;
+  stateId: string;
+  lgaId: string;
+  wardId: string;
+  pollingUnitId: string;
+  state?: IncidentLocation;
+  lga?: IncidentLocation;
+  ward?: IncidentLocation;
+  pollingUnit?: IncidentPollingUnit;
+  reportedBy?: IncidentReporter;
+  datetimeReported: string;
   mediaType: IncidentMediaType;
   sourceFileName: string;
   mimeType: string;
@@ -39,11 +66,26 @@ interface ApiResponse<T, M = undefined> {
 }
 
 export const incidentReportsService = {
-  async upload(file: File, description?: string): Promise<IncidentReport> {
+  async upload(payload: {
+    file: File;
+    stateId: string;
+    lgaId: string;
+    wardId: string;
+    pollingUnitId: string;
+    datetimeReported?: string;
+    description?: string;
+  }): Promise<IncidentReport> {
     const formData = new FormData();
-    formData.append('file', file);
-    if (description) {
-      formData.append('description', description);
+    formData.append('file', payload.file);
+    formData.append('stateId', payload.stateId);
+    formData.append('lgaId', payload.lgaId);
+    formData.append('wardId', payload.wardId);
+    formData.append('pollingUnitId', payload.pollingUnitId);
+    if (payload.datetimeReported) {
+      formData.append('datetimeReported', payload.datetimeReported);
+    }
+    if (payload.description) {
+      formData.append('description', payload.description);
     }
 
     const response = await api.post<ApiResponse<IncidentReport>>('/incident-reports', formData, {
