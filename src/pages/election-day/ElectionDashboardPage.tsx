@@ -190,7 +190,10 @@ export function ElectionDashboardPage() {
   }, [fetchDashboardData]);
 
   const stats = eventDetail?.stats;
-  const recentUploads = eventDetail?.recentUploads.data || [];
+  const recentUploads = useMemo(
+    () => eventDetail?.recentUploads.data || [],
+    [eventDetail],
+  );
   const totalUploads = stats?.totalUploads || 0;
   const confirmedCount = stats?.confirmed || 0;
   const completionRate = totalUploads > 0 ? (confirmedCount / totalUploads) * 100 : 0;

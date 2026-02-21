@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usersService } from '../../services/users.service';
 import { useAuthStore } from '../../stores/auth.store';
@@ -132,8 +132,14 @@ const generatePassword = (): string => {
 export default function CreateUserPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const allowedTargetRoles = CREATOR_ROLE_TO_ALLOWED_TARGET_ROLES[user?.role || ''] || [];
-  const availableRoles = roles.filter((role) => allowedTargetRoles.includes(role.value));
+  const allowedTargetRoles = useMemo(
+    () => CREATOR_ROLE_TO_ALLOWED_TARGET_ROLES[user?.role || ''] || [],
+    [user?.role],
+  );
+  const availableRoles = useMemo(
+    () => roles.filter((role) => allowedTargetRoles.includes(role.value)),
+    [allowedTargetRoles],
+  );
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
